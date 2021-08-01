@@ -1,0 +1,15 @@
+{
+  "name": "fastnat",
+  "version": "1.0.0",
+  "description": "tcp udp tunnel &nat",
+  "main": "app.js",
+  "repository": "yes",
+  "author": "codeneno <qsmy_qin@163.com>",
+  "license": "GPL",
+  "dependencies": {
+    "http-proxy": "^1.18.1",
+    "kcp-node": "^0.1.0",
+    "koa": "^2.13.1",
+    "log4js": "^6.3.0"
+  }
+}
