@@ -9,5 +9,4 @@ log4js.configure({
         default: { appenders: ['out', 'app'], level: 'info' }
     }
 });
-const logger = log4js.getLogger();
-module.exports={logger}
+module.exports = log4js.getLogger();

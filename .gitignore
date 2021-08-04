@@ -102,3 +102,4 @@ dist
 logs/
 # TernJS port file
 .tern-port
+*.log

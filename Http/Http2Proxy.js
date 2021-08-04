@@ -1,6 +1,6 @@
 const http2 = require('http2');
 const fs = require('fs');
-const logger=require('../Log/logger').logger;
+const logger=require('../Log/logger');
 
 const server = http2.createSecureServer({
   key: fs.readFileSync('im.key'),

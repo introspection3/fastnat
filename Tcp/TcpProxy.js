@@ -1,6 +1,6 @@
 'use strict';
 const net = require('net');
-const logger=require('../Log/logger').logger;
+const logger=require('../Log/logger');
 
 /**
  * 创建一个TCP代理
