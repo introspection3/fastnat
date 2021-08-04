@@ -3,17 +3,19 @@ const stringRandom = require('string-random');
 let client=new TcpClient({host:'0.0.0.0',port:3927});
 client.start();
 
-const str=stringRandom(1024*100);
+const str=stringRandom(102);
 
 client.eventEmitter.addListener('connect',()=>{
    setInterval(() => {
-    client.sendUtf8Json( new Date()+str);
-   }, 1000);
+    let data={
+        time:new Date(),
+        str:str,
+        type:'message'
+    }
+    client.sendCodecData(data);
+   }, 10);
 });
-
-client.eventEmitter.addListener('onMessage',(dataBuffer,socket)=>{
-    
-    let str=dataBuffer.toString();
-    console.log(str);
-     
+ 
+client.eventEmitter.addListener('onCodecMessage',(data,socket)=>{   
+      console.log(data);     
  })
