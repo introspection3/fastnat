@@ -4,7 +4,8 @@ const logger = require('../Log/logger');
 const net = require('net');
 const headBytesCount = 4;
 const events = require('events');
-
+const { StaticPool ,DynamicPool} = require('node-worker-threads-pool');
+const { Socket } = require('dgram');
 
 /**
  * Tcp隧道服务端程序
@@ -72,7 +73,7 @@ class TcpServer {
     }
 
     /**
-     * 
+     * 广播编码形式的数据
      * @param {Object} data 
      */
     broadcastCodecData(data) {
@@ -87,7 +88,7 @@ class TcpServer {
     }
 
     /**
-     * 
+     * 广播原始数据
      * @param {Buffer} dataBuffer 
      */
     broadcast(dataBuffer) {
@@ -113,26 +114,27 @@ class TcpServer {
             this.clients.add(socket);
             let lastTempBuffer = null;
             logger.info(commingInfo);
-
             socket.setTimeout(this.socketTime);
-
             let instance = this;
+
             /**
              * 通知有完整的数据来了
-             * @param {Buffer} dataBuffer 
+             * @param {Buffer} dataBuffer 来的数据
+             * @param {Socket} targetSocket 对应的socket
              */
             function notify(dataBuffer, targetSocket) {
 
                 instance.eventEmitter.emit('onMessage', dataBuffer, targetSocket);
-
+                let data=null;
                 if (instance.codec === 'utf8') {
                     let str = dataBuffer.toString('utf8');
-                    let data = JSON.parse(str);
+                    data = JSON.parse(str);
                     instance.eventEmitter.emit('onCodecMessage', data, targetSocket);
                 } else {
-                    let data = instance.codec.decode(dataBuffer);
+                    data = instance.codec.decode(dataBuffer);
                     instance.eventEmitter.emit('onCodecMessage', data, targetSocket);
                 }
+
             }
 
             0            /**

@@ -5,7 +5,7 @@ client.start();
 
 const str=stringRandom(102);
 
-client.eventEmitter.addListener('connect',()=>{
+client.eventEmitter.on('connect',()=>{
    setInterval(() => {
     let data={
         time:new Date(),
@@ -16,6 +16,6 @@ client.eventEmitter.addListener('connect',()=>{
    }, 10);
 });
  
-client.eventEmitter.addListener('onCodecMessage',(data,socket)=>{   
+client.eventEmitter.on('onCodecMessage',(data,socket)=>{   
       console.log(data);     
  })

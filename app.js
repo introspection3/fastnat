@@ -1,11 +1,31 @@
-'use strict';
-const Koa = require('koa');
-const app = new Koa();
+const express = require('express');
+ 
+const app = express();
+app.use('/public', express.static('public'));
+const Client = require('./Db/Models/Client');
 
-app.use( async ctx  => {
-  ctx.body = 'Hello World';
-})
+app.get('/', function (req, res) {
+  Client.create({ authenKey: new Date().toString(), isAvailable: true }).then(data => {
+    res.send(data);
+  })
 
-app.listen(1080,()=>{
-  console.log("server is running at 3000 port");
-})
+});
+
+app.post('/client/register', function (req, res) {
+  res.send({});
+
+});
+
+app.get('/client/allconfig', function (req, res) {  
+  res.send({});
+});
+
+
+let server = app.listen(8081, function () {
+
+  var host = server.address().address;
+  var port = server.address().port;
+
+  console.log("server start: http://%s:%s", host, port);
+
+});

@@ -52,6 +52,7 @@ class TcpClient {
         /**
       * 通知有完整的数据来了
       * @param {Buffer} dataBuffer 
+      * @param {Socket} targetSocket 对应的socket
       */
         function notify(dataBuffer, targetSocket) {
             instance.eventEmitter.emit('onMessage', dataBuffer, targetSocket);
@@ -141,6 +142,7 @@ class TcpClient {
      * @param {Object} data 
      */
     sendCodecData(data) {
+
         if (this.codec === 'utf8') {
             let jsonStr = JSON.stringify(data);
             let body = Buffer.from(jsonStr);
