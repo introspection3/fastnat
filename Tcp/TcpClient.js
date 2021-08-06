@@ -142,7 +142,6 @@ class TcpClient {
      * @param {Object} data 
      */
     sendCodecData(data) {
-
         if (this.codec === 'utf8') {
             let jsonStr = JSON.stringify(data);
             let body = Buffer.from(jsonStr);

@@ -37,15 +37,30 @@ class TcpTunnelClient {
         this.tcpClient.start();
         this.tcpClient.eventEmitter.on('connect',()=>{
             
-            let protocal=new   TcpTunnelProtocal({});
+            let protocal=new  TcpTunnelProtocal({});
             protocal.command='authen';
             protocal.authKey=this.authenKey;
             protocal.data={};            
             this.tcpClient.sendCodecData(protocal);
 
         });
+
+        this.tcpClient.eventEmitter.on('onCodecMessage',(data,socket)=>{   
+            this[data.command](data,socket);
+       });
+       
     }
 
+    
+    closeClient(data,socket){
+        logger.warn('recevie command (closeClient)'+data.info);
+        this.tcpClient.client.end();
+    }
+    
+    clientInfo(data,socket){
+        logger.info(data);
+         
+    }
 
 }
 

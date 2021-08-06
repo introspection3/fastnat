@@ -4,7 +4,7 @@ const logger = require('../Log/logger');
 const net = require('net');
 const headBytesCount = 4;
 const events = require('events');
-const { StaticPool ,DynamicPool} = require('node-worker-threads-pool');
+const TcpPackUtil=require('./TcpPackUtil');
 const { Socket } = require('dgram');
 
 /**
@@ -97,6 +97,24 @@ class TcpServer {
             item.write(pack);
         }
     }
+
+    /**
+     * 发送编码的数据到目标socket
+     * @param {Object} data {}data
+     * @param {Socket} socket target socket
+     */
+    sendCodecData2OneClient(data,socket){
+        let body = null;
+        if (this.codec === 'utf8') {
+            let jsonStr = JSON.stringify(data);
+            body = Buffer.from(jsonStr);
+        } else {
+            body = this.codec.encode(data);
+        }
+        let pack = TcpPackUtil.packData(body);
+        socket.write(pack);
+    }
+    
     
     /*启动Tcp隧道服务端程序,只会调用一次
      */
