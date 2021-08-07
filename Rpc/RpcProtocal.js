@@ -10,11 +10,12 @@ class RpcClientProtocal {
         this.method = props.method;
         this.args = props.args;
         this.uuid = props.uuid;
+        this.serverSignature=props.serverSignature;
     }
 }
 
 /**
- * Tcp Rpc Client Protocal Data
+ * Tcp Rpc Server Protocal Data
  */
 
 class RpcServerProtocal {

@@ -5,6 +5,7 @@ const net = require('net');
 const TcpClient = require('../Tcp/TcpClient');
 const { RpcClientProtocal, RpcServerProtocal } = require('./RpcProtocal');
 const { v4: uuidv4 } = require('uuid');
+
 /**
  * Tcp隧道服务端程序
  */
@@ -12,15 +13,13 @@ class RpcTcpClient {
 
     /**
      * 
-     * @param {TcpClient} tcpClient 
+     * @param {Object} tcpClientConfig 
      * @param {number} defaultTimeout
      */
-    constructor(tcpClient,defaultTimeout) {
+    constructor(tcpClientConfig,defaultTimeout=5000) {
         this.started = false;
-        this.tcpClient = tcpClient;
-        if(typeof defaultTimeout==undefined){
-            this.defaultTimeout=10*1000;
-        }
+        this.tcpClient = new TcpClient(tcpClientConfig);
+        this.defaultTimeout=defaultTimeout;
         this.defaultTimeout=defaultTimeout;
     }
 
@@ -47,7 +46,7 @@ class RpcTcpClient {
 
         let p = new Promise((resolve, reject) => {
             let t=setTimeout(() => {
-                reject('timeout:'+this.defaultTimeout)
+                reject('tcp client connect to server timeout:'+this.defaultTimeout)
             }, this.defaultTimeout);
 
             this.tcpClient.eventEmitter.once('started', (result) => {
@@ -61,13 +60,16 @@ class RpcTcpClient {
 
     /**
      * 调用远程服务器指定的方法
+     * @param {string} serverSignature which server service etc.
      * @param {string} method 
      * @param {Array} args 
+     * @param {Number} timeout 
      * @return {Promise}
      */
-    invoke(method, args) {
+    invoke(serverSignature,method, args,timeout=5000) {
 
         let data = new RpcClientProtocal({});
+        data.serverSignature=serverSignature;
         data.method = method;
         data.args = args;
         data.uuid = uuidv4();

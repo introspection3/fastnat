@@ -4,7 +4,7 @@ const logger = require('../Log/logger');
 const net = require('net');
 const headBytesCount = 4;
 const events = require('events');
-const TcpPackUtil=require('./TcpPackUtil');
+const TcpPackUtil = require('./TcpPackUtil');
 const { Socket } = require('dgram');
 
 /**
@@ -39,6 +39,7 @@ class TcpServer {
         this.server = null;
         this.eventEmitter = new events.EventEmitter();
         this.codec = 'utf8';
+        this.stopNotify = false;
     }
 
     /**
@@ -103,7 +104,7 @@ class TcpServer {
      * @param {Object} data {}data
      * @param {Socket} socket target socket
      */
-    sendCodecData2OneClient(data,socket){
+    sendCodecData2OneClient(data, socket) {
         let body = null;
         if (this.codec === 'utf8') {
             let jsonStr = JSON.stringify(data);
@@ -114,8 +115,10 @@ class TcpServer {
         let pack = TcpPackUtil.packData(body);
         socket.write(pack);
     }
-    
-    
+
+    stopNotify(targetSocket) {
+        targetSocket.stopNotify = true;
+    }
     /*启动Tcp隧道服务端程序,只会调用一次
      */
     start() {
@@ -127,7 +130,7 @@ class TcpServer {
         this.started = true;
 
         this.server = net.createServer((socket) => {
-
+            targetSocket.stopNotify=false;
             let commingInfo = `new tcp  client comming:${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
             this.clients.add(socket);
             let lastTempBuffer = null;
@@ -141,9 +144,11 @@ class TcpServer {
              * @param {Socket} targetSocket 对应的socket
              */
             function notify(dataBuffer, targetSocket) {
-
+                if (targetSocket.stopNotify) {
+                    return;
+                }
                 instance.eventEmitter.emit('onMessage', dataBuffer, targetSocket);
-                let data=null;
+                let data = null;
                 if (instance.codec === 'utf8') {
                     let str = dataBuffer.toString('utf8');
                     data = JSON.parse(str);

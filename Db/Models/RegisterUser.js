@@ -1,40 +1,34 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize=require('../Db');
-const Tunnel = sequelize.define('tunnel', {
+
+const RegisterUser = sequelize.define('registerUser', {
     // 在这里定义模型属性
-    type: {
+    username: {
         type: DataTypes.STRING(50),
+        unique: true,
         allowNull: false,
-        comment:'tunnel type'
+        comment:'user name'
     },
 
-    name: {
+    password: {
+        type: DataTypes.STRING(150),
+        allowNull: false,
+        comment:'password'
+    },
+
+    email: {
         type: DataTypes.STRING(50),
+        unique: true,
         allowNull: false,
-        comment:'tunnel name'
+        comment:'email'
     },
 
-    localIp: {
+    telphone: {
         type: DataTypes.STRING(50),
+        unique: true,
         allowNull: false,
-        comment:'local ip',
-        unique: 'uniqueTag'
+        comment:'telphone'
     },
-
-    localPort: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        comment:'local name',
-        unique: 'uniqueTag'
-    },
-
-    remotePort: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        comment:'local name',
-        unique: 'uniqueTag'
-    },
-
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -47,6 +41,7 @@ const Tunnel = sequelize.define('tunnel', {
         comment:'updated time',
         defaultValue: Sequelize.NOW
     },
+
     isAvailable: { 
         type: DataTypes.BOOLEAN, 
         allowNull: false, 
@@ -54,7 +49,7 @@ const Tunnel = sequelize.define('tunnel', {
         comment:'is available'
     }
 }, {
-    
+    // 这是其他模型参数
 });
-module.exports = Tunnel;
+module.exports = RegisterUser;
 

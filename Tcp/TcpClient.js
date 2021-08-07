@@ -118,7 +118,7 @@ class TcpClient {
             processCommingBuffer(dataBuffer);
         });
 
-        client.on('close', (data) => {
+        client.on('close', (hadError) => {
             this.eventEmitter.emit('close');
             logger.info('Tcp Client Closed:' + this.toString())
         });

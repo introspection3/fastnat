@@ -1,21 +1,34 @@
-const express = require('express'); 
+const express = require('express');
+const { RegisterUser,Client } = require('./Db/Models');
 const app = express();
 app.use('/public', express.static('public'));
-const Client = require('./Db/Models/Client');
+const { v4: uuidv4 } = require('uuid');
 
-app.get('/', function (req, res) {
-  Client.create({ authenKey: new Date().toString(), isAvailable: true }).then(data => {
-    res.send(data);
+app.get('/', async function (req, res) {
+  let user = await RegisterUser.create(data);
+  let client=await Client.create({
+    authenKey:uuidv4(),
+    registerUserId:user.id
+  });
+  res.send(client);
+});
+
+app.post('/user/register', async function (req, res) {
+  let user = await RegisterUser.create(req.body);
+  let client=await Client.create({
+    authenKey:uuidv4(),
+    registerUserId:user.id
+  });
+  res.send(client);
+});
+
+app.get('/client/allconfig', async function (req, res) {
+  let tunnels=await Client.findAll({
+    where:{
+      authenKey:req.params.authenKey
+    }
   })
-});
-
-app.post('/client/register', function (req, res) {
-  res.send({});
-
-});
-
-app.get('/client/allconfig', function (req, res) {  
-  res.send({});
+  res.send(tunnels);
 });
 
 

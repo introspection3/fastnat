@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "ssss",
+            "database": "${workspaceFolder:fastnat}/database.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
