@@ -15,10 +15,10 @@ class TcpTunnelServer {
 
     /**
      * 
-     * @param {TcpServer} tcpServer 
+     * @param {Object} tcpServerConfig 
      */
-    constructor(tcpServer) {
-        this.tcpServer = tcpServer;
+    constructor(tcpServerConfig) {
+        this.tcpServer = new TcpServer(tcpServerConfig);
     }
 
 
@@ -28,16 +28,25 @@ class TcpTunnelServer {
     start() {
 
         this.tcpServer.start();
-
-        this.tcpServer.eventEmitter.on('onMessage', (dataBuffer, socket) => {
-            
-
-        });
-
         this.tcpServer.eventEmitter.on('onCodecMessage', (data, socket) => {
-            this[data.command](data, socket);
+            authen(data, socket);
         });
 
+    }
+
+    createProxyServer(who, config) {
+        
+        let server = net.createServer((socket) => {
+            let commingInfo = `new tcp  client comming:${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
+            logger.info(commingInfo);
+            socket.pipe(who);
+        });
+
+        server.listen(config, () => {
+            logger.info("Tcp  server started success:" + this);
+        });
+
+        return server;
     }
 
     /**
@@ -46,7 +55,7 @@ class TcpTunnelServer {
      * @param {net.Socket} socket 
      */
     async authen(data, socket) {
-        
+
         let clients = await Client.findAll({
             where: {
                 authen: data.authKey,
@@ -54,8 +63,8 @@ class TcpTunnelServer {
             }
         });
 
-        if(clients==null||clients.length==0){
-            this.#notifyCloseClient(socket,'error authen key');
+        if (clients == null || clients.length == 0) {
+            this.#notifyCloseClient(socket, 'error authen key');
             setTimeout(() => {
                 socket.end();
                 socket.destroy();
@@ -63,15 +72,18 @@ class TcpTunnelServer {
             return;
         }
 
-        let clientInfo=clients[0];
-        let data={command:'clientInfo',info:'answer authen request',data:clientInfo};
-        this.tcpServer.sendCodecData2OneClient(data,socket);
-         
+        socket.stopNotify = true;
+
+        let clientInfo = clients[0];
+        let data = { command: 'clientInfo', info: 'answer authen request', data: clientInfo };
+        this.tcpServer.sendCodecData2OneClient(data, socket);
+        this.createProxyServer(socket,{})
+
     }
 
-    #notifyCloseClient(socket,info){
-        let data={command:'closeClient',info:info};
-        this.tcpServer.sendCodecData2OneClient(data,socket);
+    #notifyCloseClient(socket, info) {
+        let data = { command: 'closeClient', info: info };
+        this.tcpServer.sendCodecData2OneClient(data, socket);
         this.tcpServer.clients.delete(socket);
     }
 
