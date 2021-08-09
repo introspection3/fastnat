@@ -59,16 +59,21 @@ class TcpTunnelServer {
             let commingInfo = `proxyServer new tcp  client `+info;
             logger.info(commingInfo);
 
-            let middlePort = await getPort();
+            //let middlePort = await getPort();
+            let middlePort =0;
 
             let middleServer = net.createServer((middleSocket) => {
                 middleSocket.pipe(proxySocket);
                 proxySocket.pipe(middleSocket);
+
             });
 
             middleServer.maxConnections = 1;
-            middleServer.listen({ host: '0.0.0.0', port: middlePort }, () => {
-                logger.info(`proxyServer's middleServer started at:${middlePort}`);
+            middleServer.listen({ host: '0.0.0.0', port: 0 }, () => {
+                let port=middleServer.address().port;
+                middlePort=port;
+                this.tcpServer.sendCodecData2OneClient({ command: 'newClientComming', middlePort:port }, fromSocket);
+                logger.info(`proxyServer's middleServer started at:${port}`);
             });
 
             middleServer.on('close', () => {
@@ -90,7 +95,7 @@ class TcpTunnelServer {
                 middleServer.close();
             });
 
-            this.tcpServer.sendCodecData2OneClient({ command: 'newClientComming', middlePort: middlePort }, fromSocket);
+            
 
         });
 
