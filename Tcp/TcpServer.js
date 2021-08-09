@@ -130,6 +130,7 @@ class TcpServer {
         this.started = true;
 
         this.server = net.createServer((socket) => {
+
             socket.stopNotify=false;
             let commingInfo = `new tcp  client comming:${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
             this.clients.add(socket);
@@ -192,8 +193,8 @@ class TcpServer {
             }
 
             socket.on('data', (dataBuffer) => {
-                console.log('socket.stopNotify='+socket.stopNotify);
-                console.log('server data:'+dataBuffer.toString());
+                // console.log('socket.stopNotify='+socket.stopNotify);
+                // console.log('server data:'+dataBuffer.toString());
                 if (socket.stopNotify) {
                     return;
                 }
@@ -207,13 +208,16 @@ class TcpServer {
                 socket.end();
                 socket.destroy();
             });
+
             socket.on('error', (err) => {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
                 logger.warn('Tcp  server on socket error ' + err);
+                this.eventEmitter.emit('socketError',socket,err);
                 socket.end();
                 socket.destroy();
             });
+            
             socket.on('timeout', () => {
                 lastTempBuffer = null;
                 this.clients.delete(socket);

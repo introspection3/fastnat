@@ -8,6 +8,13 @@ const logger = require('./Log/logger');
 const TcpTunnelServer = require('./TcpTunnel/TcpTunnelServer');
 app.use(bodyParser.json());
 const config = require('./Common/Config');
+const serverConfig = config.get('server');
+logger.log(serverConfig);
+
+app.get('/checkServerStatus', function (req, res) {
+  res.send({ success: true });
+});
+
 app.get('/', async function (req, res) {
   let user = await RegisterUser.create(data);
   let client = await Client.create({
@@ -92,24 +99,29 @@ app.get('/user/init', async function (req, res) {
   res.send(user);
 });
 
-app.get('/client/tunnels/:authenKey', async function (req, res) {
-  let client = await Client.findOne({
+app.get('/client/tunnels/:authenKey', function (req, res) {
+  Client.findOne({
     where: {
       authenKey: req.params.authenKey
     },
     include: Tunnel
-  })
-  if (client == null) {
+  }).then(client => {
+
+    if (client == null) {
+      res.send({
+        success: false,
+        data: null
+      });
+      return;
+    }
     res.send({
-      success: false,
-      data: null
+      success: true,
+      data: client.tunnels
     });
-    return;
-  }
-  res.send({
-    success: true,
-    data: client.tunnels
+
+
   });
+
 });
 
 app.post('/client/startProxy', async function (req, res) {
@@ -157,8 +169,7 @@ app.post('/client/startProxy', async function (req, res) {
   }, 1000);
 
 });
-let serverConfig=config.get('server');
-console.log(serverConfig);
+
 let tcpTunnelServer = new TcpTunnelServer({ host: '0.0.0.0', port: serverConfig.tcpTunnelServerPort });
 tcpTunnelServer.start();
 

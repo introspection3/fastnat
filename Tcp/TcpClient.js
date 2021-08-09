@@ -35,13 +35,14 @@ class TcpClient {
     }
 
     toString() {
+
         return JSON.stringify(this.serverAddress);
     }
 
     stopNotify(targetSocket) {
         targetSocket.stopNotify = true;
     }
-    
+
     stopCuurentNotify() {
         this.client.stopNotify = true;
     }
@@ -90,13 +91,13 @@ class TcpClient {
                 //传来的数据比数据包要长
                 if (bodyLength < dataLength) {
                     let pack = dataBuffer.slice(headBytesCount, bodyLength + headBytesCount);
-                    notify(pack,instance.client);
+                    notify(pack, instance.client);
                     let leftBuffer = dataBuffer.slice(headBytesCount + bodyLength);
                     processCommingBuffer(leftBuffer);
                     return;
                 } else if (bodyLength == dataLength) {
                     let pack = dataBuffer.slice(headBytesCount, bodyLength + headBytesCount);
-                    notify(pack,instance.client);
+                    notify(pack, instance.client);
                     lastTempBuffer = null;
                     return;
                 } else {
@@ -119,13 +120,13 @@ class TcpClient {
 
         client.on('connect', () => {
             logger.info('Tcp client has connected to ' + this.toString());
-            client.stopNotify=false;
+            client.stopNotify = false;
             this.client = client;
             this.eventEmitter.emit('connect');
         });
 
         client.on('data', (dataBuffer) => {
-            if(client.stopNotify){
+            if (client.stopNotify) {
                 return;
             }
             processCommingBuffer(dataBuffer);
@@ -134,6 +135,11 @@ class TcpClient {
         client.on('close', (hadError) => {
             this.eventEmitter.emit('close');
             logger.info('Tcp Client Closed:' + this.toString())
+        });
+
+        client.on('error', (err) => {
+            this.eventEmitter.emit('error',err);
+            logger.info('Tcp Client error:' + err+" ,"+this.toString());
         });
 
 

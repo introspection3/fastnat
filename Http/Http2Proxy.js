@@ -9,7 +9,7 @@ const server = http2.createSecureServer({
 
 server.on('error', (err) => console.error(err));
 server.on('stream', (stream, headers) => {
-  
+ 
   // 流是一个双工流。
   stream.respond({
     'content-type': 'text/html; charset=utf-8',

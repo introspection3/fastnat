@@ -22,30 +22,36 @@ class TcpTunnelClient {
         this.localAddress = localAddress;
         this.started = false;
         this.defaultTimeout = 5000;
+        this.tcpClient = new TcpClient(this.tcpTunnelServerAddress);
     }
 
+    async stopTunnel(tunnelId){
+
+        this.tcpClient.sendCodecData({ command: 'stopTunnel', authenKey: this.authenKey, tunnelId: tunnelId });
+        
+    }
 
     /*启动Tcp隧道客户端程序,只会调用一次
     * 连接到服务端
      */
-    async start(tunnelId) {
+    async startTunnel(tunnelId) {
 
         if (this.started) {
             logger.warn("Tcp TunnelClient has already started.");
             return;
-            
+
         }
         this.started = true;
 
-        let tcpClient = new TcpClient(this.tcpTunnelServerAddress);
+       
 
-        tcpClient.start();
+        this.tcpClient.start();
 
-        tcpClient.eventEmitter.on('connect', () => {
-            tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
+        this.tcpClient.eventEmitter.on('connect', () => {
+            this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
         });
-
-        tcpClient.eventEmitter.on('onCodecMessage', data => {
+     
+        this.tcpClient.eventEmitter.on('onCodecMessage', data => {
 
             if (data.command == 'newClientComming') {
 
@@ -71,31 +77,18 @@ class TcpTunnelClient {
                         middleSocket.destroy();
                     });
 
-                    middleSocket.on('close', () => {
-                        middleSocket.end();
-                        middleSocket.destroy();
-                    });
-
                 });
 
 
-                localSocket.on('close', (hadError) => {
-
-                    logger.info('localSocket Closed:' + JSON.stringify(this.localAddress));
-                    if (localSocket.middleSocket != null) {
-                        localSocket.middleSocket.end();
-                        localSocket.middleSocket.destroy();
-                    }
-
-                });
-
+                
+                //local service server's end
                 localSocket.on('end', (hadError) => {
-                    logger.info('localSocket end:' + JSON.stringify(this.localAddress));
+                    logger.info('localSocket end:' + JSON.stringify(this.localAddress)+',proxy client:'+JSON.stringify(data.middlePort));
                     if (localSocket.middleSocket != null) {
                         localSocket.middleSocket.end();
                         localSocket.middleSocket.destroy();
+                        localSocket.middleSocket=null;
                     }
-
                 });
 
             }
