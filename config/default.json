@@ -4,9 +4,11 @@
     },
     "server": {
         "host": "0.0.0.0",
-        "port": 3927
+        "port": 8081,
+        "https":false,
+        "tcpTunnelServerPort":3927
     },
     "client": {
-        "authenKey": "abcd"
+        "authenKey": "1d6cd916-afa2-4f3d-bc6c-0708421573e2"
     }
 }

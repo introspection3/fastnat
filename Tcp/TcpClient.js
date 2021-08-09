@@ -33,13 +33,23 @@ class TcpClient {
         }
         this.codec = codec;
     }
+
     toString() {
         return JSON.stringify(this.serverAddress);
+    }
+
+    stopNotify(targetSocket) {
+        targetSocket.stopNotify = true;
+    }
+    
+    stopCuurentNotify() {
+        this.client.stopNotify = true;
     }
     /*启动Tcp隧道客户端程序,只会调用一次
     * 连接到服务端
      */
     start() {
+
         let instance = this;
         if (this.started) {
             logger.warn("Tcp client has already started.");
@@ -109,12 +119,15 @@ class TcpClient {
 
         client.on('connect', () => {
             logger.info('Tcp client has connected to ' + this.toString());
+            client.stopNotify=false;
             this.client = client;
             this.eventEmitter.emit('connect');
         });
 
         client.on('data', (dataBuffer) => {
-
+            if(client.stopNotify){
+                return;
+            }
             processCommingBuffer(dataBuffer);
         });
 
@@ -122,6 +135,7 @@ class TcpClient {
             this.eventEmitter.emit('close');
             logger.info('Tcp Client Closed:' + this.toString())
         });
+
 
     }
 

@@ -11,12 +11,22 @@ fs.exists(sqliteFilePath, (exist) => {
     }
 })
 
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: sqliteFilePath,
-    define: {
-        freezeTableName: true
-    }
-});
+// const sequelize = new Sequelize({
+//     dialect: 'sqlite',
+//     storage: sqliteFilePath,
+//     define: {
+//         freezeTableName: true
+//     }
+// });
+
+const sequelize = new Sequelize('database', 'root', 'root', {
+    host: 'localhost',
+    dialect: 'mysql',
+    logging:false
+ }
+ ,
+ 
+ );
+
 module.exports = sequelize;
 

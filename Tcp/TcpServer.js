@@ -130,12 +130,12 @@ class TcpServer {
         this.started = true;
 
         this.server = net.createServer((socket) => {
-            targetSocket.stopNotify=false;
+            socket.stopNotify=false;
             let commingInfo = `new tcp  client comming:${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
             this.clients.add(socket);
             let lastTempBuffer = null;
             logger.info(commingInfo);
-            socket.setTimeout(this.socketTime);
+            //socket.setTimeout(this.socketTime);
             let instance = this;
 
             /**
@@ -143,10 +143,7 @@ class TcpServer {
              * @param {Buffer} dataBuffer 来的数据
              * @param {Socket} targetSocket 对应的socket
              */
-            function notify(dataBuffer, targetSocket) {
-                if (targetSocket.stopNotify) {
-                    return;
-                }
+            function notify(dataBuffer, targetSocket) {               
                 instance.eventEmitter.emit('onMessage', dataBuffer, targetSocket);
                 let data = null;
                 if (instance.codec === 'utf8') {
@@ -157,7 +154,6 @@ class TcpServer {
                     data = instance.codec.decode(dataBuffer);
                     instance.eventEmitter.emit('onCodecMessage', data, targetSocket);
                 }
-
             }
 
             0            /**
@@ -196,12 +192,17 @@ class TcpServer {
             }
 
             socket.on('data', (dataBuffer) => {
+                console.log('socket.stopNotify='+socket.stopNotify);
+                console.log('server data:'+dataBuffer.toString());
+                if (socket.stopNotify) {
+                    return;
+                }
                 processCommingBuffer(dataBuffer);
             });
 
             socket.on('end', () => {
                 lastTempBuffer = null;
-                logger.warn('Tcp  server on socket end ' + err);
+                logger.warn(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
                 this.clients.delete(socket);
                 socket.end();
                 socket.destroy();

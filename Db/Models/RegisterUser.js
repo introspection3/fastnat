@@ -2,6 +2,7 @@ const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize=require('../Db');
 
 const RegisterUser = sequelize.define('registerUser', {
+    id: { type: DataTypes.INTEGER, primaryKey: true,autoIncrement:true },
     // 在这里定义模型属性
     username: {
         type: DataTypes.STRING(50),

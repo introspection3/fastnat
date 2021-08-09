@@ -1,12 +1,10 @@
-'use strict';
-
 const logger = require('../Log/logger');
 const net = require('net');
 const headBytesCount = 4;
 const events = require('events');
 const TcpServer = require('../Tcp/TcpServer');
 const TcpTunnelProtocal = require('./TcpTunnelProtocal');
-const { Client, Tunnel } = require('../Db/Models')
+const { Client, Tunnel } = require('../Db/Models');
 
 /**
  * Tcp隧道服务端程序
@@ -29,24 +27,62 @@ class TcpTunnelServer {
 
         this.tcpServer.start();
         this.tcpServer.eventEmitter.on('onCodecMessage', (data, socket) => {
-            authen(data, socket);
+            this.authen(data, socket);
         });
 
     }
 
-    createProxyServer(who, config) {
-        
-        let server = net.createServer((socket) => {
-            let commingInfo = `new tcp  client comming:${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
+    /**
+     * 
+     * @param {Socket} fromSocket from local socket
+     * @param {Object} config proxy config
+     * @returns 
+     */
+    createProxyServer(fromSocket, config) {
+
+        let proxyServer = net.createServer((proxySocket) => {
+
+            let commingInfo = `proxyServer new tcp  client comming:${proxySocket.remoteAddress}:${proxySocket.remotePort},local=${proxySocket.localAddress}:${proxySocket.localPort}`;
+
             logger.info(commingInfo);
-            socket.pipe(who);
+
+            let middlePort = 1111;
+
+            let middleServer = net.createServer((middleSocket) => {
+                middleSocket.pipe(proxySocket);
+                proxySocket.pipe(middleSocket);
+            });
+
+            middleServer.maxConnections = 1;
+
+            middleServer.listen({ host: '0.0.0.0', port: middlePort }, () => {
+                logger.info(`proxyServer's middleServer started at:${middlePort}` );
+            });
+
+            proxySocket.on('end', () => {
+                logger.warn(`proxyServer on socket end,remoteAddress=${proxySocket.remoteAddress}:${proxySocket.remotePort}, localAddress=${proxySocket.localAddress}:${proxySocket.localPort}`);
+                proxySocket.end();
+                proxySocket.destroy();
+                middleServer.close();
+            });
+
+
+            proxySocket.on('timeout', () => {
+                logger.warn('proxyServer on socket timeout,socketTime=' + this.socketTime);
+                proxySocket.end();
+                proxySocket.destroy();
+                middleServer.close();
+            });
+            
+            this.tcpServer.sendCodecData2OneClient({ command: 'newClientComming', middlePort: middlePort }, fromSocket);
+
         });
 
-        server.listen(config, () => {
-            logger.info("Tcp  server started success:" + this);
+        proxyServer.listen(config, () => {
+            logger.info("Tcp  server started success:" + JSON.stringify(config));
         });
 
-        return server;
+        return proxyServer;
     }
 
     /**
@@ -56,15 +92,16 @@ class TcpTunnelServer {
      */
     async authen(data, socket) {
 
-        let clients = await Client.findAll({
+        let clientInfo = await Client.findOne({
             where: {
-                authen: data.authKey,
+                authenKey: data.authenKey,
                 isAvailable: true
             }
         });
 
-        if (clients == null || clients.length == 0) {
-            this.#notifyCloseClient(socket, 'error authen key');
+        if (clientInfo == null) {
+            //  this.#notifyCloseClient(socket, 'error authen key');
+            logger.warn('error authen key:' + data.authKey);
             setTimeout(() => {
                 socket.end();
                 socket.destroy();
@@ -72,19 +109,30 @@ class TcpTunnelServer {
             return;
         }
 
-        socket.stopNotify = true;
 
-        let clientInfo = clients[0];
-        let data = { command: 'clientInfo', info: 'answer authen request', data: clientInfo };
-        this.tcpServer.sendCodecData2OneClient(data, socket);
-        this.createProxyServer(socket,{})
 
-    }
+        let tunnel = await Tunnel.findOne({
+            where: {
+                id: data.tunnelId,
+                clientId: clientInfo.id,
+                isAvailable: true
+            }
+        })
 
-    #notifyCloseClient(socket, info) {
-        let data = { command: 'closeClient', info: info };
-        this.tcpServer.sendCodecData2OneClient(data, socket);
-        this.tcpServer.clients.delete(socket);
+
+        if (tunnel == null || tunnel.length == 0) {
+            logger.warn('error tunnel id:' + data.tunnelId);
+            setTimeout(() => {
+                socket.end();
+                socket.destroy();
+            }, 1000);
+            return;
+        }
+
+        logger.info('start create proxy server:' + tunnel.remotePort);
+        this.createProxyServer(socket, { host: '0.0.0.0', port: tunnel.remotePort });
+
+
     }
 
 

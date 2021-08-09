@@ -7,12 +7,15 @@
   "author": "codeneno <qsmy_qin@163.com>",
   "license": "GPL",
   "dependencies": {
+    "axios": "^0.21.1",
     "body-parser": "^1.19.0",
+    "config": "^3.3.6",
     "express": "^4.17.1",
     "http-proxy": "^1.18.1",
     "kcp-node": "^0.1.0",
     "koa": "^2.13.1",
     "log4js": "^6.3.0",
+    "mysql2": "^2.3.0",
     "node-worker-threads-pool": "^1.5.0",
     "sequelize": "^6.6.5",
     "sqlite3": "^5.0.2"

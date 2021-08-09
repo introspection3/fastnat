@@ -1,6 +1,9 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize=require('../Db');
 const Client = sequelize.define('client', {
+
+    id: { type: DataTypes.INTEGER, primaryKey: true,autoIncrement:true },
+
     // 在这里定义模型属性
     authenKey: {
         type: DataTypes.STRING(250),

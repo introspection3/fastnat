@@ -1,6 +1,8 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize=require('../Db');
 const Tunnel = sequelize.define('tunnel', {
+
+     id: { type: DataTypes.INTEGER, primaryKey: true,autoIncrement:true },
     // 在这里定义模型属性
     type: {
         type: DataTypes.STRING(50),
