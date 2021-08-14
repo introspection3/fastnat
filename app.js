@@ -7,9 +7,11 @@ const { v4: uuidv4 } = require('uuid');
 const logger = require('./Log/logger');
 const TcpTunnelServer = require('./TcpTunnel/TcpTunnelServer');
 app.use(bodyParser.json());
-const config = require('./Common/Config');
-const serverConfig = config.get('server');
-logger.log(serverConfig);
+const defaultConfig = require('./Common/Config');
+const serverConfig = require('./Common/ServerConfig');
+const sequelize = require('./Db/Db');
+const defaultServerConfig = defaultConfig.server;
+logger.log(defaultServerConfig);
 
 app.get('/checkServerStatus', function (req, res) {
   res.send({ success: true });
@@ -35,95 +37,32 @@ app.post('/user/register', async function (req, res) {
 
 });
 
-app.get('/user/init', async function (req, res) {
 
-  let existUser = await RegisterUser.findOne(
-    {
-      where: {
-        username: 'user1'
-      },
+/**
+ * 客户端获取对应的隧道配置
+ */
+app.get('/client/tunnels/:authenKey', async function (req, res) {
 
-      include: [{
-        association: RegisterUser.Clients,
-        as: 'clients'
-      }
-      ]
-
-    }
-  );
-
-  if (existUser != null && existUser.username === 'user1') {
-    res.send(existUser);
-    return;
-  }
-  let user = await RegisterUser.create({
-    username: 'user1',
-    password: 'user1',
-    telphone: '123456',
-    email: 'user1@g.com',
-    clients: [
-      {
-        authenKey: uuidv4(),
-        tunnels: [{
-          type: 'tcp',
-          name: 'mysql',
-          localIp: '127.0.0.1',
-          localPort: 3306,
-          remotePort: 13306
-        }]
-      }
-    ]
-  },
-    {
-      include: [{
-        association: RegisterUser.Clients,
-        as: 'clients'
-      }
-      ]
-    }
-  );
-
-  let clientId = user.clients[0].id;
-
-  let tunnel = await Tunnel.create({
-
-    type: 'tcp',
-    name: 'mysql',
-    localIp: '127.0.0.1',
-    localPort: 3306,
-    remotePort: 13306,
-    clientId: clientId
-
-  });
-
-  res.send(user);
-});
-
-app.get('/client/tunnels/:authenKey', function (req, res) {
-  Client.findOne({
+  let client = await Client.findOne({
     where: {
       authenKey: req.params.authenKey
     },
     include: Tunnel
-  }).then(client => {
+  });
 
-    if (client == null) {
-      res.send({
-        success: false,
-        data: null
-      });
-      return;
-    }
+  if (client == null) {
     res.send({
-      success: true,
-      data: client.tunnels
+      success: false,
+      data: null
     });
-
-
+    return;
+  }
+  res.send({
+    success: true,
+    data: client.tunnels
   });
 
 });
-
 app.post('/client/startProxy', async function (req, res) {
   let tunnelId = req.body.tunnelId;
   let authenKey = req.body.authenKey;
@@ -170,13 +109,14 @@ app.post('/client/startProxy', async function (req, res) {
 
 });
 
-let tcpTunnelServer = new TcpTunnelServer({ host: '0.0.0.0', port: serverConfig.tcpTunnelServerPort });
+let tcpTunnelServer = new TcpTunnelServer({ host: '0.0.0.0', port: defaultServerConfig.tcpTunnelServerPort });
 tcpTunnelServer.start();
 
 let server = app.listen(8081, function () {
   var host = server.address().address;
   var port = server.address().port;
   console.log("fastnat web start at: http://%s:%s", host, port);
+  init();
 });
 
 
@@ -184,3 +124,87 @@ process.on("uncaughtException", function (err) {
   logger.error(err);
 });
 
+
+/**
+ * 初始化数据库
+ * @returns 
+ */
+async function init() {
+
+  await initDb(sequelize);
+
+  if (serverConfig.init.firstInit == false) {
+    return;
+  }
+
+  let firstUser = 'fastnat';
+
+  let existUser = await RegisterUser.findOne(
+    {
+      where: {
+        username: firstUser
+      },
+
+      include: [{
+        association: RegisterUser.Clients,
+        as: 'clients'
+      }
+      ]
+    }
+  );
+
+  if (existUser != null && existUser.username === firstUser) {
+    return;
+  }
+
+  let authenKey=uuidv4();
+
+  let user = await RegisterUser.create({
+    username: firstUser,
+    password: firstUser,
+    telphone: '010-123456',
+    email: 'fastnat@fastnat.com',
+    clients: [
+      {
+        authenKey: authenKey
+      }
+    ]
+  },
+    {
+      include: [{
+        association: RegisterUser.Clients,
+        as: 'clients'
+      }
+      ]
+    }
+  );
+  
+  let clientData = user.clients[0];
+  console.log(JSON.stringify(clientData));
+  let clientId = clientData.id;
+
+
+  let tunnel = await Tunnel.create({
+    type: 'tcp',
+    name: 'mysql',
+    localIp: '127.0.0.1',
+    localPort: 3306,
+    remotePort: 13306,
+    clientId: clientId
+  });
+
+  logger.warn('first client authenKey:' + clientData.authenKey);
+}
+
+/**
+ * 初始化
+ * @param {Sequelize} sequelize 
+ */
+async function initDb(sequelize) {
+  if (serverConfig.init.firstInit) {
+    logger.warn('init.firstInit=true,init all at first....');
+    await sequelize.sync({ force: true });
+  } else {
+    await sequelize.sync({});
+  }
+}

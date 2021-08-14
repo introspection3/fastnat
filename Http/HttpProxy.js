@@ -42,7 +42,9 @@ server = http.createServer(function (req, res) {
         protocolRewrite: parsedUrl.protocol
     });
 });
- 
+server.on('connect',(req,socket)=>{
+    console.log(req.url);
+});
 console.log('listening on port ' + PROXY_PORT);
 server.listen(PROXY_PORT);
 

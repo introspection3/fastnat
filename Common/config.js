@@ -1,8 +1,10 @@
  
-const config = require("config");
 const path=require('path');
 const parentDir=path.resolve(__dirname, '..');
-console.log(parentDir);
 const configDir=path.join(parentDir,"config");
-process.env["NODE_CONFIG_DIR"] =configDir;
-module.exports=config;
+const defaultConfig=path.join(configDir,'default.json');
+// const serverConfig=path.join(configDir,'server.json');
+// const clientConfig=path.join(configDir,'client.json');
+let result=require(defaultConfig);
+ 
+module.exports=result;
