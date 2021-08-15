@@ -1,50 +1,21 @@
 'use strict';
- 
-var http = require('http');
-var https = require('https');
-var httpProxy = require('http-proxy');
-var url = require('url');
- 
-var PROXY_PORT = 9000;
-var proxy, server;
- 
-// Create a proxy server with custom application logic
-proxy = httpProxy.createProxy({});
- 
-proxy.on('error', function (err) {
-    console.log('ERROR');
-    console.log(err);
-});
- 
-server = http.createServer(function (req, res) {
-    //var finalUrl = req.url,
-    var finalUrl = 'https://www.cnblogs.com';
-    var finalAgent = null;
-    var parsedUrl = url.parse(finalUrl);
-    
-    console.log(' ' + new Date().getTime() );
- 
- 
-    if (parsedUrl.protocol === 'https:') {
-        finalAgent = https.globalAgent;
-       
-    } else {
-        finalAgent = http.globalAgent;
-    }
- 
-    proxy.web(req, res, {
-        target: finalUrl,
-        agent: finalAgent,
-        headers: { host: parsedUrl.hostname },
-        prependPath: false,
-        xfwd : true,
-        hostRewrite: finalUrl.host,
-        protocolRewrite: parsedUrl.protocol
-    });
-});
-server.on('connect',(req,socket)=>{
-    console.log(req.url);
-});
-console.log('listening on port ' + PROXY_PORT);
-server.listen(PROXY_PORT);
+const net = require('net');
+const logger = require('../Log/logger');
+const http = require('http');
+const https = require('https');
+const httpProxy = require('http-proxy');
+const url = require('url');
 
+
+/**
+ * 创建一个Http代理
+ * @param {*} localAddress {host:'10.255.23.2',port:22}
+ * @param {*} targetAddress {host:'10.255.23.2',port:22}
+ * @returns 
+ */
+function createProxy(localAddress, targetAddress) {
+    let connectInfo = ` ${JSON.stringify(localAddress)}-->${JSON.stringify(targetAddress)}`;
+
+}
+
+module.exports.createTcpProxy = createProxy;

@@ -1,29 +1,25 @@
 const express = require('express');
 const { RegisterUser, Client, Tunnel } = require('./Db/Models');
 const app = express();
-const bodyParser = require("body-parser");
 app.use('/public', express.static('public'));
+const bodyParser = require("body-parser");
 const { v4: uuidv4 } = require('uuid');
 const logger = require('./Log/logger');
 const TcpTunnelServer = require('./TcpTunnel/TcpTunnelServer');
 app.use(bodyParser.json());
-const defaultConfig = require('./Common/Config');
+const defaultConfig = require('./Common/DefaultConfig');
 const serverConfig = require('./Common/ServerConfig');
 const sequelize = require('./Db/Db');
-const defaultServerConfig = defaultConfig.server;
-logger.log(defaultServerConfig);
+const defaultWebServerConfig = defaultConfig.webserver;
+const defaultBridgeConfig = defaultConfig.bridge;
 
 app.get('/checkServerStatus', function (req, res) {
   res.send({ success: true });
 });
 
-app.get('/', async function (req, res) {
-  let user = await RegisterUser.create(data);
-  let client = await Client.create({
-    authenKey: uuidv4(),
-    registerUserId: user.id
-  });
-  res.send(client);
+
+app.get('/version', async function (req, res) {
+  res.send(defaultConfig.version);
 });
 
 
@@ -63,7 +59,10 @@ app.get('/client/tunnels/:authenKey', async function (req, res) {
   });
 
 });
+
+
 app.post('/client/startProxy', async function (req, res) {
+
   let tunnelId = req.body.tunnelId;
   let authenKey = req.body.authenKey;
 
@@ -109,10 +108,11 @@ app.post('/client/startProxy', async function (req, res) {
 
 });
 
-let tcpTunnelServer = new TcpTunnelServer({ host: '0.0.0.0', port: defaultServerConfig.tcpTunnelServerPort });
+
+const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.port });
 tcpTunnelServer.start();
 
-let server = app.listen(8081, function () {
+const server = app.listen(defaultWebServerConfig.port, function () {
   var host = server.address().address;
   var port = server.address().port;
   console.log("fastnat web start at: http://%s:%s", host, port);
@@ -157,7 +157,7 @@ async function init() {
     return;
   }
 
-  let authenKey=uuidv4();
+  let authenKey = uuidv4();
 
   let user = await RegisterUser.create({
     username: firstUser,
@@ -178,11 +178,10 @@ async function init() {
       ]
     }
   );
-  
+
   let clientData = user.clients[0];
   console.log(JSON.stringify(clientData));
   let clientId = clientData.id;
-
 
   let tunnel = await Tunnel.create({
     type: 'tcp',
@@ -194,6 +193,7 @@ async function init() {
   });
 
   logger.warn('first client authenKey:' + clientData.authenKey);
+
 }
 
 /**

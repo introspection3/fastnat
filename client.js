@@ -1,18 +1,19 @@
-const config = require('./Common/Config');
+const defaultConfig = require('./Common/DefaultConfig');
 const axios = require('axios').default;
 const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
 const logger = require('./Log/logger');
-
-let isWorkingFine = true;
-let serverConfig = config.server;
-if (serverConfig.https == true) {
-    axios.defaults.baseURL = `https://${serverConfig.host}:${serverConfig.port}`;
+const defaultWebSeverConfig = defaultConfig.webserver;
+const defaultBridgeConfig = defaultConfig.bridge;
+if (defaultWebSeverConfig.https == true) {
+    axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 } else {
-    axios.defaults.baseURL = `http://${serverConfig.host}:${serverConfig.port}`;
+    axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 }
 
-let clientConfig = require('./Common/ClientConfig');
-let authenKey = clientConfig.authenKey;
+const clientConfig = require('./Common/ClientConfig');
+const authenKey = clientConfig.authenKey;
+
+let isWorkingFine = true;
 
 async function main(params) {
 
@@ -34,8 +35,8 @@ async function main(params) {
     let tcpTunnelClient = new TcpTunnelClient(
         authenKey,
         {
-            host: serverConfig.host,
-            port: serverConfig.tcpTunnelServerPort
+            host: defaultBridgeConfig.host,
+            port: defaultBridgeConfig.port
         },
         {
             host: firstTunnel.localIp,
@@ -85,9 +86,10 @@ setInterval(async () => {
             main();
         }
     }
-}, 60 * 1000);
+}, 30 * 1000);
 
 main();
+
 process.on("exit", function (code) {
 
 });

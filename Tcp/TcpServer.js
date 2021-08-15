@@ -12,7 +12,7 @@ const { Socket } = require('dgram');
  */
 class TcpServer {
 
-    host = '0.0.0.0';
+    host = null;
 
     port = 3927;
 
@@ -132,7 +132,7 @@ class TcpServer {
         this.server = net.createServer((socket) => {
 
             socket.stopNotify=false;
-            let commingInfo = `new tcp  client comming:${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
+            let commingInfo = `new tcp  client comming=>${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
             this.clients.add(socket);
             let lastTempBuffer = null;
             logger.info(commingInfo);
@@ -228,8 +228,12 @@ class TcpServer {
 
         });
 
-        this.server.listen({ host: this.host, port: this.port }, () => {
-            logger.info("Tcp  server started success:" + this);
+        let listenOption={port:this.port,host:this.host};
+        if(this.host===null){
+            listenOption={port:this.port};
+        }
+        this.server.listen(listenOption, () => {
+            logger.info("Tcp  server started success=>" + this);
         });
 
         return this.server;

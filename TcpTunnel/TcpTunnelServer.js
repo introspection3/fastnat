@@ -69,7 +69,7 @@ class TcpTunnelServer {
             });
 
             middleServer.maxConnections = 1;
-            middleServer.listen({ host: '0.0.0.0', port: 0 }, () => {
+            middleServer.listen({  port: 0 }, () => {
                 let port=middleServer.address().port;
                 middlePort=port;
                 this.tcpServer.sendCodecData2OneClient({ command: 'newClientComming', middlePort:port }, fromSocket);

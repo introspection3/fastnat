@@ -1,12 +1,23 @@
 {
-    "common": {
-        "socketTimeout": 600000,
-        "version":"1.0.0"
-    },
-    "server": {
+    "version": "1.0.0",
+    "host": "0.0.0.0",
+    "webserver": {
         "host": "0.0.0.0",
-        "port": 8081,
+        "port": 8081
+    },
+    "bridge": {
+        "type": "tcp",
+        "port": 3927
+    },
+    "http": {
         "https": false,
-        "tcpTunnelServerPort": 3927
+        "port": 80
+    },
+    "p2p": {
+        "type": "udp",
+        "port": "123456"
+    },
+    "log": {
+        "level": "info"
     }
 }
