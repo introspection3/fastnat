@@ -14,5 +14,14 @@
     "admin": {
         "username": "root",
         "password": "root321.."
+    },
+    "http": {
+        "sslFile": {
+            "type": "pem/pfx",
+            "pemKeyName": "key.pem",
+            "pemCertName": "name.pem",
+            "pfxName": "name.pfx",
+            "pfxPassword": "password"
+        }
     }
 }

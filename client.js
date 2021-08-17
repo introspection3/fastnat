@@ -4,6 +4,7 @@ const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
 const logger = require('./Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
+const HttpTunnelClient=require('./HttpTunnel/HttpTunnelClient');
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 } else {
@@ -27,7 +28,7 @@ async function main(params) {
         return;
     }
     if (!tunnelsResult.success) {
-        console.log(tunnelsResult.data);
+        logger.error(tunnelsResult.info);
         return;
     }
 
@@ -43,13 +44,25 @@ async function main(params) {
             port: firstTunnel.localPort
         }
     );
-
+    await tcpTunnelClient.startTunnel(firstTunnel.id);
     tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
         isWorkingFine = false;
         logger.error('Tcp tunnel server has stoped:' + err);
     });
-
-    await tcpTunnelClient.startTunnel(firstTunnel.id);
+    tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
+        isWorkingFine = true;
+        logger.error('process will quit for : ' + data.info);
+        process.exit(1);
+    });
+//     let httpTunnelClient=new HttpTunnelClient(authenKey,firstTunnel.id,{
+//         host: defaultBridgeConfig.host,
+//         port: defaultBridgeConfig.port
+//     },
+//     {
+//         host: firstTunnel.localIp,
+//         port: firstTunnel.localPort
+//     });
+//    await httpTunnelClient.start();
 }
 
 
@@ -100,6 +113,7 @@ process.on('SIGINT', function () {
 });
 
 process.on("uncaughtException", function (err) {
+    console.error(err.stack)
     logger.error(err);
 });
 

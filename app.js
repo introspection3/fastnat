@@ -1,12 +1,11 @@
 const express = require('express');
 const { RegisterUser, Client, Tunnel } = require('./Db/Models');
 const app = express();
-app.use('/public', express.static('public'));
-const bodyParser = require("body-parser");
+app.use('/', express.static('public'));
 const { v4: uuidv4 } = require('uuid');
 const logger = require('./Log/logger');
 const TcpTunnelServer = require('./TcpTunnel/TcpTunnelServer');
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }))
 const defaultConfig = require('./Common/DefaultConfig');
 const serverConfig = require('./Common/ServerConfig');
 const sequelize = require('./Db/Db');
@@ -49,7 +48,8 @@ app.get('/client/tunnels/:authenKey', async function (req, res) {
   if (client == null) {
     res.send({
       success: false,
-      data: null
+      data: null,
+      info:'this authenKey has no client'
     });
     return;
   }

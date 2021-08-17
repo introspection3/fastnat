@@ -5,7 +5,7 @@ const net = require('net');
 const TcpClient = require('../Tcp/TcpClient');
 const TcpTunnelProtocal = require('../TcpTunnel/TcpTunnelProtocal');
 const { Socket } = require('dgram');
-
+const genericPool = require("generic-pool");
 /**
  * Tcp隧道服务端程序
  */
@@ -17,18 +17,21 @@ class TcpTunnelClient {
      * @param {Object} localAddress 
      */
     constructor(authenKey, tcpTunnelServerAddress, localAddress) {
+
         this.authenKey = authenKey
         this.tcpTunnelServerAddress = tcpTunnelServerAddress;
         this.localAddress = localAddress;
         this.started = false;
         this.defaultTimeout = 5000;
         this.tcpClient = new TcpClient(this.tcpTunnelServerAddress);
+
+         
     }
 
-    async stopTunnel(tunnelId){
+    async stopTunnel(tunnelId) {
 
         this.tcpClient.sendCodecData({ command: 'stopTunnel', authenKey: this.authenKey, tunnelId: tunnelId });
-        
+
     }
 
     /*启动Tcp隧道客户端程序,只会调用一次
@@ -43,18 +46,17 @@ class TcpTunnelClient {
         }
         this.started = true;
 
-       
+
 
         this.tcpClient.start();
 
         this.tcpClient.eventEmitter.on('connect', () => {
             this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
         });
-     
+
         this.tcpClient.eventEmitter.on('onCodecMessage', data => {
 
-            if (data.command == 'newClientComming') {
-
+            if (data.command == 'newClientComming') {              
                 let localSocket = net.createConnection(this.localAddress, () => {
 
                 });
@@ -80,33 +82,24 @@ class TcpTunnelClient {
                 });
 
 
-                
+
                 //local service server's end
                 localSocket.on('end', (hadError) => {
-                    logger.info('localSocket end:' + JSON.stringify(this.localAddress)+',proxy client:'+JSON.stringify(data.middlePort));
+                    logger.info('localSocket end:' + JSON.stringify(this.localAddress) + ',proxy client:' + JSON.stringify(data.middlePort));
                     if (localSocket.middleSocket != null) {
                         localSocket.middleSocket.end();
                         localSocket.middleSocket.destroy();
-                        localSocket.middleSocket=null;
+                        localSocket.middleSocket = null;
                     }
                 });
 
             }
+           else if(data.command=='quitClient'){
+                logger.warn('recevie command (quitClient)=>' + data.info);
+                this.tcpClient.eventEmitter.emit('quitClient',data);
+                this.tcpClient.client.end();
+            }
         });
-
-    }
-
-
-    closeClient(data, socket) {
-
-        logger.warn('recevie command (closeClient)' + data.info);
-        this.tcpClient.client.end();
-
-    }
-
-    clientInfo(data, socket) {
-
-        logger.info(data);
 
     }
 

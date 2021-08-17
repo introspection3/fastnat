@@ -10,7 +10,8 @@ const logger=require('../Log/logger');
  */
 function createTcpProxy(localAddress, targetAddress) {
     let connectInfo=` ${JSON.stringify(localAddress)}-->${JSON.stringify(targetAddress)}`;
-    let proxyTcpServer = net.createServer((socket) => {       
+    let proxyTcpServer = net.createServer((socket) => {   
+            
         logger.info(`new socket :`+connectInfo);
         //socket will close after 10m inactive
         socket.setTimeout(60000*10);
@@ -32,6 +33,13 @@ function createTcpProxy(localAddress, targetAddress) {
             logger.error(clientErrorInfo);
             client.destroy();
         });
+
+        socket.on('end', () => {
+                
+            logger.warn(` socket end--`+connectInfo);
+            
+        });
+
     });
 
     proxyTcpServer.on('error',err=>{

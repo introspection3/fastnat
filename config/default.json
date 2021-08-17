@@ -10,8 +10,9 @@
         "port": 3927
     },
     "http": {
-        "https": false,
-        "port": 80
+        "ssl": false,
+        "port": 80,
+        "domain": "www.test.com"
     },
     "p2p": {
         "type": "udp",

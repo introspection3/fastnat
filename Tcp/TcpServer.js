@@ -202,6 +202,8 @@ class TcpServer {
             });
 
             socket.on('end', () => {
+                this.eventEmitter.emit('socketLost',socket);
+                this.eventEmitter.emit('socketEnd',socket);
                 lastTempBuffer = null;
                 logger.warn(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
                 this.clients.delete(socket);
@@ -213,6 +215,7 @@ class TcpServer {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
                 logger.warn('Tcp  server on socket error ' + err);
+                this.eventEmitter.emit('socketLost',socket);
                 this.eventEmitter.emit('socketError',socket,err);
                 socket.end();
                 socket.destroy();

@@ -1,0 +1,148 @@
+
+
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href=" https://cdn.jsdelivr.net/npm/@bootcss/v3.bootcss.com@1.0.10/dist/css/bootstrap.min.css">
+    <title>FastNat</title>
+
+    <style type="text/css">
+        .os {
+            text-align: center;
+            background-color: #ddd;
+            padding: 12px 0;
+            font-size: 24px;
+            color: #606060;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <h1>FastNat</h1>
+        <p>内网神器</p>
+        <p>
+            <span>软件版本：</span>
+            <span>v1.0.0</span>
+        </p>
+        <p>
+            <span>项目地址：</span>
+            <a target="_blank" href="https://github.com/dotnetcore/FastGithub">https://github.com/dotnetcore/FastGithub</a>
+        </p>
+
+
+        <h3>CA证书</h3>
+        <p>
+            你可能需要在客户端设备下载FastGithub自颁发的CA证书<a target="_blank" href="/cert">FastGithub.cer</a>，导入到受信任的根证书颁发机构或浏览器
+        </p>
+
+
+        <h3>部署方式</h3>
+        <div class="row">
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">windows本机</div>
+                    <div class="caption">
+                        <h4>x64系统</h4>
+                        <p>双击运行FastGithub.exe程序</p>
+                        <p><code>FastGithub.exe start</code> // 以windows服务安装并启动</p>
+                        <p><code>FastGithub.exe stop</code>  // 以windows服务卸载并删除</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">linux本机</div>
+                    <div class="caption">
+                        <h4>x64系统</h4>
+                        <p>执行<code>./FastGithub</code></p>
+                        <p>手工添加127.0.0.1做为/etc/resolv.conf的第一条记录</p>
+                        <p>手工安装CACert/FastGithub.cer到受信任的根证书颁发机构</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">macOS本机</div>
+                    <div class="caption">
+                        <h4>x64系统</h4>
+                        <p>双击运行FastGithub程序</p>
+                        <p>手工添加127.0.0.1做为连接网络的DNS的第一条记录</p>
+                        <p>手工安装CACert/FastGithub.cer并设置信任</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">局域网服务器</div>
+                    <div class="caption">
+                        <h4>x64系统</h4>
+                        <p>在局域网服务器运行FastGithub程序</p>
+                        <p>手工将你电脑的主DNS设置为局域网服务器的ip</p>
+                        <p>手工在你电脑安装<a target="_blank" href="/cert">FastGithub.cer</a>到受信任的根证书颁发机构</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>证书验证</h3>
+        <div class="row">
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">git</div>
+                    <div class="caption">
+                        <h4>SSL certificate problem</h4>
+                        <p>需要关闭git的证书验证：</p>
+                        <p><code>git config --global http.sslverify false</code></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">firefox</div>
+                    <div class="caption">
+                        <h4>未连接：有潜在的安全问题</h4>
+                        <p>设置->隐私与安全->证书->查看证书->证书颁发机构</p>
+                        <p>导入<a target="_blank" href="/cert">FastGithub.cer</a>，勾选信任由此证书颁发机构来标识网站</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <h3>应用冲突</h3>
+        <div class="row">
+
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">hosts</div>
+                    <div class="caption">
+                        <h4>hosts解析ip</h4>
+                        <p>需要从hosts文件移除github相关域名的配置</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="thumbnail">
+                    <div class="os">代理</div>
+                    <div class="caption">
+                        <h4>浏览器或系统代理</h4>
+                        <p>需要将浏览器和系统配置为不代理github相关域名</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</body>
+</html>

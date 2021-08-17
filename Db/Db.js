@@ -7,7 +7,7 @@ if (dbConfig.dbType === 'sqlite') {
     
     const sqlite = require('sqlite3');
     const GlobalData = require('../Common/GlobalData');
-    const sqliteFilePath = GlobalData.rootPath + "/database.db";
+    const sqliteFilePath = GlobalData.rootPath + "/config/database.db";
     const fs = require('fs');
     let exist = fs.existsSync(sqliteFilePath);
     if (exist == false) {
