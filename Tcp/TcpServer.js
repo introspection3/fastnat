@@ -131,7 +131,7 @@ class TcpServer {
 
         this.server = net.createServer((socket) => {
 
-            socket.stopNotify=false;
+            socket.stopNotify = false;
             let commingInfo = `new tcp  client comming=>${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
             this.clients.add(socket);
             let lastTempBuffer = null;
@@ -144,7 +144,7 @@ class TcpServer {
              * @param {Buffer} dataBuffer 来的数据
              * @param {Socket} targetSocket 对应的socket
              */
-            function notify(dataBuffer, targetSocket) {               
+            function notify(dataBuffer, targetSocket) {
                 instance.eventEmitter.emit('onMessage', dataBuffer, targetSocket);
                 let data = null;
                 if (instance.codec === 'utf8') {
@@ -202,8 +202,8 @@ class TcpServer {
             });
 
             socket.on('end', () => {
-                this.eventEmitter.emit('socketLost',socket);
-                this.eventEmitter.emit('socketEnd',socket);
+                this.eventEmitter.emit('socketLost', socket);
+                this.eventEmitter.emit('socketEnd', socket);
                 lastTempBuffer = null;
                 logger.warn(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
                 this.clients.delete(socket);
@@ -215,12 +215,12 @@ class TcpServer {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
                 logger.warn('Tcp  server on socket error ' + err);
-                this.eventEmitter.emit('socketLost',socket);
-                this.eventEmitter.emit('socketError',socket,err);
+                this.eventEmitter.emit('socketLost', socket);
+                this.eventEmitter.emit('socketError', socket, err);
                 socket.end();
                 socket.destroy();
             });
-            
+
             socket.on('timeout', () => {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
@@ -231,12 +231,15 @@ class TcpServer {
 
         });
 
-        let listenOption={port:this.port,host:this.host};
-        if(this.host===null){
-            listenOption={port:this.port};
+        let listenOption = { port: this.port, host: this.host };
+
+        if (this.host === null) {
+            listenOption = { port: this.port };
         }
+
         this.server.listen(listenOption, () => {
-            logger.info("Tcp  server started success=>" + this);
+            //在大多数操作系统中，监听未指定的 IPv6 地址 (::) 可能会导致 net.Server 也监听未指定的 IPv4 地址 (0.0.0.0)
+            logger.info("Tcp  server started success=>" + JSON.stringify(listenOption));
         });
 
         return this.server;

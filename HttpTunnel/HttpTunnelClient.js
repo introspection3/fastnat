@@ -2,81 +2,100 @@ const path = require('path');
 const TcpTunnelClient = require('../TcpTunnel/TcpTunnelClient');
 const http = require('http');
 const https = require('https');
-const http2Proxy = require('http2-proxy');
+const httpProxy = require('http-proxy');
 const url = require('url');
 const logger = require('../Log/logger');
-const http2 = require('http2');
+
 const fs = require('fs');
 const rootPath = require('../Common/GlobalData').rootPath;
-const finalhandler = require('finalhandler');
-
-const defaultWebHandler = (err, req, res) => {
-    if (err) {
-        console.error('proxy error', err)
-        finalhandler(req, res)(err)
-    }
-}
-
-const defaultWSHandler = (err, req, socket, head) => {
-    if (err) {
-        console.error('proxy error', err)
-        socket.destroy()
-    }
-}
-
+const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 
 class HttpTunnelClient {
 
     tcpTunnelClient = new TcpTunnelClient();
+
     /**
      * 
-     * @param {TcpTunnelClient} tcpTunnelClient 
+     * @param {string} authenKey 
+     * @param {object} tunnel 
+     * @param {object} tcpTunnelServerAddress 
      */
-    constructor(authenKey, tunnelId, tcpTunnelServerAddress, localAddress) {
-        this.authenKey = authenKey;
-        this.tunnelId = tunnelId;
-        this.tcpTunnelServerAddress = tcpTunnelServerAddress;
-        this.localAddress = localAddress;
-        this.started = false;
-        let configDir = path.join(rootPath, 'config');
-        let serverOptions = {
-            key: fs.readFileSync(path.join(configDir, 'ker.pem')),
-            cert: fs.readFileSync(path.join(configDir, 'cert.pem')),
-            allowHTTP1: true
-        };
-        this.httpProxyServer = http2.createSecureServer(serverOptions
-        );
-        this.httpProxyServer.on('request', (req, res) => {
-            http2Proxy.web(req, res, {
-                hostname: localAddress.host,
-                port: localAddress.port,
-                onReq: (req, options) => {
-                    let headers = options.headers;
-                    headers['X-Forwarded-For'] = req.socket.remoteAddress,
-                        headers['X-Real-IP'] = req.socket.remoteAddress
-                    headers['X-Forwarded-Proto'] = req.socket.encrypted ? 'https' : 'http';
-                    headers['host'] = `${localAddress.host}:${localAddress.port}`;
-                    // redirectHttp.request(options);
-                },
-                onRes: (req, res, proxyRes) => {
-                    res.setHeader('x-powered-by', 'fastnat');
-                    proxyRes.pipe(res)
-                }
-            }, defaultWebHandler);
+    constructor(authenKey, tunnel, tcpTunnelServerAddress) {
 
-        })
+        this.authenKey = authenKey;
+        this.tunnel = tunnel;
+        this.tcpTunnelServerAddress = tcpTunnelServerAddress;
+        this.localAddress = { host: tunnel.localIp, port: tunnel.localPort };
+        this.started = false;
+
+        let targetUrl = `${tunnel.type}://${tunnel.localIp}:${tunnel.localPort}`;
+        if (tunnel.localPort == 80 || tunnel.localPort == 443) {
+            targetUrl = `${tunnel.type}://${tunnel.localIp}`;
+        }
+
+        let parsedUrl = url.parse(targetUrl);
+        const proxy = httpProxy.createProxy({});
+
+        proxy.on('error', function (err, req, res) {
+            console.error(err);
+            res.writeHead(500, {
+                'Content-Type': 'text/plain'
+            });
+
+            res.end('Something went wrong. And we are reporting a custom error message.');
+        });
+        let finalAgent = null;
+        if (tunnel.type === 'https') {
+            finalAgent = https.globalAgent;
+
+        } else {
+            finalAgent = http.globalAgent;
+        }
+        let httpModule = http;
+        let serverOptions = {};
+
+        this.httpProxyServer = httpModule.createServer(serverOptions, function (req, res) {
+            logReq(req)
+
+            proxy.web(req, res, {
+                target: targetUrl,
+                agent: finalAgent,
+                headers: { host: parsedUrl.hostname },
+                prependPath: false,
+                xfwd: true,
+                hostRewrite: targetUrl.host,
+                protocolRewrite: parsedUrl.protocol
+            });
+        });
+        /**
+         * 
+         * @param {http.IncomingMessage} req 
+         */
+        function logReq(req) {
+            console.log(req.method, req.url, req.headers);
+            let body = '';
+            req.on('data', (chunk) => {
+                body += chunk;
+            });
+            req.on('end', () => {
+                console.log(body);
+            });
+        }
+        this.httpProxyServer.on('upgrade', function (req, socket, head) {
+            proxy.ws(req, socket, head);
+        });
     }
 
     async start() {
         if (this.started) {
-            logger.info('start httpProxyServer already');
+            logger.info(' httpProxyServer has started already');
             return;
         }
         this.httpProxyServer.listen({ port: 0 }, async () => {
             let port = this.httpProxyServer.address().port;
             logger.info(`httpProxyServer started at:${port}`);
             this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: port, host: '0.0.0.0' });
-            await this.tcpTunnelClient.startTunnel(this.tunnelId);
+            await this.tcpTunnelClient.startTunnel(this.tunnel.id);
         });
     }
 }

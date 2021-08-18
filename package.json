@@ -16,9 +16,11 @@
     "log4js": "^6.3.0",
     "mysql2": "^2.3.0",
     "node-worker-threads-pool": "^1.5.0",
+    "open": "^8.2.1",
     "sequelize": "^6.6.5",
     "socket-pool": "^1.2.3",
     "sqlite3": "^5.0.2",
+    "systray": "^1.0.5",
     "utp-punch": "^1.0.1"
   },
   "bin": "client.js",

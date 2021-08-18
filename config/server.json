@@ -8,20 +8,26 @@
         "username": "root",
         "password": "root"
     },
+    
     "init": {
         "firstInit": false
     },
+
     "admin": {
         "username": "root",
         "password": "root321.."
     },
+
     "http": {
+        "isHttps":false,
         "sslFile": {
             "type": "pem/pfx",
             "pemKeyName": "key.pem",
             "pemCertName": "name.pem",
             "pfxName": "name.pfx",
             "pfxPassword": "password"
-        }
+        },
+        "domain":"www.test.com",
+        "port":80
     }
 }

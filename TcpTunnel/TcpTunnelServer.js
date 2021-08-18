@@ -105,7 +105,7 @@ class TcpTunnelServer {
         });
 
         proxyServer.listen(config, () => {
-            logger.info("Tcp  server started success:" + JSON.stringify(config));
+            logger.info("Tcp  server started success:" + JSON.stringify(proxyServer.address()));
         });
 
         return proxyServer;
