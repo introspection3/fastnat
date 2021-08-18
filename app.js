@@ -9,8 +9,10 @@ app.use(express.urlencoded({ extended: false }))
 const defaultConfig = require('./Common/DefaultConfig');
 const serverConfig = require('./Common/ServerConfig');
 const sequelize = require('./Db/Db');
+const GlobalData = require('./Common/GlobalData');
 const defaultWebServerConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
+const { exec } = require('child_process');
 
 app.get('/checkServerStatus', function (req, res) {
   res.send({ success: true });
@@ -49,7 +51,7 @@ app.get('/client/tunnels/:authenKey', async function (req, res) {
     res.send({
       success: false,
       data: null,
-      info:'this authenKey has no client'
+      info: 'this authenKey has no client'
     });
     return;
   }
@@ -109,7 +111,7 @@ app.post('/client/startProxy', async function (req, res) {
 });
 
 
-const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.port });
+const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
 tcpTunnelServer.start();
 
 const server = app.listen(defaultWebServerConfig.port, function () {
@@ -118,6 +120,7 @@ const server = app.listen(defaultWebServerConfig.port, function () {
   console.log("fastnat web start at: http://%s:%s", host, port);
   init();
 });
+
 
 
 process.on("uncaughtException", function (err) {
@@ -130,15 +133,11 @@ process.on("uncaughtException", function (err) {
  * @returns 
  */
 async function init() {
-
   await initDb(sequelize);
-
   if (serverConfig.init.firstInit == false) {
     return;
   }
-
   let firstUser = 'fastnat';
-
   let existUser = await RegisterUser.findOne(
     {
       where: {

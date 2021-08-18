@@ -4,7 +4,10 @@ const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
 const logger = require('./Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
-const HttpTunnelClient=require('./HttpTunnel/HttpTunnelClient');
+const GlobalData = require('./Common/GlobalData');
+const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
+
+
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 } else {
@@ -33,38 +36,37 @@ async function main(params) {
     }
 
     let firstTunnel = tunnelsResult.data[0];
-    let tcpTunnelClient = new TcpTunnelClient(
-        authenKey,
-        {
-            host: defaultBridgeConfig.host,
-            port: defaultBridgeConfig.port
-        },
-        {
-            host: firstTunnel.localIp,
-            port: firstTunnel.localPort
-        }
-    );
-    await tcpTunnelClient.startTunnel(firstTunnel.id);
-    tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
-        isWorkingFine = false;
-        logger.error('Tcp tunnel server has stoped:' + err);
-    });
-    tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
-        isWorkingFine = true;
-        logger.error('process will quit for : ' + data.info);
-        process.exit(1);
-    });
-//     let httpTunnelClient=new HttpTunnelClient(authenKey,firstTunnel.id,{
-//         host: defaultBridgeConfig.host,
-//         port: defaultBridgeConfig.port
-//     },
-//     {
-//         host: firstTunnel.localIp,
-//         port: firstTunnel.localPort
-//     });
-//    await httpTunnelClient.start();
-}
 
+    // let tcpTunnelClient = new TcpTunnelClient(
+    //     authenKey,
+    //     {
+    //         host: defaultConfig.host,
+    //         port: defaultBridgeConfig.port
+    //     },
+    //     {
+    //         host: firstTunnel.localIp,
+    //         port: firstTunnel.localPort
+    //     }
+    // );
+    // await tcpTunnelClient.startTunnel(firstTunnel.id);
+    // tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
+    //     isWorkingFine = false;
+    //     logger.error('Tcp tunnel server has stoped:' + err);
+    // });
+    // tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
+    //     isWorkingFine = true;
+    //     logger.error('process will quit for : ' + data.info);
+    //     process.exit(1);
+    // });
+
+    let httpTunnelClient = new HttpTunnelClient(authenKey, firstTunnel, {
+        host: defaultBridgeConfig.host,
+        port: defaultBridgeConfig.port
+    });
+    await httpTunnelClient.start();
+
+
+}
 
 
 async function getTunnels(authenKey) {
@@ -100,7 +102,7 @@ setInterval(async () => {
         }
     }
 }, 30 * 1000);
-
+trayIcon();
 main();
 
 process.on("exit", function (code) {
@@ -116,4 +118,64 @@ process.on("uncaughtException", function (err) {
     console.error(err.stack)
     logger.error(err);
 });
+
+async function trayIcon(params) {
+    const SysTray = require('systray').default;
+    const open = require('open');
+    const fs = require('fs');
+    const readFile = require('util').promisify(fs.readFile);
+    let ext = '.png'
+    if (require('os').platform() == 'win32') {
+        ext = '.ico';
+    }
+    let bitmap = await readFile('./config/tray' + ext);
+    let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
+    const systray = new SysTray({
+        menu: {
+            // you should using .png icon in macOS/Linux, but .ico format in windows
+            icon: base64str,
+            title: "fastnat",
+            tooltip: "fastnat",
+            items: [{
+                title: "显示",
+                tooltip: "display",
+                // checked is implement by plain text in linux
+                checked: true,
+                enabled: true
+            }, {
+                title: "管理",
+                tooltip: "bb",
+                checked: false,
+                enabled: true
+            }, {
+                title: "退出",
+                tooltip: "exit",
+                checked: false,
+                enabled: true
+            }]
+        },
+        debug: false,
+        copyDir: true, // copy go tray binary to outside directory, useful for packing tool like pkg.
+    })
+
+    systray.onClick(action => {
+        if (action.seq_id === 0) {
+            systray.sendAction({
+                type: 'update-item',
+                item: {
+                    ...action.item,
+                    checked: !action.item.checked,
+                },
+                seq_id: action.seq_id,
+            })
+        } else if (action.seq_id === 1) {
+            // opens the url in the default browser 
+            open(axios.defaults.baseURL);
+            // console.log('open the url', action)
+        } else if (action.seq_id === 2) {
+            systray.kill()
+        }
+    })
+}
+
 
