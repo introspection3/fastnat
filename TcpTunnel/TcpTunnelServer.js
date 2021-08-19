@@ -44,8 +44,8 @@ class TcpTunnelServer {
             }
         });
         this.tcpServer.eventEmitter.on('socketLost', (socket) => {
-            if(socket.authenKey!=null){
-                this.authenMap.delete(socket.authenKey);
+            if(socket.authenKeyAndTunnelId!=null){
+                this.authenMap.delete(socket.authenKeyAndTunnelId);
             }
         });
         this.authenMap = new Map();
@@ -70,7 +70,9 @@ class TcpTunnelServer {
             let middleServer = net.createServer((middleSocket) => {
                 middleSocket.pipe(proxySocket);
                 proxySocket.pipe(middleSocket);
-
+                middleSocket.on('error', (error) => {
+                    logger.error('middleSocket socket error' + error);
+                });
             });
 
             middleServer.maxConnections = 1;
@@ -84,6 +86,12 @@ class TcpTunnelServer {
             middleServer.on('close', () => {
                 console.log(`middleserver closed:` + middlePort);
             });
+
+            middleServer.on('error', (err) => {
+                logger.error(`middleserver error:${middlePort} ` + +err);
+                
+            });
+
             proxySocket.on('end', () => {
 
                 logger.warn(`proxyServer socket end--` + info);
@@ -100,8 +108,15 @@ class TcpTunnelServer {
                 middleServer.close();
             });
 
+            proxySocket.on('error', (error) => {
+                logger.error('proxyServer socket error=>' + error);
+            });
 
+        });
 
+        proxyServer.on('error', (err) => {
+            logger.error(`proxyServer error ${proxyServer.address()} ` + +err);
+            
         });
 
         proxyServer.listen(config, () => {
@@ -212,15 +227,16 @@ class TcpTunnelServer {
             return;
         }
 
-        if (this.authenMap.has(data.authenKey)) {
-            this.notifyCloseClient(socket, 'this authenKey  is already online');
+        let authenKeyAndTunnelId=data.authenKey+":"+data.tunnelId;
+
+        if (this.authenMap.has(authenKeyAndTunnelId)) {
+            this.notifyCloseClient(socket, 'this authenKey&tunnelId  is already online');
             return;
         }
         
-        this.authenMap.set(data.authenKey, { enterTime: new Date() });
-        socket.authenKey=data.authenKey;
-
-        logger.info('start creating proxy server:' + tunnel.remotePort);
+        this.authenMap.set(authenKeyAndTunnelId, { enterTime: new Date() });
+        socket.authenKeyAndTunnelId=authenKeyAndTunnelId;
+        logger.info('start creating tcp proxy server:' + tunnel.remotePort);
         let server = this.createProxyServer(socket, { host: '0.0.0.0', port: tunnel.remotePort });
         this.tunnelProxyServers.set(data.tunnelId, server);
         socket.proxyServer = server;

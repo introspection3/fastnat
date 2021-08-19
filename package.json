@@ -21,6 +21,7 @@
     "socket-pool": "^1.2.3",
     "sqlite3": "^5.0.2",
     "systray": "^1.0.5",
+    "udp-proxy": "^1.2.0",
     "utp-punch": "^1.0.1"
   },
   "bin": "client.js",

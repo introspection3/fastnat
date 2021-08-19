@@ -230,7 +230,10 @@ class TcpServer {
             });
 
         });
-
+        
+        this.server.on('error',(err)=>{
+            logger.error('tcp server err: ',err);
+        });
         let listenOption = { port: this.port, host: this.host };
 
         if (this.host === null) {

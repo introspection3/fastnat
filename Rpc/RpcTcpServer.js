@@ -27,7 +27,7 @@ class RpcTcpServer {
      */
     setServicesDirLocation(dirPath){
         if(dirPath===null||dirPath===''){
-            dirPath='./services'
+            dirPath='./RpcServices'
         }
         dirPath=path.join(process.cwd(),dirPath);
         console.log(dirPath);

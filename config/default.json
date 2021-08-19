@@ -7,6 +7,9 @@
     "bridge": {
         "port": 3927
     },
+    "rpc":{
+        "port":"13141"
+    },
     "p2p": {
         "type": "udp",
         "port": "123456"

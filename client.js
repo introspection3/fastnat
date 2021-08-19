@@ -34,38 +34,40 @@ async function main(params) {
         logger.error(tunnelsResult.info);
         return;
     }
-
-    let firstTunnel = tunnelsResult.data[0];
-
-    // let tcpTunnelClient = new TcpTunnelClient(
-    //     authenKey,
-    //     {
-    //         host: defaultConfig.host,
-    //         port: defaultBridgeConfig.port
-    //     },
-    //     {
-    //         host: firstTunnel.localIp,
-    //         port: firstTunnel.localPort
-    //     }
-    // );
-    // await tcpTunnelClient.startTunnel(firstTunnel.id);
-    // tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
-    //     isWorkingFine = false;
-    //     logger.error('Tcp tunnel server has stoped:' + err);
-    // });
-    // tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
-    //     isWorkingFine = true;
-    //     logger.error('process will quit for : ' + data.info);
-    //     process.exit(1);
-    // });
-
-    let httpTunnelClient = new HttpTunnelClient(authenKey, firstTunnel, {
-        host: defaultBridgeConfig.host,
-        port: defaultBridgeConfig.port
-    });
-    await httpTunnelClient.start();
-
-
+    let tunnels = tunnelsResult.data;
+    for (const tunnelItem of tunnels) {
+        if (tunnelItem.type == 'http' || tunnelItem.type == 'https') {
+            let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
+                host: defaultBridgeConfig.host,
+                port: defaultBridgeConfig.port
+            });
+            await httpTunnelClient.start();
+            continue;
+        }
+        if (tunnelItem.type == 'tcp') {
+            let tcpTunnelClient = new TcpTunnelClient(
+                authenKey,
+                {
+                    host: defaultConfig.host,
+                    port: defaultBridgeConfig.port
+                },
+                {
+                    host: tunnelItem.localIp,
+                    port: tunnelItem.localPort
+                }
+            );
+            await tcpTunnelClient.startTunnel(tunnelItem.id);
+            tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
+                isWorkingFine = false;
+                logger.error('Tcp tunnel server has stoped:' + err);
+            });
+            tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
+                isWorkingFine = true;
+                logger.error('process will quit for : ' + data.info);
+                process.exit(1);
+            });
+        }
+    }
 }
 
 
