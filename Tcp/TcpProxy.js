@@ -12,7 +12,7 @@ function createTcpProxy(localAddress, targetAddress) {
     let connectInfo=` ${JSON.stringify(localAddress)}-->${JSON.stringify(targetAddress)}`;
     let proxyTcpServer = net.createServer((socket) => {   
             
-        logger.info(`new socket :`+connectInfo);
+        logger.trace(`new socket :`+connectInfo);
         //socket will close after 10m inactive
         socket.setTimeout(60000*10);
         socket.on('timeout', () => {
@@ -36,7 +36,7 @@ function createTcpProxy(localAddress, targetAddress) {
 
         socket.on('end', () => {
                 
-            logger.warn(` socket end--`+connectInfo);
+            logger.debug(` socket end--`+connectInfo);
             
         });
 
@@ -51,7 +51,7 @@ function createTcpProxy(localAddress, targetAddress) {
     });
     
     proxyTcpServer.listen({ host: localAddress.host, port: localAddress.port}, () => {
-        logger.info(`new proxyTcpServer start ${localAddress.host}:${localAddress.port}`);
+        logger.trace(`new proxyTcpServer start ${localAddress.host}:${localAddress.port}`);
     });
     return proxyTcpServer;
 }

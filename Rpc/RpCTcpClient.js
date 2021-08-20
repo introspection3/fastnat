@@ -30,7 +30,7 @@ class RpcTcpClient {
     start() {
 
         if (this.started) {
-            logger.warn("RcpTcpClient has already started.");
+            logger.debug("RcpTcpClient has already started.");
             return;
         }
 

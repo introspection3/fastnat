@@ -124,7 +124,7 @@ class TcpServer {
     start() {
 
         if (this.started) {
-            logger.warn(this + " has already started.");
+            logger.debug(this + " has already started.");
             return;
         }
         this.started = true;
@@ -135,7 +135,7 @@ class TcpServer {
             let commingInfo = `new tcp  client comming=>${socket.remoteAddress}:${socket.remotePort},local=${socket.localAddress}:${socket.localPort}`;
             this.clients.add(socket);
             let lastTempBuffer = null;
-            logger.info(commingInfo);
+            logger.trace(commingInfo);
             //socket.setTimeout(this.socketTime);
             let instance = this;
 
@@ -205,7 +205,7 @@ class TcpServer {
                 this.eventEmitter.emit('socketLost', socket);
                 this.eventEmitter.emit('socketEnd', socket);
                 lastTempBuffer = null;
-                logger.warn(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
+                logger.debug(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
                 this.clients.delete(socket);
                 socket.end();
                 socket.destroy();
@@ -214,7 +214,7 @@ class TcpServer {
             socket.on('error', (err) => {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
-                logger.warn('Tcp  server on socket error ' + err);
+                logger.debug('Tcp  server on socket error ' + err);
                 this.eventEmitter.emit('socketLost', socket);
                 this.eventEmitter.emit('socketError', socket, err);
                 socket.end();
@@ -224,13 +224,13 @@ class TcpServer {
             socket.on('timeout', () => {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
-                logger.warn('Tcp  server on socket timeout,socketTime=' + this.socketTime);
+                logger.debug('Tcp  server on socket timeout,socketTime=' + this.socketTime);
                 socket.end();
                 socket.destroy();
             });
 
         });
-        
+
         this.server.on('error',(err)=>{
             logger.error('tcp server err: ',err);
         });
@@ -242,7 +242,7 @@ class TcpServer {
 
         this.server.listen(listenOption, () => {
             //在大多数操作系统中，监听未指定的 IPv6 地址 (::) 可能会导致 net.Server 也监听未指定的 IPv4 地址 (0.0.0.0)
-            logger.info("Tcp  server started success=>" + JSON.stringify(listenOption));
+            logger.trace("Tcp  server started success=>" + JSON.stringify(listenOption));
         });
 
         return this.server;

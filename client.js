@@ -97,7 +97,7 @@ async function checkServerStatus() {
 setInterval(async () => {
     if (isWorkingFine == false) {
         let serverOk = await checkServerStatus();
-        logger.info('server status:' + serverOk);
+        logger.trace('server status:' + serverOk);
         if (serverOk) {
             isWorkingFine = true;
             main();

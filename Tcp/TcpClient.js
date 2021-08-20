@@ -53,7 +53,7 @@ class TcpClient {
 
         let instance = this;
         if (this.started) {
-            logger.warn("Tcp client has already started.");
+            logger.debug("Tcp client has already started.");
             return;
         }
 
@@ -115,11 +115,11 @@ class TcpClient {
 
         // 创建用于连接校验服务端的 客户端连接
         let client = net.createConnection(this.serverAddress, () => {
-            logger.info('Tcp client has created');
+            logger.trace('Tcp client has created');
         });
 
         client.on('connect', () => {
-            logger.info('Tcp client has connected to ' + this.toString());
+            logger.trace('Tcp client has connected to ' + this.toString());
             client.stopNotify = false;
             this.client = client;
             this.eventEmitter.emit('connect');
@@ -134,12 +134,12 @@ class TcpClient {
 
         client.on('close', (hadError) => {
             this.eventEmitter.emit('close');
-            logger.info('Tcp Client Closed:' + this.toString())
+            logger.trace('Tcp Client Closed:' + this.toString())
         });
 
         client.on('error', (err) => {
             this.eventEmitter.emit('error',err);
-            logger.info('Tcp Client error:' + err+" ,"+this.toString());
+            logger.trace('Tcp Client error:' + err+" ,"+this.toString());
         });
 
 

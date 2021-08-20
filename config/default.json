@@ -15,6 +15,6 @@
         "port": "123456"
     },
     "log": {
-        "level": "info"
+        "level": "trace"
     }
 }

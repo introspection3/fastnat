@@ -40,7 +40,7 @@ class TcpTunnelClient {
     async startTunnel(tunnelId) {
 
         if (this.started) {
-            logger.warn("Tcp TunnelClient has already started.");
+            logger.debug("Tcp TunnelClient has already started.");
             return;
 
         }
@@ -85,7 +85,7 @@ class TcpTunnelClient {
 
                 //local service server's end
                 localSocket.on('end', (hadError) => {
-                    logger.info('localSocket end:' + JSON.stringify(this.localAddress) + ',proxy client:' + JSON.stringify(data.middlePort));
+                    logger.trace('localSocket end:' + JSON.stringify(this.localAddress) + ',proxy client:' + JSON.stringify(data.middlePort));
                     if (localSocket.middleSocket != null) {
                         localSocket.middleSocket.end();
                         localSocket.middleSocket.destroy();
@@ -95,7 +95,7 @@ class TcpTunnelClient {
 
             }
            else if(data.command=='quitClient'){
-                logger.warn('recevie command (quitClient)=>' + data.info);
+                logger.debug('recevie command (quitClient)=>' + data.info);
                 this.tcpClient.eventEmitter.emit('quitClient',data);
                 this.tcpClient.client.end();
             }

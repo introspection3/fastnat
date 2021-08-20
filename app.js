@@ -1,18 +1,60 @@
 const express = require('express');
 const { RegisterUser, Client, Tunnel } = require('./Db/Models');
-const app = express();
-app.use('/', express.static('public'));
 const { v4: uuidv4 } = require('uuid');
 const logger = require('./Log/logger');
 const TcpTunnelServer = require('./TcpTunnel/TcpTunnelServer');
-app.use(express.urlencoded({ extended: false }))
 const defaultConfig = require('./Common/DefaultConfig');
 const serverConfig = require('./Common/ServerConfig');
 const sequelize = require('./Db/Db');
-const GlobalData = require('./Common/GlobalData');
 const defaultWebServerConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
-const { exec } = require('child_process');
+const cluster = require('cluster');
+const cpuCount = require('os').cpus().length;
+const ClusterData = require('./Common/ClusterData');
+
+if (serverConfig.cluster.enabled) {
+
+  if (cluster.isPrimary || cluster.isMaster) {
+    let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
+    logger.debug(`app starts with cluster mode (cpu count:${instanceCount})`);
+    initdbdata();
+    for (let i = 0; i < instanceCount; i++) {
+      cluster.fork();
+    }
+
+    cluster.on('online', function (worker) {
+      logger.debug(`worker (pid:${worker.process.pid}) online`);
+    });
+
+    cluster.on('listening', function (worker, address) {
+      logger.debug(`worker (pid:${worker.process.pid}) connected to ${JSON.stringify(address)}`);
+    });
+
+    cluster.on('exit', function (worker, code, signal) {
+      logger.debug(`worker ${worker.process.pid} died with code (${code}),signal(${signal})`);
+      logger.debug('starting a new worker');
+      cluster.fork();
+    });
+
+    ClusterData.register2Cluster();
+
+
+    return;
+  }
+}
+
+ClusterData.register2Worker();
+
+const app = express();
+const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
+tcpTunnelServer.start();
+
+const server = app.listen(defaultWebServerConfig.port, function () {
+  logger.debug(`fastnat web (pid:${process.pid}) start at:${JSON.stringify(server.address())}`)
+});
+
+app.use(express.urlencoded({ extended: false }))
+app.use('/', express.static('public'));
 
 app.get('/checkServerStatus', function (req, res) {
   res.send({ success: true });
@@ -111,15 +153,6 @@ app.post('/client/startProxy', async function (req, res) {
 });
 
 
-const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
-tcpTunnelServer.start();
-
-const server = app.listen(defaultWebServerConfig.port, function () {
-  var host = server.address().address;
-  var port = server.address().port;
-  console.log("fastnat web start at: http://%s:%s", host, port);
-  init();
-});
 
 
 
@@ -132,7 +165,7 @@ process.on("uncaughtException", function (err) {
  * 初始化数据库
  * @returns 
  */
-async function init() {
+async function initdbdata() {
   await initDb(sequelize);
   if (serverConfig.init.firstInit == false) {
     return;
@@ -191,7 +224,7 @@ async function init() {
     clientId: clientId
   });
 
-  logger.warn('first client authenKey:' + clientData.authenKey);
+  logger.debug('first client authenKey:' + clientData.authenKey);
 
 }
 
@@ -201,7 +234,7 @@ async function init() {
  */
 async function initDb(sequelize) {
   if (serverConfig.init.firstInit) {
-    logger.warn('init.firstInit=true,init all at first....');
+    logger.debug('init.firstInit=true,init all at first....');
     await sequelize.sync({ force: true });
   } else {
     await sequelize.sync({});
