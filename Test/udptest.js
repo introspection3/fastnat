@@ -24,12 +24,14 @@ function createUpdServer(port, serverName) {
 
     return udp_server;
 }
+
 const udpPort = 5678;
 let server = createUpdServer(udpPort, 'mainServer');
 
 //--------------------------------------
 var dgram = require('dgram');
 var udp_client = dgram.createSocket('udp4');
+var udp_client2=dgram.createSocket('udp4');
 
 udp_client.on('close', function () {
     console.log('udp client closed.')
@@ -44,9 +46,9 @@ udp_client.on('error', function () {
 udp_client.on('message', function (msg, rinfo) {
     console.log(`receive message from ${rinfo.address}:${rinfo.port}：${msg}`);
 });
-const message = Buffer.from('Some bytes');
-udp_client.connect(udpPort, '192.168.1.3', (err) => {
 
+udp_client.connect(udpPort, '192.168.1.3', (err) => {
+    const message = Buffer.from('Some bytes');
     //定时向服务器发送消息
     setInterval(function () {
         udp_client.send(message, (err) => {
@@ -55,6 +57,20 @@ udp_client.connect(udpPort, '192.168.1.3', (err) => {
     }, 3000);
 
 
-    createUpdServer(udp_client.address().port, 'server2')
+  //  createUpdServer(udp_client.address().port, 'server2')
+});
+
+
+udp_client2.connect(udpPort, '192.168.1.3', (err) => {
+    const message = Buffer.from('Some bytes22');
+    //定时向服务器发送消息
+    setInterval(function () {
+        udp_client2.send(message, (err) => {
+
+        });
+    }, 3000);
+
+
+  //  createUpdServer(udp_client.address().port, 'server2')
 });
 

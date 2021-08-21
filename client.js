@@ -109,7 +109,7 @@ trayIcon();
 main();
 
 process.on("exit", function (code) {
-   
+
 });
 
 process.on('SIGINT', function () {
@@ -135,7 +135,7 @@ async function trayIcon(params) {
     let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
     const systray = new SysTray({
         menu: {
-            // you should using .png icon in macOS/Linux, but .ico format in windows
+            // using .png icon in macOS/Linux, but .ico format in windows
             icon: base64str,
             title: "fastnat",
             tooltip: "fastnat",
@@ -159,7 +159,7 @@ async function trayIcon(params) {
         },
         debug: false,
         copyDir: true, // copy go tray binary to outside directory, useful for packing tool like pkg.
-    })
+    });
 
     systray.onClick(action => {
         if (action.seq_id === 0) {
@@ -178,7 +178,7 @@ async function trayIcon(params) {
         } else if (action.seq_id === 2) {
             systray.kill()
         }
-    })
+    });
 }
 
 
