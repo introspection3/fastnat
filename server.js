@@ -11,6 +11,7 @@ const defaultBridgeConfig = defaultConfig.bridge;
 const cluster = require('cluster');
 const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
+const createProxy=require('./Http/HttpProxy');
 
 if (serverConfig.cluster.enabled) {
   if (cluster.isPrimary || cluster.isMaster) {
@@ -42,8 +43,10 @@ if (serverConfig.cluster.enabled) {
 }
 
 
+createProxy();
 
 const app = express();
+
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
 tcpTunnelServer.start();
 

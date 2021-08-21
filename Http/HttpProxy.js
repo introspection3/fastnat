@@ -7,33 +7,22 @@ const httpProxy = require('http-proxy');
 const url = require('url');
 const defaultConfig = require('../config/default.json');
 const serverConfig = require('../config/server.json');
-const defaultHttpConfig = defaultConfig.http;
 const serverHttpConfig = serverConfig.http;
 const rootPath = require('../Common/GlobalData').rootPath;
 const path = require('path');
+const fs = require('fs');
 
-function createProxy(targetUrl) {
+function createProxy() {
 
     let proxy = httpProxy.createProxy({});
-
     proxy.on('error', function (e) {
-
+        logger.error(e);
     });
-    let finalAgent = null;
-    let parsedUrl = url.parse(targetUrl);
-
-    if (parsedUrl.protocol === 'https:') {
-        finalAgent = https.globalAgent;
-
-    } else {
-        finalAgent = http.globalAgent;
-    }
 
     let httpModule = http;
     let serverOptions = {};
-    if (defaultHttpConfig.ssl === true) {
+    if (serverHttpConfig.isHttps === true) {
         httpModule = https;
-        const fs = require('fs');
         const sslFile = serverHttpConfig.http.sslFile;
         let configDir = path.join(rootPath, 'config');
         if (sslFile.type == 'pem') {
@@ -51,6 +40,16 @@ function createProxy(targetUrl) {
     }
 
     let server = httpModule.createServer(serverOptions, function (req, res) {
+
+        let targetUrl = req.url;
+        let finalAgent = null;
+        let parsedUrl = url.parse(targetUrl);
+        if (parsedUrl.protocol === 'https:') {
+            finalAgent = https.globalAgent;
+        } else {
+            finalAgent = http.globalAgent;
+        }
+
         proxy.web(req, res, {
             target: targetUrl,
             agent: finalAgent,
@@ -62,19 +61,10 @@ function createProxy(targetUrl) {
         });
     });
 
-    server.listen(defaultHttpConfig.port);
-
-    server.on('connection', (socket) => {
-        console.log('----------------');
-        socket.on('close', () => {
-            console.log('close')
-        });
-    });
-
-    server.on('connect', (req, clientSocket, head) => {
-
+    server.listen(serverHttpConfig.port, () => {
+        logger.info('Server http proxy start:' + JSON.stringify(server.address()))
     });
     return server;
 }
 
-module.exports.createProxy = createProxy;
+module.exports = createProxy;
