@@ -11,7 +11,7 @@ function register2Cluster() {
     for (const id in cluster.workers) {
         let targetWorker = cluster.workers[id];
         targetWorker.on('message', message => {
-           
+
             if (message.messageType === 'clusterSet') {
                 masterLocalMap.set(message.name, message.value);
                 let fromWorker = cluster.workers[message.workerId];
@@ -58,7 +58,7 @@ function register2Cluster() {
 
 function register2Worker() {
     process.on('message', message => {
-        
+
         if (message.messageType === 'clusterSet_Result') {
             eventEmitter.emit(message.mid, message.result);
             return;

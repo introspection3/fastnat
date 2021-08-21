@@ -5,7 +5,7 @@ const net = require('net');
 const headBytesCount = 4;
 const events = require('events');
 const TcpPackUtil = require('./TcpPackUtil');
-const { Socket } = require('dgram');
+
 
 /**
  * Tcp隧道服务端程序

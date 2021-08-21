@@ -41,19 +41,20 @@ if (serverConfig.cluster.enabled) {
 
     return;
   }
+  ClusterData.register2Worker();
 }
 
-ClusterData.register2Worker();
+
 
 const app = express();
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
 tcpTunnelServer.start();
 
 const server = app.listen(defaultWebServerConfig.port, function () {
-  logger.debug(`fastnat web (pid:${process.pid}) start at:${JSON.stringify(server.address())}`)
+  logger.debug(`fastnat web start at:${JSON.stringify(server.address())}`)
 });
 
-app.use(express.urlencoded({ extended: false }))
+app.use(express.urlencoded({ extended: false }));
 app.use('/', express.static('public'));
 
 app.get('/checkServerStatus', function (req, res) {
