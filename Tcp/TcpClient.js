@@ -43,7 +43,7 @@ class TcpClient {
         targetSocket.stopNotify = true;
     }
 
-    stopCuurentNotify() {
+    stopCurrentNotify() {
         this.client.stopNotify = true;
     }
     /*启动Tcp隧道客户端程序,只会调用一次
@@ -115,7 +115,7 @@ class TcpClient {
 
         // 创建用于连接校验服务端的 客户端连接
         let client = net.createConnection(this.serverAddress, () => {
-            logger.trace('Tcp client has created');
+            logger.trace('Tcp client has created for '+this.toString());
         });
 
         client.on('connect', () => {
@@ -139,10 +139,21 @@ class TcpClient {
 
         client.on('error', (err) => {
             this.eventEmitter.emit('error',err);
-            logger.trace('Tcp Client error:' + err+" ,"+this.toString());
+            logger.trace('Tcp Client error: ' + err+" ,"+this.toString());
         });
 
 
+        let p = new Promise((resolve, reject) => {
+            let t = setTimeout(() => {
+                reject('tcp start timeout:');
+            }, 2000);
+
+            this.eventEmitter.once('connect', (result) => {
+                clearTimeout(t);
+                resolve(true);
+            });
+        });
+        return p;
     }
 
     /**

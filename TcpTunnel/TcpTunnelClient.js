@@ -17,7 +17,7 @@ class TcpTunnelClient {
      * @param {Object} localAddress 
      */
     constructor(authenKey, tcpTunnelServerAddress, localAddress) {
-
+       
         this.authenKey = authenKey
         this.tcpTunnelServerAddress = tcpTunnelServerAddress;
         this.localAddress = localAddress;
@@ -25,7 +25,7 @@ class TcpTunnelClient {
         this.defaultTimeout = 5000;
         this.tcpClient = new TcpClient(this.tcpTunnelServerAddress);
 
-         
+
     }
 
     async stopTunnel(tunnelId) {
@@ -48,15 +48,15 @@ class TcpTunnelClient {
 
 
 
-        this.tcpClient.start();
-
-        this.tcpClient.eventEmitter.on('connect', () => {
-            this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
-        });
+        await this.tcpClient.start();
+        this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
+        // this.tcpClient.eventEmitter.on('connect', () => {
+        //     this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
+        // });
 
         this.tcpClient.eventEmitter.on('onCodecMessage', data => {
 
-            if (data.command == 'newClientComming') {              
+            if (data.command == 'newClientComming') {
                 let localSocket = net.createConnection(this.localAddress, () => {
 
                 });
@@ -94,9 +94,9 @@ class TcpTunnelClient {
                 });
 
             }
-           else if(data.command=='quitClient'){
+            else if (data.command == 'quitClient') {
                 logger.debug('recevie command (quitClient)=>' + data.info);
-                this.tcpClient.eventEmitter.emit('quitClient',data);
+                this.tcpClient.eventEmitter.emit('quitClient', data);
                 this.tcpClient.client.end();
             }
         });

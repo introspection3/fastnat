@@ -5,23 +5,21 @@ const https = require('https');
 const httpProxy = require('http-proxy');
 const url = require('url');
 const logger = require('../Log/logger');
-
 const fs = require('fs');
 const rootPath = require('../Common/GlobalData').rootPath;
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 
 class HttpTunnelClient {
 
-    tcpTunnelClient = new TcpTunnelClient();
+    
 
     /**
      * 
      * @param {string} authenKey 
-     * @param {object} tunnel 
+     * @param {Tunnel} tunnel 
      * @param {object} tcpTunnelServerAddress 
      */
     constructor(authenKey, tunnel, tcpTunnelServerAddress) {
-
         this.authenKey = authenKey;
         this.tunnel = tunnel;
         this.tcpTunnelServerAddress = tcpTunnelServerAddress;
@@ -94,8 +92,8 @@ class HttpTunnelClient {
         this.httpProxyServer.listen({ port: 0 }, async () => {
             let port = this.httpProxyServer.address().port;
             logger.trace(`httpProxyServer started at:${port}`);
-            this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: port, host: '0.0.0.0' });
-            await this.tcpTunnelClient.startTunnel(this.tunnel.id);
+            let tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: port, host: '0.0.0.0' });
+            await tcpTunnelClient.startTunnel(this.tunnel.id);
         });
     }
 }

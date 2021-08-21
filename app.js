@@ -13,10 +13,9 @@ const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
 
 if (serverConfig.cluster.enabled) {
-
   if (cluster.isPrimary || cluster.isMaster) {
     let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
-    logger.debug(`app starts with cluster mode (cpu count:${instanceCount})`);
+    logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
     initdbdata();
     for (let i = 0; i < instanceCount; i++) {
       cluster.fork();
@@ -37,8 +36,6 @@ if (serverConfig.cluster.enabled) {
     });
 
     ClusterData.register2Cluster();
-
-
     return;
   }
   ClusterData.register2Worker();
@@ -171,6 +168,7 @@ async function initdbdata() {
   if (serverConfig.init.firstInit == false) {
     return;
   }
+  logger.debug('start init db data...');
   let firstUser = 'fastnat';
   let existUser = await RegisterUser.findOne(
     {

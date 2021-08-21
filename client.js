@@ -7,7 +7,6 @@ const defaultBridgeConfig = defaultConfig.bridge;
 const GlobalData = require('./Common/GlobalData');
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 
-
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 } else {
@@ -30,21 +29,23 @@ async function main(params) {
         isWorkingFine = false;
         return;
     }
+
     if (!tunnelsResult.success) {
         logger.error(tunnelsResult.info);
         return;
     }
+
     let tunnels = tunnelsResult.data;
     for (const tunnelItem of tunnels) {
-        if (tunnelItem.type == 'http' || tunnelItem.type == 'https') {
+        if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
             let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
-                host: defaultBridgeConfig.host,
+                host: defaultConfig.host,
                 port: defaultBridgeConfig.port
             });
             await httpTunnelClient.start();
             continue;
         }
-        if (tunnelItem.type == 'tcp') {
+        if (tunnelItem.type === 'tcp') {
             let tcpTunnelClient = new TcpTunnelClient(
                 authenKey,
                 {
@@ -108,7 +109,7 @@ trayIcon();
 main();
 
 process.on("exit", function (code) {
-
+   
 });
 
 process.on('SIGINT', function () {
