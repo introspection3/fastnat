@@ -1,7 +1,7 @@
 const Node = require('utp-punch');
 
 let server = new Node(socket => {
-    console.log('server: socket connected',socket.host,socket.port);
+    console.log('server: socket connected', socket.host, socket.port);
     socket.on('data', data => {
         console.log(`server: received '${data.toString()}'`);
         socket.write('world');
@@ -21,7 +21,7 @@ server.listen( // run
 let client = new Node();
 client.bind(); // bind to any port
 client.connect(20000, '127.0.0.1', socket => {
-    console.log('client: socket connected',socket.host,socket.port);
+    console.log('client: socket connected', socket.host, socket.port);
     socket.on('data', data => console.log(`client: received '${data.toString()}'`));
     socket.on('end', () => {
         console.log('client: socket disconnected');

@@ -13,4 +13,7 @@
 - Powerful extension functions, everything is available (cache, compression, encryption, traffic limit, bandwidth limit, port reuse, etc.)
 - Domain name resolution has functions such as custom headers, 404 page configuration, host modification, site protection, URL routing, and pan-resolution.
 - Multi-user and user registration support on server.
+
+STUN (RFC 3489) 与 STUN (RFC 5389/5780)
+https://www.netmanias.com/en/?m=view&id=techdocs&no=6065
  

@@ -12,6 +12,7 @@
     "express": "^4.17.1",
     "generic-pool": "^3.8.2",
     "get-port": "^5.1.1",
+    "getmac": "^5.20.0",
     "http-proxy": "^1.18.1",
     "log4js": "^6.3.0",
     "mysql2": "^2.3.0",

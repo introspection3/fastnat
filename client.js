@@ -6,6 +6,10 @@ const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
 const GlobalData = require('./Common/GlobalData');
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
+const getNatType = require("nat-type-identifier");
+const clientConfig = require('./Common/ClientConfig');
+const os=require('os');
+const getMAC=require('getmac').default;
 
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
@@ -13,7 +17,7 @@ if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 }
 
-const clientConfig = require('./Common/ClientConfig');
+
 const authenKey = clientConfig.authenKey;
 
 let isWorkingFine = true;
@@ -34,7 +38,7 @@ async function main(params) {
         logger.error(tunnelsResult.info);
         return;
     }
-
+    await updateClientSystemInfo();
     let tunnels = tunnelsResult.data;
     for (const tunnelItem of tunnels) {
         if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
@@ -128,7 +132,7 @@ async function trayIcon(params) {
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
-    if (require('os').platform() == 'win32') {
+    if (os.platform() == 'win32') {
         ext = '.ico';
     }
     let bitmap = await readFile('./config/tray' + ext);
@@ -181,4 +185,25 @@ async function trayIcon(params) {
     });
 }
 
+async function updateClientSystemInfo() {
+    let stunHost = clientConfig.stunHost;
+    const params = { logsEnabled: true, sampleCount: 5, stunHost: stunHost };
+    const natType = await getNatType(params);  
+    let osInfo={
+        cpuCount:os.cpus().length,
+        arch:os.arch(),
+        platform:os.platform()
+    };   
+    let mac=JSON.stringify(os.networkInterfaces());
+
+    let data={
+        os:JSON.stringify(osInfo),
+        natType:natType,
+        mac:getMAC()
+    }
+    console.log(data);
+    let result = await (await axios.put('/client/'+authenKey, data)).data;
+    console.log(result);
+    return result;
+}
 

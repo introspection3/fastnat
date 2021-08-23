@@ -11,7 +11,7 @@ const defaultBridgeConfig = defaultConfig.bridge;
 const cluster = require('cluster');
 const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
-const createProxy=require('./Http/HttpProxy');
+const createProxy = require('./Http/HttpProxy');
 
 if (serverConfig.cluster.enabled) {
   if (cluster.isPrimary || cluster.isMaster) {
@@ -46,7 +46,9 @@ if (serverConfig.cluster.enabled) {
 createProxy();
 
 const app = express();
-
+const bodyParser = require('body-parser');//解析,用req.body获取post参数
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
 tcpTunnelServer.start();
 
@@ -54,7 +56,7 @@ const server = app.listen(defaultWebServerConfig.port, function () {
   logger.debug(`fastnat web start at:${JSON.stringify(server.address())}`)
 });
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use('/', express.static('public'));
 
 app.get('/checkServerStatus', function (req, res) {
@@ -76,6 +78,34 @@ app.post('/user/register', async function (req, res) {
   res.send(client);
 
 });
+
+
+app.put('/client/:authenKey', async function (req, res) {
+  console.log('-----------------------------',JSON.stringify(req.body))
+  let result = await Client.update(
+    {
+      os: req.body.os,
+      publicIp: req.body.publicIp,
+      mac: req.body.mac,
+      natType: req.body.natType,
+      publicIp: req.ip
+    },
+    {
+      where: {
+        authenKey: req.params.authenKey
+      }
+    }
+  );
+
+  let success = result[0] > 0;
+  res.send({
+    success: success,
+    data: req.params.authenKey,
+    info: 'update success=' + success
+  });
+
+});
+
 
 
 /**
@@ -239,6 +269,6 @@ async function initDb(sequelize) {
     logger.debug('init.firstInit=true,init all at first....');
     await sequelize.sync({ force: true });
   } else {
-    await sequelize.sync({});
+    await sequelize.sync({ alert: true });
   }
 }
