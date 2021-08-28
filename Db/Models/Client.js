@@ -24,6 +24,7 @@ const Client = sequelize.define('client', {
         defaultValue: '',
         comment: 'client public ip'
     },
+    
     mac: {
         type: DataTypes.STRING(250),
         allowNull: false,
@@ -39,13 +40,13 @@ const Client = sequelize.define('client', {
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        comment: 'created time',
+        comment: 'create time',
         defaultValue: Sequelize.NOW
     },
     updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        comment: 'updated time',
+        comment: 'update time',
         defaultValue: Sequelize.NOW
     },
     isAvailable: {

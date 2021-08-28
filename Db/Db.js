@@ -4,7 +4,6 @@ const config = require('../Common/ServerConfig');
 const dbConfig = config.db;
 
 if (dbConfig.dbType === 'sqlite') {
-    
     const sqlite = require('sqlite3');
     const GlobalData = require('../Common/GlobalData');
     const sqliteFilePath = GlobalData.rootPath + "/config/database.db";
@@ -33,7 +32,7 @@ if (dbConfig.dbType === 'sqlite') {
         storage: sqliteFilePath,
         logging: dbConfig.logging
     });
-   
+
     module.exports = sequelize;
 } else {
     const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
@@ -41,7 +40,7 @@ if (dbConfig.dbType === 'sqlite') {
         dialect: dbConfig.dbType,
         logging: dbConfig.logging
     });
-    
+
     module.exports = sequelize;
 }
 

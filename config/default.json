@@ -2,7 +2,9 @@
     "version": "1.0.0",
     "host": "192.168.1.3",
     "webserver": {
-        "port": 8081
+        "https": false,
+        "port": 8081,
+        "socketioPort": 8082
     },
     "bridge": {
         "port": 3927
@@ -11,8 +13,7 @@
         "port": "13141"
     },
     "p2p": {
-        "type": "udp",
-        "port": "123456"
+        "trackerPort": "39270"
     },
     "log": {
         "level": "trace"

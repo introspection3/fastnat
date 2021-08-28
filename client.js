@@ -8,8 +8,12 @@ const GlobalData = require('./Common/GlobalData');
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 const getNatType = require("nat-type-identifier");
 const clientConfig = require('./Common/ClientConfig');
-const os=require('os');
-const getMAC=require('getmac').default;
+const os = require('os');
+const getMAC = require('getmac').default;
+const notifier = require('node-notifier');
+const io = require('socket.io-client').io;
+const SYMMETRIC_NAT = "Symmetric NAT";
+const P2PClient = require('./P2P/P2PClient');
 
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
@@ -23,8 +27,16 @@ const authenKey = clientConfig.authenKey;
 let isWorkingFine = true;
 
 async function main(params) {
+    // Object
+    notifier.notify({
+        title: '通知',
+        message: '欢迎使用fastnat',
+        sound: true,
+        timeout: 3
+    });
 
     let tunnelsResult = null;
+    let socketIOSocket = await useSocketIO(authenKey);
 
     try {
         tunnelsResult = await getTunnels(authenKey);
@@ -38,7 +50,8 @@ async function main(params) {
         logger.error(tunnelsResult.info);
         return;
     }
-    await updateClientSystemInfo();
+    const natType = await getNatType({ logsEnabled: true, sampleCount: 5, stunHost: stunHost });
+    await updateClientSystemInfo(natType);
     let tunnels = tunnelsResult.data;
     for (const tunnelItem of tunnels) {
         if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
@@ -49,7 +62,7 @@ async function main(params) {
             await httpTunnelClient.start();
             continue;
         }
-        if (tunnelItem.type === 'tcp') {
+        if (tunnelItem.type === 'tcp' || tunnelItem.type === 'p2p') {
             let tcpTunnelClient = new TcpTunnelClient(
                 authenKey,
                 {
@@ -71,6 +84,7 @@ async function main(params) {
                 logger.error('process will quit for : ' + data.info);
                 process.exit(1);
             });
+            continue;
         }
     }
 }
@@ -108,23 +122,12 @@ setInterval(async () => {
             main();
         }
     }
-}, 30 * 1000);
+}, 10 * 1000);
+
 trayIcon();
 main();
 
-process.on("exit", function (code) {
 
-});
-
-process.on('SIGINT', function () {
-    console.log('Exit now!');
-    process.exit();
-});
-
-process.on("uncaughtException", function (err) {
-    console.error(err.stack)
-    logger.error(err);
-});
 
 async function trayIcon(params) {
     const SysTray = require('systray').default;
@@ -151,12 +154,12 @@ async function trayIcon(params) {
                 enabled: true
             }, {
                 title: "管理",
-                tooltip: "bb",
+                tooltip: "manage",
                 checked: false,
                 enabled: true
             }, {
                 title: "退出",
-                tooltip: "exit",
+                tooltip: "quit",
                 checked: false,
                 enabled: true
             }]
@@ -185,25 +188,79 @@ async function trayIcon(params) {
     });
 }
 
-async function updateClientSystemInfo() {
+async function updateClientSystemInfo(natType) {
+    // Symmetric NAT
     let stunHost = clientConfig.stunHost;
-    const params = { logsEnabled: true, sampleCount: 5, stunHost: stunHost };
-    const natType = await getNatType(params);  
-    let osInfo={
-        cpuCount:os.cpus().length,
-        arch:os.arch(),
-        platform:os.platform()
-    };   
-    let mac=JSON.stringify(os.networkInterfaces());
-
-    let data={
-        os:JSON.stringify(osInfo),
-        natType:natType,
-        mac:getMAC()
+    let osInfo = {
+        cpuCount: os.cpus().length,
+        arch: os.arch(),
+        platform: os.platform()
+    };
+    let data = {
+        os: JSON.stringify(osInfo),
+        natType: natType,
+        mac: getMAC()
     }
-    console.log(data);
-    let result = await (await axios.put('/client/'+authenKey, data)).data;
-    console.log(result);
+    let result = await (await axios.put('/client/' + authenKey, data)).data;
     return result;
 }
 
+/**
+ * 
+ * @param {string} authenKey 
+ * @returns {Promise<io.Socket >}
+ */
+function useSocketIO(authenKey) {
+
+    let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
+    logger.debug('ioUrl:' + ioUrl);
+    const socket = io(ioUrl, {
+        auth: {
+            token: authenKey
+        },
+        transports: ["websocket"]
+
+    });
+
+    socket.on('p2p.request.open', async (data) => {
+        let p2pClient = new P2PClient(defaultConfig.host, defaultConfig.p2p.trackerPort, data.targetTunnelId, authenKey);
+        p2pClient.start();
+    });
+
+    socket.on('errorToken', async (data) => {
+        socket.disconnect(true);
+        logger.error('error token:' + data.token);
+    });
+
+    socket.on('disconnecting', (reason) => {
+        console.log(reason);
+    });
+
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            reject('socket.io client  to server timeout,please check the server status')
+        }, 2000);
+
+        socket.on('connect', function () {
+            clearTimeout(t);
+            logger.debug('socket.io client has connected to server,socket.id=' + socket.id);
+            resolve(socket);
+        });
+    });
+    return p;
+}
+
+
+process.on("exit", function (code) {
+
+});
+
+process.on('SIGINT', function () {
+    console.log('Exit now!');
+    process.exit();
+});
+
+process.on("uncaughtException", function (err) {
+    console.error(err.stack)
+    logger.error(err);
+});
