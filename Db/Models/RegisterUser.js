@@ -34,13 +34,13 @@ const RegisterUser = sequelize.define('registerUser', {
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        comment: 'created time',
+        comment: 'create time',
         defaultValue: Sequelize.NOW
     },
     updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        comment: 'updated time',
+        comment: 'update time',
         defaultValue: Sequelize.NOW
     },
 
