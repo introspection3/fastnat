@@ -5,20 +5,11 @@ const trackerPort = defaultConfig.p2p.trackerPort;
 const dgram = require('dgram');
 const udpSocket = dgram.createSocket('udp4');
 const logger = require('../Log/logger');
-const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 
 udpSocket.on('error', err => {
     logger.error(err);
 });
 
-
-class MsgResult {
-    constructor(authenKey, searchClientId, p2p) {
-        this.authenKey = authenKey;
-        this.searchClientId = searchClientId;
-        this.p2p = p2p;
-    }
-}
 
 udpSocket.on('message', async (msg, rinfo) => {
 
@@ -33,7 +24,7 @@ udpSocket.on('message', async (msg, rinfo) => {
     console.log(`p2p tracker got: ${text} from ${rinfo.address}:${rinfo.port}`);
 
     if (message.command === 'client_report_tunnel_info') {
-        let result = await Tunnel.update(
+         let result = await Tunnel.update(
             {
                 p2pRemotePort: rinfo.port,
                 p2pRemotePortUpdatedAt: new Date(),
@@ -51,39 +42,13 @@ udpSocket.on('message', async (msg, rinfo) => {
             logger.warn('p2p tracker,a client with a wrong authenKey:' + message.authenKey);
             return;
         }
-        udpSocket.send(JSON.stringify({host:rinfo.address,port:rinfo.port}), rinfo.port, rinfo.address);
+        udpSocket.send(JSON.stringify({ host: rinfo.address, port: rinfo.port }), rinfo.port, rinfo.address);
     }
 
     if (message.command === 'connector_report_tunnel_info') {
-        let result = await Tunnel.update(
-            {
-                p2pRemotePort: rinfo.port,
-                p2pRemotePortUpdatedAt: new Date(),
-                updatedAt: new Date()
-            },
-            {
-                where: {
-                    id: message.localTunnelId,
-                    isAvailable: true
-                }
-            }
-        );
-        let success = result[0] > 0;
-        if (success == false) {
-            logger.warn('p2p tracker,a client with a wrong authenKey:' + message.authenKey);
-            return;
-        }
-        udpSocket.send(JSON.stringify({host:rinfo.address,port:rinfo.port}), rinfo.port, rinfo.address);
-    }
-  
-    let searchClient = await Client.findOne({
-        where: {
-            id: message.searchClientId
-        }
-    });
 
-    let msgResult = new MsgResult(message.authenKey, searchClient.pip ?? '');
-    udpSocket.send(JSON.stringify(msgResult), rinfo.port, rinfo.address);
+        udpSocket.send(JSON.stringify({ host: rinfo.address, port: rinfo.port }), rinfo.port, rinfo.address);
+    }
 
 });
 

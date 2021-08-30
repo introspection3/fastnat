@@ -38,11 +38,13 @@ class P2pConnector {
     }
 
     start() {
+
         if (this.started) {
             logger.warn('already started')
             return;
         }
         this.started = true;
+
         this.server = new Node(socket => {
             console.log('p2p connector : UTP client is connected');
             const address = socket.address();
@@ -62,7 +64,7 @@ class P2pConnector {
             this.udpSocket = this.server.getUdpSocket();
             logger.debug('p2p connector is ready,bindPort=' + this.udpSocket.address().port);
             this.bindPort = this.udpSocket.address().port;
-            this.udpSocket.on('message', this.#onMessage);
+
             let msg = JSON.stringify({ authenKey: authenKey, targetTunnelId: this.targetTunnelId, command: 'connector_report_tunnel_info' });
             this.timer = setInterval(() => {
                 this.udpSocket.send(
@@ -72,21 +74,43 @@ class P2pConnector {
                     (err) => { logger.debug('p2p connector  notify to   tracker error: ' + err) }
                 );
             }, this.notifyTrackerInterval);
+
+            this.udpSocket.on('message', (msg, rinfo) => {
+                const text = msg.toString();
+                let message = JSON.parse(text);
+                if (rinfo.address === this.trackerIP && rinfo.port === this.trackerPort) {
+                    this.udpSocket.removeListener('message', this.#onMessage);
+                    clearInterval(this.timer);
+                    //通知对应的客户端进行同时打洞操作
+                    this.socketIOSocket.emit('p2p.request.open', {
+                        targetTunnelId: this.targetTunnelId,
+                        targetP2PPassword: this.targetP2PPassword,
+                        authenKey: this.authenKey,
+                        connectorHost: message.host,
+                        connectorPort: message.host,
+                    }, (backData) => {
+                        //处理逻辑没有
+                        this.tryConnect2Public(backData.data.host,backData.data.port);
+                    });
+                }
+            });
+
+
         });
     }
 
-    async tryConnect2Public(host, port) {
+    async tryConnect2Public(clientHost, clientPort) {
+
         let publicInfo = {
-            address: host,
-            port: port
+            address: clientHost,
+            port: clientPort
         }
-        console.log(
-            `p2p connector: punching a hole to ${publicInfo.address}:${publicInfo.port}...`
-        );
+        console.log(`p2p connector: begin punching a hole to ${publicInfo.address}:${publicInfo.port}...`);
+
         this.server.punch(10, publicInfo.port, publicInfo.address, success => {
-            console.log(
-                `p2p connector: punching result: ${success ? 'success' : 'failure'}`
-            );
+
+            console.log( `p2p connector: punching result: ${success ? 'success' : 'failure'}` );               
+           
             if (!success)
                 process.exit(1);
 
@@ -98,33 +122,6 @@ class P2pConnector {
 
         });
     }
-
-
-    /**
-     * 
-     * @param {Buffer} msg 
-     * @param {dgram.RemoteInfo} rinfo 
-     */
-    #onMessage(msg, rinfo) {
-        const text = msg.toString();
-        let message = JSON.parse(text);
-        if (rinfo.address === this.trackerIP && rinfo.port === this.trackerPort) {
-            this.udpSocket.removeListener('message', this.#onMessage);
-            clearInterval(this.timer);
-            //通知对应的客户端进行同时打洞操作
-            this.socketIOSocket.emit('p2p.request.open', {
-                targetTunnelId: this.targetTunnelId,
-                targetP2PPassword: this.targetP2PPassword,
-                authenKey: this.authenKey,
-                connectorHost: message.host,
-                connectorPort: message.host,
-            }, (backData) => {
-
-
-            });
-        }
-    }
-
-
-
 }
+
+module.exports=P2pConnector;

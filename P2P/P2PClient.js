@@ -16,34 +16,44 @@ class P2PClient {
      * @param {Number} trackerPort 
      * @param {Number} localTunnelId 
      * @param {string} authenKey 
+     * @param {Socket} socketIOSocket 
      * @param {Number} notifyTrackerInterval 
      * @param {Number} bindPort 
      */
     constructor(trackerIP, trackerPort,
         localTunnelId, authenKey,
+        socketIOSocket,
         notifyTrackerInterval = 2000,
         bindPort = 0) {
         this.trackerIP = trackerIP;
         this.trackerPort = trackerPort;
         this.localTunnelId = localTunnelId;
         this.authenKey = authenKey;
+        this.socketIOSocket=socketIOSocket;
         this.notifyTrackerInterval = notifyTrackerInterval;
         this.bindPort = bindPort;
         this.started = false;
     }
 
-    start() {
+    start(connectorHost, connectorPort,fn) {
+
         if (this.started) {
             logger.warn('already started')
             return;
         }
+        
+        this.connectorHost = connectorHost;
+        this.connectorPort = connectorPort;
         this.started = true;
         this.client = new Node();
+
         this.client.bind(this.bindPort, () => {
             this.udpSocket = this.client.getUdpSocket();
             logger.debug('p2p client is ready,bindPort=' + this.udpSocket.address().port);
             this.bindPort = this.udpSocket.address().port;
-            this.udpSocket.on('message', this.#onMessage);
+
+            //--------向tracker汇报--------------------------
+
             let msg = JSON.stringify({ authenKey: authenKey, localTunnelId: this.localTunnelId, command: 'client_report_tunnel_info' });
             this.timer = setInterval(() => {
                 this.udpSocket.send(
@@ -54,7 +64,22 @@ class P2PClient {
                 );
                 logger.trace(`p2p client tunnel.id=${this.localTunnelId}  notify to   tracker`);
             }, this.notifyTrackerInterval);
+
+           
+            //---------来至tracker的回应------------------
+            this.udpSocket.on('message', (msg, rinfo) => {
+                const text = msg.toString();
+                let message = JSON.parse(text);
+                if (rinfo.address === this.trackerIP && rinfo.port === this.trackerPort) {
+                    this.udpSocket.removeListener('message', this.#onMessage);
+                    clearInterval(this.timer);
+                    fn({success:true,data:message,info:'client public info'});
+                    this.tryConnect2Public(this.connectorHost, this.connectorPort);
+                }
+            });
+
         });
+
     }
 
     async tryConnect2Public(host, port) {
@@ -98,23 +123,8 @@ class P2PClient {
         });
     }
 
-    /**
-     * 
-     * @param {Buffer} msg 
-     * @param {dgram.RemoteInfo} rinfo 
-     */
-    #onMessage(msg, rinfo) {
-        const text = msg.toString();
-        if (rinfo.address === this.trackerIP && rinfo.port === this.trackerPort) {
-            this.udpSocket.removeListener('message', this.#onMessage);
-            clearInterval(this.timer);
-            //通知对应的客户端进行同时打洞操作
-
-        }
-    }
-
 
 
 }
 
-module.exports=P2PClient;
+module.exports = P2PClient;

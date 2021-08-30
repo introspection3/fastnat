@@ -14,6 +14,7 @@ const notifier = require('node-notifier');
 const io = require('socket.io-client').io;
 const SYMMETRIC_NAT = "Symmetric NAT";
 const P2PClient = require('./P2P/P2PClient');
+const P2pConnector = require('./P2P/P2pConnector');
 
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
@@ -207,26 +208,41 @@ async function updateClientSystemInfo(natType) {
 
 /**
  * 
+ * @param {number} targetTunnelId 
+ * @param {string} targetP2PPassword 
+ * @param {Socket} socketIOSocket 
+ */
+function p2pStart(targetTunnelId, targetP2PPassword, socketIOSocket) {
+    let connector = new P2pConnector(defaultConfig.host, defaultConfig.p2p.trackerPort, targetTunnelId, targetP2PPassword, authenKey, socketIOSocket);
+    connector.start();
+}
+
+/**
+ * 
  * @param {string} authenKey 
  * @returns {Promise<io.Socket >}
  */
 function useSocketIO(authenKey) {
 
     let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
+
     logger.debug('ioUrl:' + ioUrl);
+
     const socket = io(ioUrl, {
         auth: {
             token: authenKey
         },
         transports: ["websocket"]
-
     });
 
-    socket.on('p2p.request.open', async (data) => {
-        let p2pClient = new P2PClient(defaultConfig.host, defaultConfig.p2p.trackerPort, data.targetTunnelId, authenKey);
-        p2pClient.start();
+    socket.on('p2p.request.open', async (data, fn) => {
+        let p2pClient = new P2PClient(defaultConfig.host, defaultConfig.p2p.trackerPort, data.targetTunnelId, authenKey, socket);
+        p2pClient.start(data.connectorHost, data.connectorPort, fn);
     });
 
+    socket.on('p2p.request.openConnector', async (data) => {
+
+    });
     socket.on('errorToken', async (data) => {
         socket.disconnect(true);
         logger.error('error token:' + data.token);

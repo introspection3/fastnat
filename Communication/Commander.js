@@ -52,6 +52,7 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
+    
     let token = socket.handshake.auth.token;
     socket.on('disconnect', function () {
         console.log(`client authenKey=${token} disconnect`);
@@ -72,7 +73,7 @@ io.on('connection', (socket) => {
     }
     //-------------------------------------------------
 
-    socket.on('p2p.request.open', async (data, callback) => {
+    socket.on('p2p.request.open', async (data, fn) => {
         let clientInfo = await getClientByTunnelId(data.targetTunnelId);
         let result = false;
         let info = '';
@@ -84,20 +85,25 @@ io.on('connection', (socket) => {
             let targetSocket = allSockets.find((value, index, array) => {
                 value.handshake.auth.token === clientInfo.authenKey;
             });
+
             if (targetSocket != null) {
-                if (targetSocket.data[data.targetTunnelId] != null) {
-                    info = 'targetTunnelId is p2ped by ' + targetSocket.data[data.targetTunnelId];
+                let objectKey = data.targetTunnelId + '';
+                if (targetSocket.data[objectKey] != null) {
+                    info = 'targetTunnelId is p2ped by ' + targetSocket.data[objectKey];
+                    fn({ success: result, data: data, info: info });
                 } else {
-                    targetSocket.data[data.targetTunnelId] = data.authenKey;
+                    targetSocket.data[objectKey] = data.authenKey;
                     result = true;
-                    targetSocket.emit('p2p.request.open', data);
+                    targetSocket.emit('p2p.request.open', data, (ret) => {
+                        fn(ret);
+                    });
                 }
             }
             else {
                 info = `targetTunnelId's client is not online`;
+                fn({ success: result, data: data, info: info });
             }
         }
-        callback({ success: result, data: data, info: info });
     });
 });
 
