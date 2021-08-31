@@ -31,10 +31,12 @@ class P2pConnector {
         this.bindPort = bindPort;
         this.started = false;
         this.targetP2PPassword = targetP2PPassword;
+
     }
 
     stop() {
         this.server.close();
+        console.log('server close');
     }
     start() {
 
@@ -45,7 +47,7 @@ class P2pConnector {
         this.started = true;
 
         this.server = new Node(socket => {
-            logger.info('p2p connector : UTP client is connected');
+            logger.info('p2p connector : UTP client comming');
             socket.write(`I'm conncetor ,hi...`);
             const address = socket.address();
             socket.on('data', data => {
@@ -93,7 +95,12 @@ class P2pConnector {
                         connectorHost: message.host,
                         connectorPort: message.port,
                     }, (backData) => {
-                        logger.info('backData:' + JSON.stringify(backData))
+                        logger.info('backData:' + JSON.stringify(backData));
+                        if(backData.success==false){
+                            logger.warn(`can't connect to p2p client for:`+backData.info);
+                            this.stop();
+                            return;
+                        }
                         this.tryConnect2Public(backData.data.host, backData.data.port);
                     });
                 }
