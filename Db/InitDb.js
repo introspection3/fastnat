@@ -83,7 +83,7 @@ async function initDb(sequelize) {
         logger.debug('init.firstInit=true,init all at first....');
         await sequelize.sync({ force: true });
     } else {
-        await sequelize.sync({  });
+        await sequelize.sync({});
     }
 }
-module.exports=initdbdata;
+module.exports = initdbdata;

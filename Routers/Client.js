@@ -1,6 +1,6 @@
 const express = require(`express`);
 const router = express.Router();
-const { RegisterUser, Client, Tunnel } = require('../Db/Models');
+const { RegisterUser, Client, Tunnel, Connector } = require('../Db/Models');
 
 router.get(`/tunnels/:authenKey`, async (req, res, next) => {
     let client = await Client.findOne({
@@ -23,7 +23,30 @@ router.get(`/tunnels/:authenKey`, async (req, res, next) => {
         success: true,
         data: client.tunnels
     });
-})
+});
+
+router.get(`/connectors/:authenKey`, async (req, res, next) => {
+    let client = await Client.findOne({
+        where: {
+            authenKey: req.params.authenKey,
+            isAvailable: true
+        },
+        include: Connector
+    });
+
+    if (client == null) {
+        res.send({
+            success: false,
+            data: null,
+            info: 'this authenKey has no client'
+        });
+        return;
+    }
+    res.send({
+        success: true,
+        data: client.connectors
+    });
+});
 
 
 

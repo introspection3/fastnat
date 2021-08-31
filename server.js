@@ -10,13 +10,14 @@ const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
 const createProxy = require('./Http/HttpProxy');
 const initdbdata = require('./Db/InitDb');
-
+const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
 
 if (serverConfig.cluster.enabled) {
   if (cluster.isPrimary || cluster.isMaster) {
     let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
     logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
     initdbdata();
+    setupPrimary();
     for (let i = 0; i < instanceCount; i++) {
       cluster.fork();
     }

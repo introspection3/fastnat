@@ -7,6 +7,7 @@
   "author": "codeneno <qsmy_qin@163.com>",
   "license": "GPL",
   "dependencies": {
+    "@socket.io/cluster-adapter": "^0.1.0",
     "@socket.io/redis-adapter": "^7.0.0",
     "axios": "^0.21.1",
     "commander": "^8.1.0",

@@ -1,16 +1,21 @@
 const Client = require('./Models/Client');
 const Tunnel = require('./Models/Tunnel');
 const RegisterUser = require('./Models/RegisterUser');
+const Connector = require('./Models/Connector');
 
-RegisterUser.Clients=RegisterUser.hasMany(Client,{ onDelete: 'CASCADE', onUpdate: 'CASCADE' });
-Client.RegisterUser=Client.belongsTo(RegisterUser);
+RegisterUser.Clients = RegisterUser.hasMany(Client, { onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+Client.RegisterUser = Client.belongsTo(RegisterUser);
 
-Tunnel.Client=Tunnel.belongsTo(Client);
-Client.Tunnels=Client.hasMany(Tunnel,{ onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+Tunnel.Client = Tunnel.belongsTo(Client);
+Client.Tunnels = Client.hasMany(Tunnel, { onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 
-module.exports={
+Connector.Client = Connector.belongsTo(Client);
+Client.Connectors = Client.hasMany(Connector, { onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+module.exports = {
     Client,
     Tunnel,
-    RegisterUser
+    RegisterUser,
+    Connector
 }
