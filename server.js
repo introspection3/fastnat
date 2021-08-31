@@ -68,7 +68,7 @@ const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
 tcpTunnelServer.start();
 
 //-----------------------socket.io-----------------
-
+require('./P2P/P2PTracker');
 require('./Communication/Commander');
 //-------------------------------------------------
 process.on("uncaughtException", function (err) {

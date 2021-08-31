@@ -51,8 +51,10 @@ io.use(async (socket, next) => {
     return next(new Error('socketio authen error'));
 });
 
-io.on('connection', (socket) => {
-    
+let defaultNS = io.of('/');
+
+io.on('connection', async (socket) => {
+    socket.join('default');
     let token = socket.handshake.auth.token;
     socket.on('disconnect', function () {
         console.log(`client authenKey=${token} disconnect`);
@@ -60,7 +62,7 @@ io.on('connection', (socket) => {
     logger.debug('socket.io new connection,socket.id=' + socket.id);
 
     //-----------判断是否已经连了这个authenKey----------
-    let currentSockets = await defaultNS.fetchSockets();
+    let currentSockets = await defaultNS.in('default').fetchSockets();
     let existSockets = currentSockets.filter((value, index, array) => {
         value.handshake.auth.token === token;
     });
@@ -81,7 +83,7 @@ io.on('connection', (socket) => {
             info = `targetTunnelId's client not exist`;
         }
         else {
-            let allSockets = await defaultNS.fetchSockets();
+            let allSockets = await defaultNS.in('default').fetchSockets();
             let targetSocket = allSockets.find((value, index, array) => {
                 value.handshake.auth.token === clientInfo.authenKey;
             });
@@ -107,7 +109,7 @@ io.on('connection', (socket) => {
     });
 });
 
-let defaultNS = io.of('/');
+
 
 if (serverConfig.cluster.enabled) {
 

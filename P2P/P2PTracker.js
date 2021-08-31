@@ -1,6 +1,5 @@
 
-const Node = require('utp-punch');
-const defaultConfig = require('./Common/DefaultConfig');
+const defaultConfig = require('../Common/DefaultConfig');
 const trackerPort = defaultConfig.p2p.trackerPort;
 const dgram = require('dgram');
 const udpSocket = dgram.createSocket('udp4');
@@ -24,7 +23,7 @@ udpSocket.on('message', async (msg, rinfo) => {
     console.log(`p2p tracker got: ${text} from ${rinfo.address}:${rinfo.port}`);
 
     if (message.command === 'client_report_tunnel_info') {
-         let result = await Tunnel.update(
+        let result = await Tunnel.update(
             {
                 p2pRemotePort: rinfo.port,
                 p2pRemotePortUpdatedAt: new Date(),
@@ -57,5 +56,7 @@ udpSocket.on('listening', () => {
     const address = udpSocket.address();
     console.log(`p2p tracker listening ${address.address}:${address.port}`);
 });
+console.log('trackerPort', trackerPort)
+udpSocket.bind({ port: trackerPort, exclusive: true });
 
-udpSocket.bind(trackerPort);
+module.exports = udpSocket;

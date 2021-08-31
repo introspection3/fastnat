@@ -13,7 +13,8 @@
         "port": "13141"
     },
     "p2p": {
-        "trackerPort": "39270"
+        "host":"119.101.217.113",
+        "trackerPort": 5432
     },
     "log": {
         "level": "trace"

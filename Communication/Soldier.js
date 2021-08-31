@@ -1,12 +1,8 @@
-const defaultConfig = require('./Common/DefaultConfig');
-
-const logger = require('./Log/logger');
+﻿const defaultConfig = require('../Common/DefaultConfig');
+const logger = require('../Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
-
 const io = require('socket.io-client').io;
-
-const P2PClient = require('./P2P/P2PClient');
-
+const P2PClient = require('../P2P/P2PClient');
 
 /**
  * 
@@ -27,7 +23,7 @@ function useSocketIO(authenKey) {
     });
 
     socket.on('p2p.request.open', async (data, fn) => {
-        let p2pClient = new P2PClient(defaultConfig.host, defaultConfig.p2p.trackerPort, data.targetTunnelId, authenKey, socket);
+        let p2pClient = new P2PClient(defaultConfig.p2p.host, defaultConfig.p2p.trackerPort, data.targetTunnelId, authenKey, socket);
         p2pClient.start(data.connectorHost, data.connectorPort, fn);
     });
 

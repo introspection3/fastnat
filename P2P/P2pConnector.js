@@ -1,6 +1,6 @@
 
 const Node = require('utp-punch');
-const defaultConfig = require('./Common/DefaultConfig');
+const defaultConfig = require('../Common/DefaultConfig');
 const trackerPort = defaultConfig.port;
 const dgram = require('dgram');
 const udpSocket = dgram.createSocket('udp4');
@@ -47,6 +47,7 @@ class P2pConnector {
 
         this.server = new Node(socket => {
             console.log('p2p connector : UTP client is connected');
+            socket.write(`I'm conncetor ,hi...`);
             const address = socket.address();
             socket.on('data', data => {
                 const text = data.toString();
@@ -75,11 +76,11 @@ class P2pConnector {
                 );
             }, this.notifyTrackerInterval);
 
-            this.udpSocket.on('message', (msg, rinfo) => {
+            let onMessage = (msg, rinfo) => {
                 const text = msg.toString();
                 let message = JSON.parse(text);
                 if (rinfo.address === this.trackerIP && rinfo.port === this.trackerPort) {
-                    this.udpSocket.removeListener('message', this.#onMessage);
+                    this.udpSocket.removeListener('message', onMessage);
                     clearInterval(this.timer);
                     //通知对应的客户端进行同时打洞操作
                     this.socketIOSocket.emit('p2p.request.open', {
@@ -90,10 +91,12 @@ class P2pConnector {
                         connectorPort: message.host,
                     }, (backData) => {
                         //处理逻辑没有
-                        this.tryConnect2Public(backData.data.host,backData.data.port);
+                        this.tryConnect2Public(backData.data.host, backData.data.port);
                     });
                 }
-            });
+            };
+
+            this.udpSocket.on('message', onMessage);
 
 
         });
@@ -109,8 +112,8 @@ class P2pConnector {
 
         this.server.punch(10, publicInfo.port, publicInfo.address, success => {
 
-            console.log( `p2p connector: punching result: ${success ? 'success' : 'failure'}` );               
-           
+            console.log(`p2p connector: punching result: ${success ? 'success' : 'failure'}`);
+
             if (!success)
                 process.exit(1);
 
@@ -124,4 +127,4 @@ class P2pConnector {
     }
 }
 
-module.exports=P2pConnector;
+module.exports = P2pConnector;

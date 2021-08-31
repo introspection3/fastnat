@@ -259,6 +259,11 @@
   dependencies:
     "delayed-stream" "~1.0.0"
 
+"commander@^8.1.0":
+  "integrity" "sha512-mf45ldcuHSYShkplHHGKWb4TrmwQadxOn7v4WuhDJy0ZVoY5JFajaRDKD0PNe5qXzBX0rhovjTnP6Kz9LETcuA=="
+  "resolved" "https://registry.npmjs.org/commander/-/commander-8.1.0.tgz"
+  "version" "8.1.0"
+
 "component-emitter@~1.3.0":
   "integrity" "sha512-Rd3se6QB+sO1TwqZjscQrurpEPIfO0/yYnSin6Q/rD3mOutHvUrCAhJub3r90uNb+SESBuE0QYoB90YdfatsRg=="
   "resolved" "https://registry.npmjs.org/component-emitter/-/component-emitter-1.3.0.tgz"

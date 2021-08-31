@@ -1,6 +1,6 @@
 
 const Node = require('utp-punch');
-const defaultConfig = require('./Common/DefaultConfig');
+const defaultConfig = require('../Common/DefaultConfig');
 const trackerPort = defaultConfig.port;
 const dgram = require('dgram');
 const udpSocket = dgram.createSocket('udp4');
@@ -65,18 +65,19 @@ class P2PClient {
                 logger.trace(`p2p client tunnel.id=${this.localTunnelId}  notify to   tracker`);
             }, this.notifyTrackerInterval);
 
-           
-            //---------来至tracker的回应------------------
-            this.udpSocket.on('message', (msg, rinfo) => {
+            let onMessage=(msg, rinfo) => {
                 const text = msg.toString();
                 let message = JSON.parse(text);
                 if (rinfo.address === this.trackerIP && rinfo.port === this.trackerPort) {
-                    this.udpSocket.removeListener('message', this.#onMessage);
+                    this.udpSocket.removeListener('message', onMessage);
                     clearInterval(this.timer);
                     fn({success:true,data:message,info:'client public info'});
                     this.tryConnect2Public(this.connectorHost, this.connectorPort);
                 }
-            });
+            };
+           
+            //---------来至tracker的回应------------------
+            this.udpSocket.on('message', onMessage);
 
         });
 
@@ -111,6 +112,7 @@ class P2PClient {
      */
     #onConnected(socket) {
         console.log('p2p client: UTP socket has connected to the public');
+        socket.write(`I'm client ,hi...`);
         const address = socket.address();
         socket.on('data', data => {
             const text = data.toString();
