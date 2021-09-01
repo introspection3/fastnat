@@ -7,7 +7,7 @@ const Socket = require('socket.io-client').Socket;
 const net = require('net');
 const { Database } = require('sqlite3');
 
-class P2pConnector {
+class P2pConnector2 {
 
     /**
      * 
@@ -42,55 +42,12 @@ class P2pConnector {
     }
 
     stop() {
-        this.server.close();
+        this.client.close();
         logger.debug('P2pConnector close,connectorClientId=' + this.connectorClientId);
     }
 
-    #createLocalTcpServer(localPort, utpSocket) {
 
-        let server = net.createServer((socket) => {
-            utpSocket.on('data',data=>{
-                socket.write(data);
-            });
 
-            socket.on('data', (dataBuffer) => {
-                console.log(dataBuffer.toString())
-                utpSocket.write(dataBuffer);
-            });
-
-            socket.on('end', () => {
-
-                logger.debug(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
-
-                socket.end();
-                socket.destroy();
-            });
-
-            socket.on('error', (err) => {
-
-                logger.debug('Tcp  server on socket error ' + err);
-
-                socket.end();
-                socket.destroy();
-            });
-
-            socket.on('timeout', () => {
-
-                logger.debug('Tcp  server on socket timeout,socketTime=' + this.socketTime);
-                socket.end();
-                socket.destroy();
-            });
-
-        });
-
-        server.listen(localPort, () => {
-            //在大多数操作系统中，监听未指定的 IPv6 地址 (::) 可能会导致 net.Server 也监听未指定的 IPv4 地址 (0.0.0.0)
-            logger.trace("Tcp  server started success=>9999");
-        });
-
-        return server;
-
-    }
     start() {
 
         if (this.started) {
@@ -98,37 +55,14 @@ class P2pConnector {
             return;
         }
         this.started = true;
+        this.client = new Node();
 
-        this.server = new Node(utpSocket => {
-            logger.info('p2p connector : UTP client comming');
-
-            const address = utpSocket.address();
-            let onData = data => {
-                const text = data.toString();
-                if (text === 'okok') {
-                    let tcpServer = this.#createLocalTcpServer(9999, utpSocket);
-                    logger.warn('okok');
-                   
-                    return;
-                }
-                console.log(
-                    `p2p connector: received '${text}' from ${address.address}:${address.port}`
-                );
-            };
-
-            utpSocket.once('data', onData);
-            utpSocket.on('end', () => {
-                logger.debug('p2p connector: remote disconnected');
-                this.server.close();
-            });
-
-        });
-
-        this.server.bind(this.bindPort);
-        this.server.listen(() => {
-            this.udpSocket = this.server.getUdpSocket();
-            logger.debug('p2p connector is ready,bindPort=' + this.udpSocket.address().port);
+        this.client.bind(this.bindPort, () => {
+            this.udpSocket = this.client.getUdpSocket();
+            logger.debug('p2p connector2 is ready,bindPort=' + this.udpSocket.address().port);
             this.bindPort = this.udpSocket.address().port;
+
+            //--------向tracker汇报--------------------------
 
             let msg = JSON.stringify({ authenKey: this.authenKey, targetTunnelId: this.targetTunnelId, command: 'connector_report_tunnel_info' });
 
@@ -169,36 +103,97 @@ class P2pConnector {
                 }
             };
 
+            //---------来至tracker的回应------------------
             this.udpSocket.on('message', onMessage);
+
         });
+
+
     }
 
     async tryConnect2Public(clientHost, clientPort) {
 
-        let publicInfo = {
+        let server = {
             address: clientHost,
             port: clientPort
         }
-        logger.debug(`p2p connector: begin punching a hole to ${publicInfo.address}:${publicInfo.port}...`);
+        logger.debug(`p2p connector: begin punching a hole to ${server.address}:${server.port}...`);
 
-        this.server.punch(10, publicInfo.port, publicInfo.address, success => {
-
-            logger.debug(`p2p connector: punching result: ${success ? 'success' : 'failure'}`);
-
+        this.client.punch(10, server.port, server.address, success => {
+            logger.debug(
+                `p2p connector: punching result: ${success ? 'success' : 'failure'}`
+            );
             if (!success) {
-                logger.warn(`p2p connector punch failed`);
                 this.stop();
-                return;
             }
-
-            this.server.on('timeout', () => {
-                logger.warn('p2p connector: connect timeout');
+            this.client.on('timeout', () => {
+                console.log('p2p connector: connect timeout');
                 this.stop();
             });
-            logger.debug('p2p connector: waiting for the client to connect...');
-
+            this.client.connect(server.port, server.address, this.#onConnected);
         });
     }
-}
 
-module.exports = P2pConnector;
+
+
+    #onConnected(utpSocket) {
+
+        logger.debug('p2p connector:  has connected to the p2p client');
+
+        const address = utpSocket.address();
+        //
+        let server = net.createServer((socket) => {
+
+            utpSocket.on('data', data => {
+                const text = data.toString();
+                logger.debug(
+                    `p2p connector utpSocket: received '${text}' from ${address.address}:${address.port}`
+                );
+                socket.write(data);
+            });
+
+            socket.on('data', (dataBuffer) => {
+                console.log(dataBuffer.toString())
+                utpSocket.write(dataBuffer);
+            });
+
+            socket.on('end', () => {
+
+                logger.debug(`Tcp  server on socket end,remoteAddress=${socket.remoteAddress}:${socket.remotePort}, localAddress=${socket.localAddress}:${socket.localPort}`);
+
+                socket.end();
+                socket.destroy();
+            });
+
+            socket.on('error', (err) => {
+
+                logger.debug('Tcp  server on socket error ' + err);
+
+                socket.end();
+                socket.destroy();
+            });
+
+            socket.on('timeout', () => {
+
+                logger.debug('Tcp  server on socket timeout,socketTime=');
+                socket.end();
+                socket.destroy();
+            });
+
+        });
+
+        server.listen(9999, () => {
+            //在大多数操作系统中，监听未指定的 IPv6 地址 (::) 可能会导致 net.Server 也监听未指定的 IPv4 地址 (0.0.0.0)
+            logger.trace("Tcp  server started success=>9999");
+        });
+
+        //
+
+        utpSocket.on('end', () => {
+            logger.debug('p2p connector: socket end');
+
+        });
+
+    }
+}
+module.exports = P2pConnector2;

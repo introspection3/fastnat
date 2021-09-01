@@ -10,7 +10,7 @@ const P2PRest = require('./P2PRest');
 const Connection = require('utp-punch/connection').Connection;
 const net = require('net');
 
-class P2PClient {
+class P2PClient2 {
 
     /**
      * 
@@ -43,10 +43,12 @@ class P2PClient {
         this.started = false;
 
     }
+
     stop() {
-        this.client.close();
+        this.server.close();
         logger.debug('client close=>' + this.connectorClientId + ":" + this.localTunnelId);
     }
+
     start(connectorHost, connectorPort, fn) {
 
         if (this.started) {
@@ -57,16 +59,36 @@ class P2PClient {
         this.connectorHost = connectorHost;
         this.connectorPort = connectorPort;
         this.started = true;
-        this.client = new Node();
 
-        this.client.bind(this.bindPort, () => {
-            this.udpSocket = this.client.getUdpSocket();
+        this.server = new Node(utpSocket => {
+            logger.info('p2p client : UTP client comming');
+            let tcpClient = this.#connect2LocalTcp('127.0.0.1', 3306, utpSocket);
+            const address = utpSocket.address();
+            let onData = data => {
+                const text = data.toString();
+                console.log(
+                    `p2p client: received '${text}' from ${address.address}:${address.port}`
+                );
+                
+                tcpClient.write(data);
+            };
+
+            utpSocket.on('data', onData);
+            utpSocket.on('end', () => {
+                logger.debug('p2p client: remote disconnected');
+                this.server.close();
+            });
+
+        });
+
+        this.server.bind(this.bindPort);
+        this.server.listen(() => {
+            this.udpSocket = this.server.getUdpSocket();
             logger.debug('p2p client is ready,bindPort=' + this.udpSocket.address().port);
             this.bindPort = this.udpSocket.address().port;
 
-            //--------向tracker汇报--------------------------
-
             let msg = JSON.stringify({ authenKey: this.authenKey, localTunnelId: this.localTunnelId, command: 'client_report_tunnel_info' });
+
             this.timer = setInterval(() => {
                 this.udpSocket.send(
                     msg,
@@ -76,6 +98,7 @@ class P2PClient {
                 );
                 logger.trace(`p2p client tunnel.id=${this.localTunnelId}  notify to   tracker`);
             }, this.notifyTrackerInterval);
+
 
             let onMessage = (msg, rinfo) => {
                 const text = msg.toString();
@@ -90,76 +113,46 @@ class P2PClient {
 
             //---------来至tracker的回应------------------
             this.udpSocket.on('message', onMessage);
-
         });
-
     }
 
     async tryConnect2Public(host, port) {
-
-        let server = {
+        let publicInfo = {
             address: host,
             port: port
         }
-        logger.debug(
-            `p2p client: punching a hole to ${server.address}:${server.port}...`
-        );
-        this.client.punch(10, server.port, server.address, success => {
-            logger.debug(
-                `p2p client: punching result: ${success ? 'success' : 'failure'}`
-            );
+        logger.debug(`p2p client: begin punching a hole to ${publicInfo.address}:${publicInfo.port}...`);
+
+        this.server.punch(10, publicInfo.port, publicInfo.address, success => {
+
+            logger.debug(`p2p client: punching result: ${success ? 'success' : 'failure'}`);
+
             if (!success) {
+                logger.warn(`p2p client punch failed`);
                 this.stop();
+                return;
             }
-            this.client.on('timeout', () => {
-                console.log('p2p client: connect timeout');
+
+
+            this.server.on('timeout', () => {
+                logger.warn('p2p client: connect timeout');
                 this.stop();
             });
-            this.client.connect(server.port, server.address, this.#onConnected);
+            logger.debug('p2p client: waiting for the client to connect...');
+
         });
     }
 
-    /**
-     * 
-     * @param {Connection} socket 
-     */
-    #onConnected(socket) {
 
-        logger.debug('p2p client: UTP socket has connected to the connector');
-        socket.write('okok');
-        let tcpClient = null;
-        const address = socket.address();
-        socket.on('data', data => {
-            const text = data.toString();
-            logger.debug(
-                `p2p client: received '${text}' from ${address.address}:${address.port}`
-            );
-            if (tcpClient == null) {
-                tcpClient = connect2LocalTcp('127.0.0.1', 3306, socket);
-                setTimeout(() => {
-                    tcpClient.write(data);
-                }, 1000);
-            }else{
-                tcpClient.write(data);
-            }
-
-
-        });
-        socket.on('end', () => {
-            logger.debug('p2p client: socket end');
-
-        });
-
-    }
 
     #connect2LocalTcp(localIp, localPort, utpSocket) {
         let address = { host: localIp, port: localPort }
         let tcpClient = net.createConnection(address, () => {
-            logger.trace('p2p tcp client has created for ' + address.toString());
+            logger.trace('p2p tcp client has created for ' + JSON.stringify(utpSocket));
         });
 
         tcpClient.on('connect', () => {
-            logger.trace('p2p tcp client has connected to ' + address.toString());
+            logger.trace('p2p tcp client has connected to ' + JSON.stringify(utpSocket));
 
         });
 
@@ -168,16 +161,16 @@ class P2PClient {
         });
 
         tcpClient.on('close', (hadError) => {
-            logger.trace('p2p tcp Client Closed:' + address.toString())
+            logger.trace('p2p tcp Client Closed:' + JSON.stringify(utpSocket))
         });
 
         tcpClient.on('error', (err) => {
 
-            logger.trace('p2p tcp Client error: ' + err + " ," + address.toString());
+            logger.warn('p2p tcp Client error: ' + err + " ," + JSON.stringify(utpSocket));
         });
         return tcpClient;
     }
 
 }
 
-module.exports = P2PClient;
+module.exports = P2PClient2;

@@ -30,7 +30,11 @@ if (dbConfig.dbType === 'sqlite') {
     const sequelize = new Sequelize({
         dialect: 'sqlite',
         storage: sqliteFilePath,
-        logging: dbConfig.logging,
+        logging: sql=>{
+            if( dbConfig.logging){
+                console.log(sql);
+            }
+         },
        // timezone: '+08:00'
     });
 
@@ -39,7 +43,11 @@ if (dbConfig.dbType === 'sqlite') {
     const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
         host: dbConfig.host,
         dialect: dbConfig.dbType,
-        logging: dbConfig.logging,
+        logging: sql=>{
+           if( dbConfig.logging){
+               console.log(sql);
+           }
+        },
         timezone: '+08:00'
     });
 

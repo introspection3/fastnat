@@ -1,6 +1,7 @@
 const express = require(`express`);
 const router = express.Router();
 const { RegisterUser, Client, Tunnel, Connector } = require('../Db/Models');
+const logger = require('../Log/logger');
 
 router.get(`/tunnels/:authenKey`, async (req, res, next) => {
     let client = await Client.findOne({
@@ -48,7 +49,50 @@ router.get(`/connectors/:authenKey`, async (req, res, next) => {
     });
 });
 
+router.get(`/getClientP2PInfoByTunnelId`, async (req, res, next) => {
+ 
+    let tunnelId = req.query.tunnelId;
+    let authenKey = req.query.authenKey;
+    let client = await Client.findOne({
+        where: {
+            isAvailable: true
+        },
+        include: [
+            {
+                model: Tunnel,
+                required: true,
+                where: {
+                    isAvailable: 1,
+                    id:tunnelId
+                }
+            } 
+        ]
+    });
 
+    if (client == null) {
+        res.send({
+            success: false,
+            info: 'error client authenKey',
+            data:null
+        });
+        return;
+    }
+
+
+    let reuslt={
+        publicIp:client.publicIp,
+        clientId:client.id,
+        p2pRemotePort:client.p2pRemotePort,
+        natType:client.natType
+    }
+
+    
+    res.send({
+        success: true,
+        info: 'sucess',
+        data:reuslt
+    });
+});
 
 router.post(`/startProxy`, async (req, res, next) => {
 
@@ -117,7 +161,47 @@ router.put('/:authenKey', async function (req, res, next) {
         data: req.params.authenKey,
         info: 'update success=' + success
     });
-
 });
+
+
+
+router.get('/:authenKey', async function (req, res, next) {
+    let client = await Client.findOne({
+        where: {
+            authenKey: req.params.authenKey,
+            isAvailable: true
+        },
+        include: [
+            {
+                model: Tunnel,
+                required: false,
+                where: {
+                    isAvailable: 1
+                }
+            },
+            {
+                model: Connector,
+                required: false,
+                where: {
+                    isAvailable: 1
+                }
+            }
+        ]
+    });
+
+    if (client == null) {
+        res.send({
+            success: false,
+            data: null,
+            info: 'this authenKey has no client'
+        });
+        return;
+    }
+    res.send({
+        success: true,
+        data: client
+    });
+});
+
 
 module.exports = router

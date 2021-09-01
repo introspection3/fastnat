@@ -13,8 +13,11 @@ const getMAC = require('getmac').default;
 const notifier = require('node-notifier');
 const io = require('socket.io-client').io;
 const SYMMETRIC_NAT = "Symmetric NAT";
-const P2pConnector = require('./P2P/P2pConnector');
+const P2pConnector2 = require('./P2P/P2pConnector2');
 const { program } = require('commander');
+const startConnect2SocketIO = require('./Communication/Soldier');
+const P2PClient2 = require('./P2P/P2PClient2');
+
 program.version('0.0.1');
 program
     .option('-t, --test', 'is test')
@@ -26,7 +29,8 @@ if (defaultWebSeverConfig.https == true) {
 } else {
     axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 }
-
+const ConnectorSet = new Set();
+const P2PClientSet = new Set();
 
 let authenKey = clientConfig.authenKey;
 if (options.test) {
@@ -34,40 +38,85 @@ if (options.test) {
 }
 let isWorkingFine = true;
 
-async function main(params) {
-    // Object
-    notifier.notify({
-        title: '通知',
-        message: '欢迎使用fastnat',
-        sound: true,
-        timeout: 3
+async function registerSocketIOEvent(socketIOSocket, ownClientId) {
+    socketIOSocket.on('p2p.request.open', async (data, fn) => {
+        let key = data.clientId + ":" + data.targetTunnelId;
+        for (let item of P2PClientSet) {
+            if (item.connectorClientId == data.id && item.localTunnelId == data.targetTunnelId) {
+                item.stop();
+                P2PClientSet.delete(item);
+                logger.debug('close old p2p client,and reopen another P2PClient,key=' + key);
+            }
+        }
+        let p2pClient = new P2PClient2(defaultConfig.p2p.host, defaultConfig.p2p.trackerPort, data.targetTunnelId, authenKey, data.clientId, ownClientId, socketIOSocket);
+        p2pClient.start(data.connectorHost, data.connectorPort, fn);
+        P2PClientSet.add(p2pClient);
     });
 
-   
-    let socketIOSocket = await require('./Communication/Soldier')(authenKey);
+    socketIOSocket.on('client.disconnect', async (data) => {
+        for (let item of P2PClientSet) {
+            console.log(item.ownClientId, item.connectorClientId);
+            if (item.connectorClientId == data.clientId || item.ownClientId == data.clientId) {
+                item.stop();
+                P2PClientSet.delete(item);
+                logger.debug('client.disconnect,delete P2PClient,clientId=' + data.clientId);
+            }
+        }
 
-    // if (options.test) {
-    //     console.log('connector start');
-    //     p2pStart(1, 'fastnat', socketIOSocket);
-    // }
+        for (let item of ConnectorSet) {
+            console.log(item.targetClientId, item.connectorClientId);
+            if (item.connectorClientId == data.clientId || item.targetClientId == data.clientId) {
+                item.stop();
+                ConnectorSet.delete(item);
+                logger.debug('client.disconnect,delete Connector,clientId=' + data.clientId);
+            }
+        }
 
-    let tunnelsResult = null;
+    });
+
+    socketIOSocket.on('errorToken', async (data) => {
+        socketIOSocket.disconnect(true);
+        logger.error('error token:' + data.token);
+    });
+
+    socketIOSocket.on('disconnecting', (reason) => {
+        logger.debug(`socket.io-client disconnecting  reason:` + reason);
+        for (let item of P2PClientSet) {
+            item.stop();
+        }
+        P2PClientSet.clear();
+
+        for (let item of ConnectorSet) {
+            item.stop();
+        }
+        ConnectorSet.clear();
+    });
+
+}
+
+async function main(params) {
+
+    let clientResult = null;
     try {
-        tunnelsResult = await getTunnels(authenKey);
+        clientResult = await getClient(authenKey);
     } catch (error) {
-        console.error('connect to server failed,waiting...');
+        console.error('connect to server failed,waiting...'+error);
         isWorkingFine = false;
         return;
     }
 
-    if (!tunnelsResult.success) {
-        logger.error(tunnelsResult.info);
+    if (!clientResult.success) {
+        logger.error(clientResult.info);
         return;
     }
-    
+
+    let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id);
+    registerSocketIOEvent(socketIOSocket, clientResult.data.id);
+    console.log(1111111111);
+    //----------
     const natType = await getNatType({ logsEnabled: true, sampleCount: 5, stunHost: clientConfig.stunHost });
     await updateClientSystemInfo(natType);
-    let tunnels = tunnelsResult.data;
+    let tunnels = clientResult.data.tunnels;
     for (const tunnelItem of tunnels) {
         if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
             let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
@@ -103,26 +152,42 @@ async function main(params) {
         }
     }
 
-    let connectorsResult=await getConnectors(authenKey);
-    if (!connectorsResult.success) {
-        logger.error(connectorsResult.info);
-        return;
-    }
-    let connectors = connectorsResult.data;
+    let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
-        p2pStart(connectorItem.p2pTunnelId, connectorItem.p2pPassword, socketIOSocket);
+        p2pStart(connectorItem.p2pTunnelId, connectorItem.p2pPassword, socketIOSocket, clientResult.data.id);
     }
 }
 
 
-async function getTunnels(authenKey) {
-    let ret = await axios.get('/client/tunnels/' + authenKey);
+/**
+ * 
+ * @param {number} targetTunnelId 
+ * @param {string} targetP2PPassword 
+ * @param {Socket} socketIOSocket 
+ */
+async function p2pStart(targetTunnelId, targetP2PPassword, socketIOSocket, clientId) {
+    let result = await getClientP2PInfoByTunnelId(authenKey, targetTunnelId);
+    let targetClientId = result.data.clientId;
+    let connector = new P2pConnector2(defaultConfig.p2p.host, defaultConfig.p2p.trackerPort, targetClientId, targetTunnelId, targetP2PPassword, authenKey, clientId, socketIOSocket);
+    connector.start();
+    ConnectorSet.add(connector);
+}
+
+
+async function getClient(authenKey) {
+    let ret = await axios.get('/client/' + authenKey);
     let result = await ret.data;
     return result;
 }
 
-async function getConnectors(authenKey) {
-    let ret = await axios.get('/client/connectors/' + authenKey);
+
+async function getClientP2PInfoByTunnelId(authenKey, tunnelId) {
+    let ret = await axios.get('/client/getClientP2PInfoByTunnelId', {
+        params: {
+            authenKey: authenKey,
+            tunnelId: tunnelId,
+        }
+    });
     let result = await ret.data;
     return result;
 }
@@ -235,17 +300,6 @@ async function updateClientSystemInfo(natType) {
     return result;
 }
 
-/**
- * 
- * @param {number} targetTunnelId 
- * @param {string} targetP2PPassword 
- * @param {Socket} socketIOSocket 
- */
-function p2pStart(targetTunnelId, targetP2PPassword, socketIOSocket) {
-    console.warn('authenKey',authenKey);
-    let connector = new P2pConnector(defaultConfig.p2p.host, defaultConfig.p2p.trackerPort, targetTunnelId, targetP2PPassword, authenKey, socketIOSocket);
-    connector.start();
-}
 
 
 process.on("exit", function (code) {

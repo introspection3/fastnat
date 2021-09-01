@@ -57,29 +57,31 @@ let defaultNS = io.of('/');
 
 io.on('connection', async (socket) => {
     // socket.join('default');
-    let token = socket.handshake.auth.token;
+    let clientId = socket.handshake.auth.clientId;
     socket.on('disconnect', function () {
-        console.log(`client authenKey=${token} disconnect`);
+        let clientId = socket.handshake.auth.clientId;
+        console.log(`clientId=${clientId} disconnect`);
+        io.emit('client.disconnect', { clientId: clientId });
     });
     logger.debug('socket.io new connection,socket.id=' + socket.id);
 
-    //-----------判断是否已经连了这个authenKey----------
+    //-----------判断是否登录到系统了----------
     let currentSockets = await defaultNS.fetchSockets();
     let existSockets = currentSockets.filter((value, index, array) => {
-        value.handshake.auth.token === token;
+        value.handshake.auth.clientId === clientId;
     });
 
     if (existSockets && existSockets.length > 1) {
         //已有连接了
         socket.disconnect(true);
-        logger.error('exist authenKey online,authenKey=' + token);
+        logger.error('client is already  online,clientId=' + clientId);
         return;
     }
     //-------------------------------------------------
 
     socket.on('p2p.request.open', async (data, fn) => {
         let clientInfo = await getClientByTunnelId(data.targetTunnelId, data.targetP2PPassword);
-        let targetClientAuthenKey = clientInfo.client.authenKey;
+        let targetClientId = clientInfo.client.id;
         let result = false;
         let info = '';
         if (clientInfo == null) {
@@ -89,24 +91,24 @@ io.on('connection', async (socket) => {
             let allSockets = await defaultNS.fetchSockets();
             logger.warn('allSockets:' + JSON.stringify(allSockets.length))
             let targetSocket = allSockets.find((value, index, array) => {
-                return value.handshake.auth.token === targetClientAuthenKey;
+                return value.handshake.auth.clientId === targetClientId;
             });
 
             if (targetSocket != null) {
                 let objectKey = data.targetTunnelId + '';
-                let connectorAuthenKey=data.authenKey;
-                let tunnelIdP2PByAuthenKey=targetSocket.data[objectKey];
+                let connectorClientId = data.clientId;
+                let tunnelIdP2PByClientId = targetSocket.data[objectKey];
 
-                if (tunnelIdP2PByAuthenKey != null && tunnelIdP2PByAuthenKey != connectorAuthenKey) {
-                    info = 'targetTunnelId is p2ped by ' + tunnelIdP2PByAuthenKey;
+                if (tunnelIdP2PByClientId != null && tunnelIdP2PByClientId != connectorClientId) {
+                    info = 'targetTunnelId is p2ped by clientId=' + tunnelIdP2PByClientId;
                     fn({ success: result, data: data, info: info });
                 } else {
 
-                    if (tunnelIdP2PByAuthenKey != null && tunnelIdP2PByAuthenKey == connectorAuthenKey) {
-                       logger.info('reopen p2p by'+connectorAuthenKey);
+                    if (tunnelIdP2PByClientId != null && tunnelIdP2PByClientId == connectorClientId) {
+                        logger.info('reopen p2p by client:' + connectorClientId);
                     }
 
-                    targetSocket.data[objectKey] = connectorAuthenKey;
+                    targetSocket.data[objectKey] = connectorClientId;
                     result = true;
                     targetSocket.emit('p2p.request.open', data, (ret) => {
                         fn(ret);
@@ -114,7 +116,7 @@ io.on('connection', async (socket) => {
                 }
             }
             else {
-                info = `targetTunnelId's client is not online:targetClientAuthenKey=` + targetClientAuthenKey;
+                info = `targetTunnelId's client is not online:targetClientId=` + targetClientId;
                 fn({ success: result, data: data, info: info });
             }
         }

@@ -44,6 +44,7 @@ if (serverConfig.cluster.enabled) {
 
 createProxy();
 
+require('./Communication/Commander');
 //----------------express------------------
 const app = express();
 const bodyParser = require('body-parser');
@@ -65,12 +66,12 @@ const server = app.listen(defaultWebServerConfig.port, function () {
 });
 
 //----------------tcp tunnel server---------------
-const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.tcp });
+const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.port });
 tcpTunnelServer.start();
 
 //-----------------------socket.io-----------------
 require('./P2P/P2PTracker');
-require('./Communication/Commander');
+
 //-------------------------------------------------
 process.on("uncaughtException", function (err) {
   logger.error(err);

@@ -8,11 +8,6 @@
         "username": "root",
         "password": "root"
     },
-    "redis": {
-        "host": "192.168.1.6",
-        "port": 6379,
-        "password": "redispass"
-    },
     "init": {
         "firstInit": false
     },

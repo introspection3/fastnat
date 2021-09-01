@@ -23,6 +23,8 @@ router.get('/getP2PInfo', async function (req, res, next) {
         });
         return;
     }
+
+    
     let reuslt={
         publicIp:client.publicIp,
         p2pRemotePort:p2pRemotePort,
