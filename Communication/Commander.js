@@ -80,46 +80,25 @@ io.on('connection', async (socket) => {
     //-------------------------------------------------
 
     socket.on('p2p.request.open', async (data, fn) => {
-        let clientInfo = await getClientByTunnelId(data.targetTunnelId, data.targetP2PPassword);
-        let targetClientId = clientInfo.client.id;
+
+        let targetClientId = data.targetClientId;
         let result = false;
         let info = '';
-        if (clientInfo == null) {
-            info = `targetTunnelId's client not exist`;
+        let allSockets = await defaultNS.fetchSockets();
+        let targetSocket = allSockets.find((value, index, array) => {
+            return value.handshake.auth.clientId === targetClientId;
+        });
+        if (targetSocket != null) {
+            result = true;
+            targetSocket.emit('p2p.request.open', data, (ret) => {
+                fn(ret);
+            });
         }
         else {
-            let allSockets = await defaultNS.fetchSockets();
-            logger.warn('allSockets:' + JSON.stringify(allSockets.length))
-            let targetSocket = allSockets.find((value, index, array) => {
-                return value.handshake.auth.clientId === targetClientId;
-            });
-
-            if (targetSocket != null) {
-                let objectKey = data.targetTunnelId + '';
-                let connectorClientId = data.clientId;
-                let tunnelIdP2PByClientId = targetSocket.data[objectKey];
-
-                if (tunnelIdP2PByClientId != null && tunnelIdP2PByClientId != connectorClientId) {
-                    info = 'targetTunnelId is p2ped by clientId=' + tunnelIdP2PByClientId;
-                    fn({ success: result, data: data, info: info });
-                } else {
-
-                    if (tunnelIdP2PByClientId != null && tunnelIdP2PByClientId == connectorClientId) {
-                        logger.info('reopen p2p by client:' + connectorClientId);
-                    }
-
-                    targetSocket.data[objectKey] = connectorClientId;
-                    result = true;
-                    targetSocket.emit('p2p.request.open', data, (ret) => {
-                        fn(ret);
-                    });
-                }
-            }
-            else {
-                info = `targetTunnelId's client is not online:targetClientId=` + targetClientId;
-                fn({ success: result, data: data, info: info });
-            }
+            info = `targetTunnelId's client is not online:targetClientId=` + targetClientId;
+            fn({ success: result, data: data, info: info });
         }
+
     });
 });
 

@@ -15,20 +15,7 @@ const Tunnel = sequelize.define('tunnel', {
         allowNull: false,
         comment: 'tunnel name'
     },
-
-    p2pRemotePort: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: -1,
-        comment: 'p2p remote port'
-    },
-
-    p2pRemotePortUpdatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        comment: 'p2p remote port UpdatedAt time',
-        defaultValue: Sequelize.NOW
-    },
+    
     p2pPassword: {
         type: DataTypes.STRING(50),
         allowNull: false,

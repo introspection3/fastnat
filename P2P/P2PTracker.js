@@ -24,31 +24,7 @@ udpSocket.on('message', async (msg, rinfo) => {
 
     logger.debug(`p2p tracker got: ${text} from ${rinfo.address}:${rinfo.port}`);
 
-    if (message.command === 'client_report_tunnel_info') {
-
-        let result = await Tunnel.update(
-            {
-                p2pRemotePort: rinfo.port,
-                p2pRemotePortUpdatedAt: new Date(),
-                updatedAt: new Date()
-            },
-            {
-                where: {
-                    id: message.localTunnelId,
-                    isAvailable: true
-                }
-            }
-        );
-        let success = result[0] > 0;
-        if (success == false) {
-            logger.warn('p2p tracker,a client with a wrong authenKey:' + message.authenKey);
-            return;
-        }
-        udpSocket.send(JSON.stringify({ host: rinfo.address, port: rinfo.port }), rinfo.port, rinfo.address);
-    }
-
-    if (message.command === 'connector_report_tunnel_info') {
-
+    if (message.command === 'client_report_tunnel_info' || message.command === 'connector_report_tunnel_info') {
         udpSocket.send(JSON.stringify({ host: rinfo.address, port: rinfo.port }), rinfo.port, rinfo.address);
     }
 

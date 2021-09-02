@@ -9,7 +9,7 @@ function startConnect2SocketIO(authenKey, clientId) {
 
     let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
 
-    logger.debug('ioUrl:' + ioUrl);
+    logger.debug('io Url:' + ioUrl);
 
     const socketIOSocket = io(ioUrl, {
         auth: {
