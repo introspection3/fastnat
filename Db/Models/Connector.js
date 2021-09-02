@@ -28,7 +28,7 @@ const Connector = sequelize.define('connector', {
         type: DataTypes.INTEGER,
         allowNull: false,
         comment: 'local port',
-        defaultValue:0,
+        defaultValue: 0,
     },
 
     createdAt: {
