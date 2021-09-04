@@ -2,14 +2,19 @@
 const logger = require('../Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const io = require('socket.io-client').io;
+const Socket= require('socket.io-client').Socket;
 
-
-
+/**
+ * 
+ * @param {string} authenKey 
+ * @param {Number} clientId 
+ * @returns {Socket}
+ */
 function startConnect2SocketIO(authenKey, clientId) {
 
     let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
 
-    logger.debug('io Url:' + ioUrl);
+    logger.debug('SocketIO Url:' + ioUrl);
 
     const socketIOSocket = io(ioUrl, {
         auth: {

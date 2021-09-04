@@ -150,7 +150,7 @@ class TcpClient {
 
             this.eventEmitter.once('connect', (result) => {
                 clearTimeout(t);
-                resolve(true);
+                resolve(client);
             });
         });
         return p;

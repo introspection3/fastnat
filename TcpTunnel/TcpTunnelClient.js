@@ -24,7 +24,7 @@ class TcpTunnelClient {
         this.started = false;
         this.defaultTimeout = 5000;
         this.tcpClient = new TcpClient(this.tcpTunnelServerAddress);
-
+      
 
     }
 
@@ -49,6 +49,7 @@ class TcpTunnelClient {
 
 
         await this.tcpClient.start();
+       // this.tcpClient.client.setTimeout(this.defaultTimeout);
         this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });
         // this.tcpClient.eventEmitter.on('connect', () => {
         //     this.tcpClient.sendCodecData({ command: 'authen', authenKey: this.authenKey, tunnelId: tunnelId });

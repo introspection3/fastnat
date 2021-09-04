@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "host": "192.168.1.3",
+    "host": "192.168.0.100",
     "webserver": {
         "https": false,
         "port": 8081,
@@ -9,13 +9,13 @@
     "bridge": {
         "port": 3927
     },
-    "rpc": {
-        "port": "13141"
-    },
+    "//": "p2p需要的相关配置信息",
     "p2p": {
-        "host":"stun.l.google.com",
+        "mtu": 1200,
+        "host": "stun.l.google.com",
+        "port":19302,
         "trackerPort": 19302,
-        "isStun":true
+        "isStun": true
     },
     "log": {
         "level": "trace"

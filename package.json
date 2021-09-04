@@ -32,7 +32,8 @@
     "stun": "^2.1.0",
     "systray": "^1.0.5",
     "udp-proxy": "^1.2.0",
-    "utp-punch": "^1.0.1"
+    "utp-punch": "^1.0.1",
+    "vs-stun": "^0.0.7"
   },
   "bin": "client.js",
   "pkg": {

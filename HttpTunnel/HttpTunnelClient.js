@@ -7,7 +7,7 @@ const url = require('url');
 const logger = require('../Log/logger');
 const fs = require('fs');
 const rootPath = require('../Common/GlobalData').rootPath;
-const { RegisterUser, Client, Tunnel } = require('../Db/Models');
+
 
 class HttpTunnelClient {
 

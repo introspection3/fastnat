@@ -4,7 +4,6 @@ const trackerPort = defaultConfig.p2p.trackerPort;
 const dgram = require('dgram');
 const udpSocket = dgram.createSocket('udp4');
 const logger = require('../Log/logger');
-const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 
 udpSocket.on('error', (err) => {
     logger.error(err);

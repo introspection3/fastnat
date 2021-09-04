@@ -2328,6 +2328,11 @@
     "core-util-is" "1.0.2"
     "extsprintf" "^1.2.0"
 
+"vs-stun@^0.0.7":
+  "integrity" "sha1-PHHGp/Ps90OsH2+b65ayYmzDvYA="
+  "resolved" "https://registry.npmjs.org/vs-stun/-/vs-stun-0.0.7.tgz"
+  "version" "0.0.7"
+
 "which@^2.0.2":
   "integrity" "sha1-fGqN0KY2oDJ+ELWckobu6T8/UbE="
   "resolved" "https://registry.nlark.com/which/download/which-2.0.2.tgz"

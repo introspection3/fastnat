@@ -60,8 +60,8 @@ io.on('connection', async (socket) => {
     let clientId = socket.handshake.auth.clientId;
     socket.on('disconnect', function () {
         let clientId = socket.handshake.auth.clientId;
-        console.log(`clientId=${clientId} disconnect`);
-        io.emit('client.disconnect', { clientId: clientId });
+        logger.debug(`clientId=${clientId} disconnect,socket.id=${socket.id}`);
+        io.emit('client.disconnect', { clientId: clientId, socketIOSocketId:socket.id });
     });
     logger.debug('socket.io new connection,socket.id=' + socket.id);
 

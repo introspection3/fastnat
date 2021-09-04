@@ -9,54 +9,82 @@ const getNatType = require("nat-type-identifier");
 const clientConfig = require('./Common/ClientConfig');
 const os = require('os');
 const getMAC = require('getmac').default;
-const notifier = require('node-notifier');
 const SYMMETRIC_NAT = "Symmetric NAT";
 const { program } = require('commander');
 const startConnect2SocketIO = require('./Communication/Soldier');
 const net = require('net');
 const Node = require('utp-punch');
-const dgram = require('dgram');
 const stun = require('stun');
-
+const Socket = require('socket.io-client').Socket;
+const p2pHost = defaultConfig.p2p.host;
+const trackerPort = defaultConfig.p2p.trackerPort;
+const isStunTracker = defaultConfig.p2p.isStun;
+const p2pmtu = defaultConfig.p2p.mtu;
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
     .parse(process.argv);
 const options = program.opts();
 
+axios.defaults.timeout=15000;
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 } else {
     axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 }
-const ConnectorSet = new Set();
-const P2PClientSet = new Set();
+console.log(axios.defaults.baseURL)
 
 let authenKey = clientConfig.authenKey;
 if (options.test) {
     authenKey = '2';
 }
 let isWorkingFine = true;
-const trackerIP = defaultConfig.p2p.host;
-const trackerPort = defaultConfig.p2p.trackerPort;
+let currentClientNatType = null;
+const currentClientTunnelsMap = new Map();
+const SocketIOCreateUtpServerMap = new Map();
+const SocketIOCreateUtpClientMap = new Map();
 
 
-
+/**
+ * 
+ * @param {Socket} socketIOSocket 
+ * @param {Number} ownClientId 
+ */
 async function registerSocketIOEvent(socketIOSocket, ownClientId) {
-    socketIOSocket.on('p2p.request.open', async (data, fn) => {
 
+    socketIOSocket.on('p2p.request.open', async (data, fn) => {
+        if (currentClientTunnelsMap.has(data.targetTunnelId)) {
+            let tunnel = currentClientTunnelsMap.get(data.targetTunnelId);
+            if (data.targetTunnelId != tunnel.id || data.targetP2PPassword != tunnel.p2pPassword) {
+                fn({ success: false, data: null, info: 'targetTunnelId or p2pPassword is not right' });
+                return;
+            }else{
+                if(currentClientNatType===SYMMETRIC_NAT){
+                    fn({ success: false, data: null, info: 'target client is  SYMMETRIC_NAT' });
+                    return;
+                }
+                logger.info(currentClientNatType);
+            }
+        } else {
+            fn({ success: false, data: null, info: 'targetTunnelId not exist' });
+            return;
+        }
         let connectorHost = data.connectorHost;
         let connectorPort = data.connectorPort;
+        let tunnel = currentClientTunnelsMap.get(data.targetTunnelId);
+        let server = new Node({ mtu: p2pmtu }, utpSocket => {
 
-        let server = new Node(utpSocket => {
-            logger.info('p2p client : UTP client comming');
+            logger.info('utpSocket client is comming');
 
             //-----------tcpClient-----
             // let address = { host: '127.0.0.1', port: 3306 };
-            let address = { host: '192.168.1.1', port: 80 };
+            let address = { host: tunnel.localIp, port: tunnel.localPort };
             let tcpClient = net.createConnection(address, () => {
                 logger.trace('p2p tcp client has created ');
             });
+            //-----------------记录此UtpServer所用tcpclient-----------
+
+            server.TcpClient = tcpClient;
 
             tcpClient.on('connect', () => {
                 logger.trace('p2p tcp client has connected to ' + JSON.stringify(address));
@@ -64,16 +92,17 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             });
 
             tcpClient.on('data', (dataBuffer) => {
-
                 utpSocket.write(dataBuffer);
             });
 
             tcpClient.on('close', (hadError) => {
+                tempTcpClient = null;
                 logger.trace('p2p tcp Client Closed:' + JSON.stringify(address));
                 server.close();
             });
 
             tcpClient.on('error', (err) => {
+                tempTcpClient = null;
                 logger.warn('p2p tcp Client error: ' + err + " ," + JSON.stringify(address));
                 server.close();
             });
@@ -81,7 +110,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
             let utpSocketaddress = utpSocket.address();
             let onData = data => {
-                console.log(
+                logger.trace(
                     `p2p client utpserver: received '${data.length}' bytes data from ${utpSocketaddress.address}:${utpSocketaddress.port}`
                 );
 
@@ -93,10 +122,17 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
                 logger.debug(`p2p client utpserver: remote disconnected  ${utpSocketaddress.address}:${utpSocketaddress.port}`);
                 server.close();
                 tcpClient.end();
+                tcpClient.destroy();
             });
 
         });
 
+        //-----------------
+        if (SocketIOCreateUtpServerMap.has(data.connectorclientId) == false) {
+            SocketIOCreateUtpServerMap.set(data.connectorclientId, []);
+        }
+        SocketIOCreateUtpServerMap.get(data.connectorclientId).push(server);
+        //-----------------
         server.bind(0);
 
         server.listen(() => {
@@ -105,31 +141,13 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             let msg = JSON.stringify({ authenKey: authenKey, command: 'client_report_tunnel_info' });
             let timer = null;
             let timeout = null;
-            if (defaultConfig.p2p.isStun == false) {
-                timer = setInterval(() => {
-                    udpSocket.send(
-                        msg,
-                        trackerPort,
-                        trackerIP,
-                        (err) => { logger.warn(`p2p client utpServer  notify to   tracker error: ` + err) }
-                    );
-                    logger.trace(`p2p client utpServer  notify to   tracker`);
-                }, 500);
 
-                timeout = setTimeout(() => {
-                    clearInterval(timer);
-                    logger.warn('report to tracker timeout,utp failed');
-                    server.close();
-                    // tcpSocket.end();
-                    return;
-                }, 5 * 1000);
-            }
             let onMessage = (msg, rinfo) => {
 
                 if (rinfo.port === trackerPort) {
                     udpSocket.removeListener('message', onMessage);
                     let message = {};
-                    if (defaultConfig.p2p.isStun == false) {
+                    if (isStunTracker == false) {
                         if (timer != null)
                             clearInterval(timer);
                         if (timeout != null)
@@ -143,14 +161,14 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
                         message.port = res.port;
                     }
                     logger.info(`p2p info:` + JSON.stringify(message))
-                    fn({ success: true, data: message, info: 'client public info' });
+                    fn({ success: true, data: message, info: 'target client is ready.nat type='+currentClientNatType });
 
                     //------------tryConnect2Public---
                     let publicInfo = {
                         address: connectorHost,
                         port: connectorPort
                     }
-                    logger.debug(`p2p client utpServer: begin punching a hole to ${publicInfo.address}:${publicInfo.port}...`);
+                    logger.trace(`p2p client utpServer: begin punching a hole to ${publicInfo.address}:${publicInfo.port}...`);
 
                     server.punch(10, publicInfo.port, publicInfo.address, success => {
 
@@ -178,21 +196,70 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
             //---------来至tracker的回应------------------
             udpSocket.on('message', onMessage);
-            if (defaultConfig.p2p.isStun) {              
-                stun.request('stun.l.google.com:19302', { socket: udpSocket }, (err, res) => {
+
+            if (isStunTracker) {
+                stun.request(`${p2pHost}:${trackerPort}`, { socket: udpSocket }, (err, res) => {
                     if (err) {
                         logger.error(err);
                     } else {
-                        const { address } = res.getXorAddress();
-                        logger.log('your public:', address,port);
+                        const { address, port } = res.getXorAddress();
+                        logger.log('your public:', address, port);
                     }
                 });
+            }
+            else {
+                timer = setInterval(() => {
+                    udpSocket.send(
+                        msg,
+                        trackerPort,
+                        defaultConfig.host,
+                        (err) => { logger.warn(`p2p client utpServer  notify to   tracker error: ` + err) }
+                    );
+                    logger.trace(`p2p client utpServer  notify to   tracker`);
+                }, 500);
+
+                timeout = setTimeout(() => {
+                    clearInterval(timer);
+                    logger.warn('report to tracker timeout,utp failed');
+                    server.close();
+                    return;
+                }, 5 * 1000);
             }
         });
 
     });
 
     socketIOSocket.on('client.disconnect', async (data) => {
+        logger.debug('client.disconnect=>' + data.clientId);
+        logger.debug('SocketIOCreateUtpServerMap.size', SocketIOCreateUtpServerMap.size)
+        if (SocketIOCreateUtpServerMap.has(data.clientId)) {
+            logger.debug('SocketIOCreateUtpServerMap.delete=>' + data.clientId);
+            let array = SocketIOCreateUtpServerMap.get(data.clientId);
+            for (let index in array) {
+                let item = array[index];
+                if (item.TcpClient) {
+                    item.TcpClient.end();
+                    item.TcpClient.destroy();
+                    item.TcpClient = null;
+                }
+                item.close();
+            }
+            SocketIOCreateUtpServerMap.delete(data.clientId);
+        }
+
+        logger.debug('SocketIOCreateUtpClientMap.size', SocketIOCreateUtpClientMap.size)
+        if (SocketIOCreateUtpClientMap.has(data.clientId)) {
+            logger.debug('SocketIOCreateUtpClientMap.delete=>' + data.clientId);
+            let array = SocketIOCreateUtpClientMap.get(data.clientId);
+            for (let index in array) {
+                let item = array[index];
+                item.TcpSocket.end();
+                item.TcpSocket.destroy();
+                console.log('item.TcpSocket.destroy();')
+                item.UtpClient.close();
+            }
+            SocketIOCreateUtpClientMap.delete(data.clientId);
+        }
 
     });
 
@@ -202,18 +269,18 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
     });
 
     socketIOSocket.on('disconnecting', (reason) => {
-        logger.debug(`socket.io-client disconnecting  reason:` + reason);
-        for (let item of P2PClientSet) {
-            //   item.stop();
-        }
-        P2PClientSet.clear();
-
-        for (let item of ConnectorSet) {
-            //  item.stop();
-        }
-        ConnectorSet.clear();
+        logger.warn(`socket.io-client disconnecting  reason:` + reason);
+        SocketIOCreateUtpServerMap.clear();
+        SocketIOCreateUtpServerMap.clear();
     });
 
+}
+
+function setCurrentClientTunnelsMap(currentClientTunnels) {
+    currentClientTunnelsMap.clear();
+    for (let item of currentClientTunnels) {
+        currentClientTunnelsMap.set(item.id, item);
+    }
 }
 
 async function main(params) {
@@ -231,16 +298,24 @@ async function main(params) {
         logger.error(clientResult.info);
         return;
     }
-
+    let currentClientTunnels = clientResult.data.tunnels;
+    setCurrentClientTunnelsMap(currentClientTunnels)
     let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id);
     registerSocketIOEvent(socketIOSocket, clientResult.data.id);
 
     //----------
-    const natType = await getNatType({ logsEnabled: true, sampleCount: 5, stunHost: clientConfig.stunHost });
-    await updateClientSystemInfo(natType);
-    let tunnels = clientResult.data.tunnels;
+    try {
+        currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: 5, stunHost: clientConfig.stunHost });
+    } catch (error) {
+        logger.warn(error);
+        currentClientNatType='Error';
+    }
+   
+    logger.info('client nat\'s type:', currentClientNatType);
+    await updateClientSystemInfo(currentClientNatType);
+
     const ownClientId = clientResult.data.id;
-    for (const tunnelItem of tunnels) {
+    for (const tunnelItem of currentClientTunnels) {
         if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
             let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
                 host: defaultConfig.host,
@@ -267,7 +342,7 @@ async function main(params) {
                 logger.error('Tcp tunnel server has stoped:' + err);
             });
             tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
-                isWorkingFine = true;
+                isWorkingFine = false;
                 logger.error('process will quit for : ' + data.info);
                 process.exit(1);
             });
@@ -278,56 +353,48 @@ async function main(params) {
     for (const connectorItem of connectors) {
         let result = await getClientP2PInfoByTunnelId(authenKey, connectorItem.p2pTunnelId);
         let targetClientId = result.data.clientId;
-        beginP2P(connectorItem, socketIOSocket, ownClientId, targetClientId);
+        startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId);
     }
 }
 
 
 
-
-async function beginP2P(connectorItem, socketIOSocket, ownClientId, targetClientId) {
+/**
+ * 
+ * @param {Connector} connectorItem 
+ * @param {Socket} socketIOSocket 
+ * @param {Number} ownClientId 
+ * @param {Number} targetClientId 
+ */
+async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId) {
 
     let server = net.createServer((tcpSocket) => {
         let socketAddressInfo = `remoteAddress=${tcpSocket.remoteAddress}:${tcpSocket.remotePort},localAddress=${tcpSocket.localAddress}:${tcpSocket.localPort}`;
         //-----------utpclient----------
-        let utpclient = new Node();
+        let utpclient = new Node({ mtu: p2pmtu });
+        if (SocketIOCreateUtpClientMap.has(targetClientId) === false) {
+            SocketIOCreateUtpClientMap.set(targetClientId, []);
+        }
+        logger.warn('targetClientId', targetClientId);
+        SocketIOCreateUtpClientMap.get(targetClientId).push({ UtpClient: utpclient, TcpSocket: tcpSocket });
+
         utpclient.bind(0, () => {
 
             let udpSocket = utpclient.getUdpSocket();
             logger.debug('p2p connector utpclient bindPort=' + udpSocket.address().port);
             //--------向tracker汇报--------------------------
-            let msg = JSON.stringify({ authenKey: authenKey, command: 'connector_report_tunnel_info' });
+
             let timer = null;
             let timeout = null;
-            if (defaultConfig.p2p.isStun == false) {
-                timer = setInterval(() => {
-                    udpSocket.send(
-                        msg,
-                        trackerPort,
-                        trackerIP,
-                        (err) => { logger.debug('p2p connector  notify to   tracker error: ' + err) }
-                    );
-                }, 500);
-
-                timeout = setTimeout(() => {
-                    clearInterval(timer);
-                    logger.warn('report to tracker timeout,utp failed');
-                    utpclient.close();
-                    tcpSocket.end();
-                    return;
-                }, 5 * 1000);
-            }
-
-
 
             let onMessage = (msg, rinfo) => {
 
-                if ( rinfo.port === trackerPort) {
+                if (rinfo.port === trackerPort) {
 
                     udpSocket.removeListener('message', onMessage);
 
                     let message = {};
-                    if (defaultConfig.p2p.isStun == false) {
+                    if (isStunTracker == false) {
                         if (timer != null)
                             clearInterval(timer);
                         if (timeout != null)
@@ -349,8 +416,9 @@ async function beginP2P(connectorItem, socketIOSocket, ownClientId, targetClient
                         targetClientId: targetClientId,
                         connectorHost: message.host,
                         connectorPort: message.port,
+                        socketIOSocketId: socketIOSocket.id
                     }, (backData) => {
-                        logger.info('backData:' + JSON.stringify(backData));
+                        logger.trace('backData:' + JSON.stringify(backData));
                         if (backData.success == false) {
                             logger.warn(`can't connect to p2p client for:` + backData.info);
                             utpclient.close();
@@ -380,16 +448,18 @@ async function beginP2P(connectorItem, socketIOSocket, ownClientId, targetClient
                                 logger.debug('p2p connector:  has connected to the p2p client');
                                 let address = utpSocket.address();
                                 utpSocket.on('data', data => {
-                                    logger.debug(`p2p connector utpSocket: received '${data.length}' bytes data from ${address.address}:${address.port}`);
+                                    logger.trace(`p2p connector utpSocket: received '${data.length}' bytes data from ${address.address}:${address.port}`);
                                     tcpSocket.write(data);
                                 });
                                 utpSocket.on('end', () => {
                                     logger.debug('p2p connector: utpSocket end');
                                     utpclient.close();
                                     tcpSocket.end();
+
+                                    tcpSocket.destroy();
                                     return;
                                 });
-                                //------------------这个时候的tcpsocket才能正式使用了a---------------
+                                //------------------这个时候的tcpsocket才能正式使用---------------
                                 tcpSocket.on('data', (dataBuffer) => {
                                     utpSocket.write(dataBuffer);
                                 });
@@ -424,25 +494,42 @@ async function beginP2P(connectorItem, socketIOSocket, ownClientId, targetClient
             //---------来至tracker的回应------------------
             udpSocket.on('message', onMessage);
 
-            if (defaultConfig.p2p.isStun) {
-                console.log('send..a...');
-                stun.request('stun.l.google.com:19302', { socket: udpSocket }, (err, res) => {
+            if (isStunTracker) {
+                stun.request(`${p2pHost}:${trackerPort}`, { socket: udpSocket }, (err, res) => {
                     if (err) {
                         console.error(err);
                     } else {
-                        const { address } = res.getXorAddress();
-                        console.log('your ip', address);
+                        const { address, port } = res.getXorAddress();
+                        console.log('your ip', address, port);
                     }
                 });
             }
+            else {
+                let msg = JSON.stringify({ authenKey: authenKey, command: 'connector_report_tunnel_info' });
+                timer = setInterval(() => {
+                    udpSocket.send(
+                        msg,
+                        trackerPort,
+                        defaultConfig.host,
+                        (err) => { logger.debug('p2p connector  notify to   tracker error: ' + err) }
+                    );
+                }, 500);
+
+                timeout = setTimeout(() => {
+                    clearInterval(timer);
+                    logger.warn('report to tracker timeout,utp failed');
+                    utpclient.close();
+                    tcpSocket.end();
+                    return;
+                }, 5 * 1000);
+            }
+
         });
-
-
 
     });
 
     server.listen(connectorItem.localPort, () => {
-        logger.trace("connector tcp  server started success,port=" + connectorItem.localPort);
+        logger.debug("p2p local tcp  server started at port=" + connectorItem.localPort);
     });
 
 }
@@ -478,6 +565,7 @@ async function checkServerStatus() {
         let result = await ret.data;
         return result.success;
     } catch (error) {
+        logger.trace(error);
         return false;
     }
 
@@ -494,7 +582,10 @@ setInterval(async () => {
     }
 }, 10 * 1000);
 
-trayIcon();
+if(require('os').arch()!='arm64'){
+    trayIcon();
+}
+
 main();
 
 
