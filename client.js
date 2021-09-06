@@ -25,8 +25,7 @@ program
     .option('-t, --test', 'is test')
     .parse(process.argv);
 const options = program.opts();
-
-axios.defaults.timeout=15000;
+axios.defaults.timeout = 5000;
 if (defaultWebSeverConfig.https == true) {
     axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 } else {
@@ -38,6 +37,12 @@ let authenKey = clientConfig.authenKey;
 if (options.test) {
     authenKey = '2';
 }
+
+if(defaultConfig.monitor.enabled){
+    const easyMonitor = require('easy-monitor');
+    easyMonitor('client');
+}
+
 let isWorkingFine = true;
 let currentClientNatType = null;
 const currentClientTunnelsMap = new Map();
@@ -58,8 +63,8 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             if (data.targetTunnelId != tunnel.id || data.targetP2PPassword != tunnel.p2pPassword) {
                 fn({ success: false, data: null, info: 'targetTunnelId or p2pPassword is not right' });
                 return;
-            }else{
-                if(currentClientNatType===SYMMETRIC_NAT){
+            } else {
+                if (currentClientNatType === SYMMETRIC_NAT) {
                     fn({ success: false, data: null, info: 'target client is  SYMMETRIC_NAT' });
                     return;
                 }
@@ -91,10 +96,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
             });
 
-            tcpClient.on('data', (dataBuffer) => {
-                utpSocket.write(dataBuffer);
-            });
-
+            tcpClient.pipe(utpSocket); //--
             tcpClient.on('close', (hadError) => {
                 tempTcpClient = null;
                 logger.trace('p2p tcp Client Closed:' + JSON.stringify(address));
@@ -109,15 +111,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             //---------------
 
             let utpSocketaddress = utpSocket.address();
-            let onData = data => {
-                logger.trace(
-                    `p2p client utpserver: received '${data.length}' bytes data from ${utpSocketaddress.address}:${utpSocketaddress.port}`
-                );
-
-                tcpClient.write(data);
-            };
-
-            utpSocket.on('data', onData);
+            utpSocket.pipe(tcpClient);  //--
             utpSocket.on('end', () => {
                 logger.debug(`p2p client utpserver: remote disconnected  ${utpSocketaddress.address}:${utpSocketaddress.port}`);
                 server.close();
@@ -161,7 +155,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
                         message.port = res.port;
                     }
                     logger.info(`p2p info:` + JSON.stringify(message))
-                    fn({ success: true, data: message, info: 'target client is ready.nat type='+currentClientNatType });
+                    fn({ success: true, data: message, info: 'target client is ready.nat type=' + currentClientNatType });
 
                     //------------tryConnect2Public---
                     let publicInfo = {
@@ -308,14 +302,15 @@ async function main(params) {
         currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: 5, stunHost: clientConfig.stunHost });
     } catch (error) {
         logger.warn(error);
-        currentClientNatType='Error';
+        currentClientNatType = 'Error';
     }
-   
+
     logger.info('client nat\'s type:', currentClientNatType);
     await updateClientSystemInfo(currentClientNatType);
 
     const ownClientId = clientResult.data.id;
     for (const tunnelItem of currentClientTunnels) {
+        
         if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
             let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
                 host: defaultConfig.host,
@@ -324,6 +319,7 @@ async function main(params) {
             await httpTunnelClient.start();
             continue;
         }
+
         if (tunnelItem.type === 'tcp' || tunnelItem.type === 'p2p') {
             let tcpTunnelClient = new TcpTunnelClient(
                 authenKey,
@@ -346,6 +342,15 @@ async function main(params) {
                 logger.error('process will quit for : ' + data.info);
                 process.exit(1);
             });
+            continue;
+        }
+
+        if(tunnelItem.type==='socks5'){
+            let sock5TunnelClient = new Sock5TunnelClient(authenKey, tunnelItem, {
+                host: defaultConfig.host,
+                port: defaultBridgeConfig.port
+            });
+            await sock5TunnelClient.start();
             continue;
         }
     }
@@ -446,11 +451,8 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
 
                             utpclient.connect(server.port, server.address, (utpSocket) => {
                                 logger.debug('p2p connector:  has connected to the p2p client');
-                                let address = utpSocket.address();
-                                utpSocket.on('data', data => {
-                                    logger.trace(`p2p connector utpSocket: received '${data.length}' bytes data from ${address.address}:${address.port}`);
-                                    tcpSocket.write(data);
-                                });
+                                //let address = utpSocket.address();
+                                utpSocket.pipe(tcpSocket);
                                 utpSocket.on('end', () => {
                                     logger.debug('p2p connector: utpSocket end');
                                     utpclient.close();
@@ -460,10 +462,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                                     return;
                                 });
                                 //------------------这个时候的tcpsocket才能正式使用---------------
-                                tcpSocket.on('data', (dataBuffer) => {
-                                    utpSocket.write(dataBuffer);
-                                });
-
+                                tcpSocket.pipe(utpSocket); //--
                                 tcpSocket.on('end', () => {
                                     logger.debug(`connector tcp  server on socket end,` + socketAddressInfo);
                                     utpclient.close();
@@ -582,7 +581,7 @@ setInterval(async () => {
     }
 }, 10 * 1000);
 
-if(require('os').arch()!='arm64'){
+if (require('os').arch() != 'arm64') {
     trayIcon();
 }
 

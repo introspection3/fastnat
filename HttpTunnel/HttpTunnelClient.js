@@ -11,7 +11,7 @@ const rootPath = require('../Common/GlobalData').rootPath;
 
 class HttpTunnelClient {
 
-    
+
 
     /**
      * 
@@ -23,7 +23,7 @@ class HttpTunnelClient {
         this.authenKey = authenKey;
         this.tunnel = tunnel;
         this.tcpTunnelServerAddress = tcpTunnelServerAddress;
-        this.localAddress = { host: tunnel.localIp, port: tunnel.localPort };
+       // this.localAddress = { host: tunnel.localIp, port: tunnel.localPort };
         this.started = false;
 
         let targetUrl = `${tunnel.type}://${tunnel.localIp}:${tunnel.localPort}`;

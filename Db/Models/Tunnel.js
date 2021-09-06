@@ -15,13 +15,21 @@ const Tunnel = sequelize.define('tunnel', {
         allowNull: false,
         comment: 'tunnel name'
     },
-    
+
+    other: {
+        type: DataTypes.STRING(500),
+        allowNull: false,
+        comment: 'other config',
+        defaultValue: ''
+    },
+
     p2pPassword: {
         type: DataTypes.STRING(50),
         allowNull: false,
         comment: 'p2p password',
         defaultValue: 'fastnat'
     },
+
     localIp: {
         type: DataTypes.STRING(50),
         allowNull: false,
