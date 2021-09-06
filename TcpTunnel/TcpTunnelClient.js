@@ -104,6 +104,10 @@ class TcpTunnelClient {
 
     }
 
+    stop(){
+        this.tcpClient.stop();
+    }
+
 }
 
 module.exports = TcpTunnelClient;

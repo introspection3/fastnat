@@ -92,10 +92,17 @@ class HttpTunnelClient {
         this.httpProxyServer.listen({ port: 0 }, async () => {
             let port = this.httpProxyServer.address().port;
             logger.trace(`httpProxyServer started at:${port}`);
-            let tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: port, host: '0.0.0.0' });
-            await tcpTunnelClient.startTunnel(this.tunnel.id);
+            this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: port, host: '0.0.0.0' });
+            await this.tcpTunnelClient.startTunnel(this.tunnel.id);
         });
     }
+
+    stop(){
+        if( this.tcpTunnelClient ){
+            this.tcpTunnelClient.stop();
+        }
+    }
+
 }
 
 module.exports = HttpTunnelClient;

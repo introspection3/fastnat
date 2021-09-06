@@ -1,7 +1,6 @@
 
 const TcpTunnelClient = require('../TcpTunnel/TcpTunnelClient');
 const logger = require('../Log/logger');
-const rootPath = require('../Common/GlobalData').rootPath;
 const socks5 = require('simple-socks');
 
 class Sock5TunnelClient {
@@ -33,7 +32,7 @@ class Sock5TunnelClient {
             logger.trace('Sock5TunnelClient has started already');
             return;
         }
-        let socks5Server = null;
+        this.socks5Server = null;
         if (this.socks5Config.authenEnabled) {
             const options = {
                 authenticate: function (username, password, socket, callback) {
@@ -43,25 +42,40 @@ class Sock5TunnelClient {
                     return setImmediate(callback, new Error('incorrect username and password'));
                 }
             };
-            socks5Server = socks5.createServer(options);
+            this.socks5Server = socks5.createServer(options);
         } else {
-            socks5Server = socks5.createServer();
+            this.socks5Server = socks5.createServer();
+            
         }
         socks5Server.on('authenticate', function (username) {
-            logger.debug('user %s successfully authenticated!', username);
+            logger.debug('user ' + username + ' successfully authenticated!');
         });
         socks5Server.on('authenticateError', function (username, err) {
-            logger.error('user %s failed to authenticate...', username, err);
+            logger.error('user ' + username + ' failed to authenticate...' + err);
         });
         socks5Server.on('handshake', function (socket) {
-            logger.trace('new socks5 client from %s:%d', socket.remoteAddress, socket.remotePort);
+            logger.trace('new socks5 client from ' + socket.remoteAddress + ':' + socket.remotePort);
+        });
+        socks5Server.on('proxyError', function (err) {
+            logger.error('unable to connect to remote server');
+            logger.error(err);
+        });
+        socks5Server.on('proxyDisconnect', function (originInfo, destinationInfo, hadError) {
+            logger.debug(
+                `client ${originInfo.address}:${originInfo.port} request has disconnected from remote server at${destinationInfo.address}:${destinationInfo.port} with err ${hadError ? '' : 'no '}`);
         });
 
         socks5Server.listen(this.tunnel.localPort, '0.0.0.0', function () {
             logger.debug('SOCKS5 proxy server started on 0.0.0.0' + this.tunnel.localPort);
-            let tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: this.socks5Config.port, host: '0.0.0.0' });
-            await tcpTunnelClient.startTunnel(this.tunnel.id);
+            this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: this.socks5Config.port, host: '0.0.0.0' });
+            await this.tcpTunnelClient.startTunnel(this.tunnel.id);
         });
+    }
+    stop(){
+        this.socks5Server.close();
+        if(this.tcpTunnelClient){
+            this.tcpTunnelClient.stop();
+        }
     }
 }
 

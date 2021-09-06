@@ -184,6 +184,13 @@ class TcpClient {
 
     }
 
+    stop(){
+        if(this.client!=null){
+            this.client.end();
+            this.client.destroy();
+        }
+    }
+
 
 }
 

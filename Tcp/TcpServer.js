@@ -40,6 +40,7 @@ class TcpServer {
         this.eventEmitter = new events.EventEmitter();
         this.codec = 'utf8';
         this.stopNotify = false;
+        
     }
 
     /**
@@ -230,7 +231,7 @@ class TcpServer {
             });
 
         });
-
+        
         this.server.on('error',(err)=>{
             logger.error('tcp server err: ',err);
         });
@@ -246,6 +247,11 @@ class TcpServer {
         });
 
         return this.server;
+    }
+    stop(){
+        if(this.server){
+            this.server.close();
+        }
     }
 
 }
