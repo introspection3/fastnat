@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "host": "192.168.1.4",
+    "host": "192.168.0.100",
     "webserver": {
         "https": false,
         "port": 8081,
@@ -15,7 +15,8 @@
         "host": "stun.l.google.com",
         "port": 19302,
         "trackerPort": 19302,
-        "isStun": true
+        "isStun": true,
+        "sampleCount": 1
     },
     "log": {
         "level": "trace"

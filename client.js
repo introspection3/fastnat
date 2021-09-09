@@ -19,6 +19,7 @@ const Socket = require('socket.io-client').Socket;
 const p2pHost = defaultConfig.p2p.host;
 const trackerPort = defaultConfig.p2p.trackerPort;
 const isStunTracker = defaultConfig.p2p.isStun;
+const sampleCount=defaultConfig.p2p.sampleCount;
 const p2pmtu = defaultConfig.p2p.mtu;
 program.version('1.0.0');
 program
@@ -38,7 +39,7 @@ if (options.test) {
     authenKey = '2';
 }
 
-if(defaultConfig.monitor.enabled){
+if (defaultConfig.monitor.enabled) {
     const easyMonitor = require('easy-monitor');
     easyMonitor('client');
 }
@@ -85,7 +86,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             // let address = { host: '127.0.0.1', port: 3306 };
             let address = { host: tunnel.localIp, port: tunnel.localPort };
             let tcpClient = net.createConnection(address, () => {
-                logger.trace('p2p tcp client has created ');
+                logger.trace('p2p tcp client has created to ' + JSON.stringify(address));
             });
             //-----------------记录此UtpServer所用tcpclient-----------
 
@@ -299,7 +300,7 @@ async function main(params) {
 
     //----------
     try {
-        currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: 5, stunHost: clientConfig.stunHost });
+        currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
     } catch (error) {
         logger.warn(error);
         currentClientNatType = 'Error';
@@ -310,7 +311,7 @@ async function main(params) {
 
     const ownClientId = clientResult.data.id;
     for (const tunnelItem of currentClientTunnels) {
-        
+
         if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
             let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
                 host: defaultConfig.host,
@@ -345,7 +346,7 @@ async function main(params) {
             continue;
         }
 
-        if(tunnelItem.type==='socks5'){
+        if (tunnelItem.type === 'socks5') {
             let sock5TunnelClient = new Sock5TunnelClient(authenKey, tunnelItem, {
                 host: defaultConfig.host,
                 port: defaultBridgeConfig.port
@@ -357,8 +358,14 @@ async function main(params) {
     let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
         let result = await getClientP2PInfoByTunnelId(authenKey, connectorItem.p2pTunnelId);
-        let targetClientId = result.data.clientId;
-        startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId);
+        if (result.success) {
+            let targetClientId = result.data.clientId;
+            let remotePort = result.data.remotePort;
+            startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort);
+        } else {
+            logger.error(result.info);
+        }
+
     }
 }
 
@@ -371,7 +378,7 @@ async function main(params) {
  * @param {Number} ownClientId 
  * @param {Number} targetClientId 
  */
-async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId) {
+async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort) {
 
     let server = net.createServer((tcpSocket) => {
         let socketAddressInfo = `remoteAddress=${tcpSocket.remoteAddress}:${tcpSocket.remotePort},localAddress=${tcpSocket.localAddress}:${tcpSocket.localPort}`;
@@ -427,7 +434,31 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         if (backData.success == false) {
                             logger.warn(`can't connect to p2p client for:` + backData.info);
                             utpclient.close();
-                            tcpSocket.end();
+                            logger.warn('start fallover to tcp tunnel');
+                            // tcpSocket.end();//------fallover
+                            //----fallover connect to tcp server---s-
+                            let address = { host: defaultConfig.host, port: remotePort };
+                            let tcpClient = net.createConnection(address, () => {
+                                logger.trace('p2p tcp client has created to ' + JSON.stringify(address));
+
+                            });
+                            tcpClient.on('connect', () => {
+                                tcpClient.pipe(tcpSocket);
+                                tcpSocket.pipe(tcpClient);
+                            });
+
+                            tcpClient.on('close', (hadError) => {
+                                logger.trace('Tcp Client Closed:' + this.toString());
+                                tcpSocket.end();
+                                tcpSocket.destroy();
+                            });
+
+                            tcpClient.on('error', (err) => {
+                                tcpSocket.end();
+                                tcpSocket.destroy();
+                                logger.trace('Tcp Client error: ' + err + " ," + this.toString());
+                            });
+                             //----fallover connect to tcp server---e
                             return;
                         }
                         //---------tryConnect2Public------
@@ -457,7 +488,6 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                                     logger.debug('p2p connector: utpSocket end');
                                     utpclient.close();
                                     tcpSocket.end();
-
                                     tcpSocket.destroy();
                                     return;
                                 });

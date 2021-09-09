@@ -53,6 +53,7 @@ router.get(`/getClientP2PInfoByTunnelId`, async (req, res, next) => {
  
     let tunnelId = req.query.tunnelId;
     let authenKey = req.query.authenKey;
+   
     let client = await Client.findOne({
         where: {
             isAvailable: true
@@ -78,11 +79,11 @@ router.get(`/getClientP2PInfoByTunnelId`, async (req, res, next) => {
         return;
     }
 
-
+     
     let reuslt={
         publicIp:client.publicIp,
         clientId:client.id,
-        p2pRemotePort:client.p2pRemotePort,
+        remotePort:client.tunnels[0].remotePort,// for tcp fallover
         natType:client.natType
     }
 

@@ -27,7 +27,7 @@ router.get('/getP2PInfo', async function (req, res, next) {
     
     let reuslt={
         publicIp:client.publicIp,
-        p2pRemotePort:p2pRemotePort,
+        remotePort:client.tunnels[0].remotePort,
         natType:client.natType
     }
     res.send(reuslt);

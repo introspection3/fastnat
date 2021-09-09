@@ -8,17 +8,16 @@ log4js.configure({
     appenders: {
         out: {
             type: 'console',
-            // layout: {
-            //     type: 'pattern',
-            //     pattern: '%d %p %c %z==> %m%n'
-            // }
         },
         app: {
-            type: 'file',
+            type: 'dateFile',
+           
             layout: {
                 type: 'pattern',
                 pattern: '%d %p %c %z==> %m%n'
             },
+            compress: true,
+            daysToKeep: 2,
             filename: logPath
         }
     },
