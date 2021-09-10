@@ -5,22 +5,27 @@ const logger = require('./Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
-const getNatType = require("nat-type-identifier");
+const UdpTunnelClient=require('./UdpTunnel/UdpTunnelClient');
 const clientConfig = require('./Common/ClientConfig');
 const os = require('os');
 const getMAC = require('getmac').default;
-const SYMMETRIC_NAT = "Symmetric NAT";
 const { program } = require('commander');
 const startConnect2SocketIO = require('./Communication/Soldier');
 const net = require('net');
+const Socket = require('socket.io-client').Socket;
+
+//---------------p2p config -----s-----
+const getNatType = require("nat-type-identifier");
+const SYMMETRIC_NAT = "Symmetric NAT";
 const Node = require('utp-punch');
 const stun = require('stun');
-const Socket = require('socket.io-client').Socket;
 const p2pHost = defaultConfig.p2p.host;
 const trackerPort = defaultConfig.p2p.trackerPort;
 const isStunTracker = defaultConfig.p2p.isStun;
 const sampleCount = defaultConfig.p2p.sampleCount;
 const p2pmtu = defaultConfig.p2p.mtu;
+//---------------p2p config -----e-----
+
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
@@ -354,6 +359,13 @@ async function main(params) {
             await sock5TunnelClient.start();
             continue;
         }
+
+        if (tunnelItem.type === 'udp') {
+            let udpTunnelClient=new UdpTunnelClient(socketIOSocket,tunnelItem);
+            udpTunnelClient.start();
+            continue;
+        }
+
     }
     let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
@@ -365,7 +377,6 @@ async function main(params) {
         } else {
             logger.error(result.info);
         }
-
     }
 }
 

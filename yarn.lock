@@ -18,16 +18,6 @@
     "debug" "~4.3.1"
     "socket.io-adapter" "~2.3.0"
 
-"@socket.io/redis-adapter@^7.0.0":
-  "integrity" "sha512-ioqzSUH2XvrBKm70bphTeLwBSPUU0n+w/Qkz11ryKBn6IIT4GJxyVOpodVBGnmDpxhT31EImQTZRT1ZueSTiTQ=="
-  "resolved" "https://registry.npmjs.org/@socket.io/redis-adapter/-/redis-adapter-7.0.0.tgz"
-  "version" "7.0.0"
-  dependencies:
-    "debug" "~4.3.1"
-    "notepack.io" "~2.2.0"
-    "socket.io-adapter" "~2.3.0"
-    "uid2" "0.0.3"
-
 "@types/component-emitter@^1.2.10":
   "integrity" "sha512-bsjleuRKWmGqajMerkzox19aGbscQX5rmmvvXl3wlIp5gMG1HgkiwPxsN5p070fBDKTNSPgojVbuY1+HWMbFhg=="
   "resolved" "https://registry.npmjs.org/@types/component-emitter/-/component-emitter-1.2.10.tgz"
@@ -350,13 +340,6 @@
   "resolved" "https://registry.nlark.com/concat-map/download/concat-map-0.0.1.tgz"
   "version" "0.0.1"
 
-"config@^3.3.6":
-  "integrity" "sha1-uHeZ23OZzDSYj1U3m19DRlsbBlw="
-  "resolved" "https://registry.nlark.com/config/download/config-3.3.6.tgz"
-  "version" "3.3.6"
-  dependencies:
-    "json5" "^2.1.1"
-
 "console-control-strings@^1.0.0", "console-control-strings@~1.1.0":
   "integrity" "sha1-PXz0Rk22RG6mRL9LOVB/mFEAjo4="
   "resolved" "https://registry.nlark.com/console-control-strings/download/console-control-strings-1.1.0.tgz"
@@ -523,7 +506,7 @@
   "resolved" "https://registry.nlark.com/delegates/download/delegates-1.0.0.tgz"
   "version" "1.0.0"
 
-"denque@^1.4.1", "denque@^1.5.0":
+"denque@^1.4.1":
   "integrity" "sha1-B/Zw4pyaePj67LJWah4sEZKcXL8="
   "resolved" "https://registry.nlark.com/denque/download/denque-1.5.1.tgz?cache=0&sync_timestamp=1629309980907&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fdenque%2Fdownload%2Fdenque-1.5.1.tgz"
   "version" "1.5.1"
@@ -833,7 +816,7 @@
   dependencies:
     "is-property" "^1.0.2"
 
-"generic-pool@^3.4.2", "generic-pool@^3.8.2":
+"generic-pool@^3.8.2":
   "integrity" "sha1-qrTygK21Iv373F5bZNcY02g/BOk="
   "resolved" "https://registry.nlark.com/generic-pool/download/generic-pool-3.8.2.tgz"
   "version" "3.8.2"
@@ -1151,13 +1134,6 @@
   "integrity" "sha1-Epai1Y/UXxmg9s4B1lcB4sc1tus="
   "resolved" "https://registry.nlark.com/json-stringify-safe/download/json-stringify-safe-5.0.1.tgz"
   "version" "5.0.1"
-
-"json5@^2.1.1":
-  "integrity" "sha1-Lf7+cgxrpSXZ69kJlQ8FFTFsiaM="
-  "resolved" "https://registry.nlark.com/json5/download/json5-2.2.0.tgz"
-  "version" "2.2.0"
-  dependencies:
-    "minimist" "^1.2.5"
 
 "jsonfile@^4.0.0":
   "integrity" "sha1-h3Gq4HmbZAdrdmQPygWPnBDjPss="
@@ -1533,11 +1509,6 @@
   "resolved" "https://registry.nlark.com/normalize-url/download/normalize-url-4.5.1.tgz?cache=0&sync_timestamp=1628689099559&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fnormalize-url%2Fdownload%2Fnormalize-url-4.5.1.tgz"
   "version" "4.5.1"
 
-"notepack.io@~2.2.0":
-  "integrity" "sha512-9b5w3t5VSH6ZPosoYnyDONnUTF8o0UkBw7JLA6eBlYJWyGT1Q3vQa8Hmuj1/X6RYvHjjygBDgw6fJhe0JEojfw=="
-  "resolved" "https://registry.npmjs.org/notepack.io/-/notepack.io-2.2.0.tgz"
-  "version" "2.2.0"
-
 "npm-bundled@^1.0.1":
   "integrity" "sha1-lEx4eJvXOQNbcLqiylzDK42GC8E="
   "resolved" "https://registry.nlark.com/npm-bundled/download/npm-bundled-1.1.2.tgz"
@@ -1635,11 +1606,6 @@
     "os-homedir" "^1.0.0"
     "os-tmpdir" "^1.0.0"
 
-"p-finally@^1.0.0":
-  "integrity" "sha1-P7z7FbiZpEEjs0ttzBi3JDNqLK4="
-  "resolved" "https://registry.nlark.com/p-finally/download/p-finally-1.0.0.tgz"
-  "version" "1.0.0"
-
 "p-limit@^1.1.0":
   "integrity" "sha1-uGvV8MJWkJEcdZD8v8IBDVSzzLg="
   "resolved" "https://registry.nlark.com/p-limit/download/p-limit-1.3.0.tgz?cache=0&sync_timestamp=1628812766275&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fp-limit%2Fdownload%2Fp-limit-1.3.0.tgz"
@@ -1653,13 +1619,6 @@
   "version" "2.0.0"
   dependencies:
     "p-limit" "^1.1.0"
-
-"p-timeout@^2.0.1":
-  "integrity" "sha1-2N0ZeVldLcATnh/ka4tkbLPN8Dg="
-  "resolved" "https://registry.nlark.com/p-timeout/download/p-timeout-2.0.1.tgz"
-  "version" "2.0.1"
-  dependencies:
-    "p-finally" "^1.0.0"
 
 "p-try@^1.0.0":
   "integrity" "sha1-y8ec26+P1CKOE/Yh8rGiN8GyB7M="
@@ -1878,33 +1837,6 @@
   dependencies:
     "indent-string" "^3.0.0"
     "strip-indent" "^2.0.0"
-
-"redis-commands@^1.7.0":
-  "integrity" "sha512-nJWqw3bTFy21hX/CPKHth6sfhZbdiHP6bTawSgQBlKOVRG7EZkfHbbHwQJnrE4vsQf0CMNE+3gJ4Fmm16vdVlQ=="
-  "resolved" "https://registry.npmjs.org/redis-commands/-/redis-commands-1.7.0.tgz"
-  "version" "1.7.0"
-
-"redis-errors@^1.0.0", "redis-errors@^1.2.0":
-  "integrity" "sha1-62LSrbFeTq9GEMBK/hUpOEJQq60="
-  "resolved" "https://registry.npmjs.org/redis-errors/-/redis-errors-1.2.0.tgz"
-  "version" "1.2.0"
-
-"redis-parser@^3.0.0":
-  "integrity" "sha1-tm2CjNyv5rS4pCin3vTGvKwxyLQ="
-  "resolved" "https://registry.npmjs.org/redis-parser/-/redis-parser-3.0.0.tgz"
-  "version" "3.0.0"
-  dependencies:
-    "redis-errors" "^1.0.0"
-
-"redis@^3.1.2":
-  "integrity" "sha512-grn5KoZLr/qrRQVwoSkmzdbw6pwF+/rwODtrOr6vuBRiR/f3rjSTGupbF90Zpqm2oenix8Do6RV7pYEkGwlKkw=="
-  "resolved" "https://registry.npmjs.org/redis/-/redis-3.1.2.tgz"
-  "version" "3.1.2"
-  dependencies:
-    "denque" "^1.5.0"
-    "redis-commands" "^1.7.0"
-    "redis-errors" "^1.2.0"
-    "redis-parser" "^3.0.0"
 
 "regenerator-runtime@^0.13.4":
   "integrity" "sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA=="
@@ -2133,14 +2065,6 @@
   dependencies:
     "@babel/runtime-corejs3" "^7.13.10"
     "binary" "^0.3.0"
-
-"socket-pool@^1.2.3":
-  "integrity" "sha1-2Y6mjVK0fezy8IrYJQ9uW1yvryY="
-  "resolved" "https://registry.nlark.com/socket-pool/download/socket-pool-1.2.3.tgz"
-  "version" "1.2.3"
-  dependencies:
-    "generic-pool" "^3.4.2"
-    "p-timeout" "^2.0.1"
 
 "socket.io-adapter@~2.3.0", "socket.io-adapter@~2.3.1":
   "integrity" "sha512-8cVkRxI8Nt2wadkY6u60Y4rpW3ejA1rxgcK2JuyIhmF+RMNpTy1QRtkHIDUOf3B4HlQwakMsWbKftMv/71VMmw=="
@@ -2438,16 +2362,6 @@
   dependencies:
     "media-typer" "0.3.0"
     "mime-types" "~2.1.24"
-
-"udp-proxy@^1.2.0":
-  "integrity" "sha1-pBrDj/MPK5j9LNhR4W0drYSWdUU="
-  "resolved" "https://registry.nlark.com/udp-proxy/download/udp-proxy-1.2.0.tgz"
-  "version" "1.2.0"
-
-"uid2@0.0.3":
-  "integrity" "sha1-SDEm4Rd03y9xuLY53NeZw3YWK4I="
-  "resolved" "https://registry.npmjs.org/uid2/-/uid2-0.0.3.tgz"
-  "version" "0.0.3"
 
 "universalify@^0.1.0", "universalify@^0.1.2":
   "integrity" "sha1-tkb2m+OULavOzJ1mOcgNwQXvqmY="

@@ -44,6 +44,8 @@ if (serverConfig.cluster.enabled) {
 
 createProxy();
 
+//-----------------------socket.io-----------------
+
 const { io, defaultNS } = require('./Communication/Commander');
 //----------------express------------------
 const app = express();
@@ -69,7 +71,7 @@ const server = app.listen(defaultWebServerConfig.port, function () {
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.port });
 tcpTunnelServer.start();
 
-//-----------------------socket.io-----------------
+
 require('./P2P/P2PTracker');
 
 //-------------------------------------------------

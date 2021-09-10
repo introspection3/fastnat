@@ -5,6 +5,7 @@ const Socket = require('socket.io-client').Socket;
 class UdpTunnelClient {
 
     outTime = new Date('2000/03/28 10:17:22');
+
     /**
      * 
      * @param {Socket} socketIOSocket 
@@ -15,7 +16,6 @@ class UdpTunnelClient {
         this.socketIOSocket = socketIOSocket;
         this.eventName = 'server.send.udp:' + this.udpTunnelItemOption.id;
         this.backEventName = 'client.back.udp:' + this.udpTunnelItemOption.id;
-
         this.socketIOSocket.on(this.eventName, (msg, rInfo) => {
             let udpClient = this.#getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
             //转发udp包
@@ -24,6 +24,12 @@ class UdpTunnelClient {
 
         this.udpClientMap = new Map();
         this._checkUdpClientTimer = this.#checkUdpClient(clientTimeout);
+    }
+
+    start(){
+        this.socketIOSocket.emit('client.createUpdTunnelServer',this.udpTunnelItemOption,(backData) => {
+
+        });
     }
 
     stop() {
@@ -42,8 +48,8 @@ class UdpTunnelClient {
     #checkUdpClient(ms) {
         let timer = setInterval(() => {
             for (let [key, udpClient] of this.udpClientMap) {
-                let ms = parseInt(new Date() - udpClient.lastMessageTime);
-                if (ms == 11111) {
+                let time = parseInt(new Date() - udpClient.lastMessageTime);
+                if (ms >= time) {
                     udpClient.close();
                     this.udpClientMap.delete(key);
                 }
@@ -73,6 +79,7 @@ class UdpTunnelClient {
 
         //错误处理
         udpClient.on('error', (err) => {
+            udpClient.lastMessageTime = this.outTime;
             logger.warn(clientName + ' err:' + err)
         })
 
@@ -83,10 +90,11 @@ class UdpTunnelClient {
         });
 
         udpClient.connect(localPort, localIp, (err) => {
-            udpClient.lastMessageTime = outTime;
+            udpClient.lastMessageTime = this.outTime;
             logger.warn(err);
         });
         return udpClient;
     }
 
 }
+module.exports=UdpTunnelClient;

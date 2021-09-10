@@ -1,6 +1,4 @@
 const SocketIO = require('socket.io');
-const { createClient } = require('redis');
-const redisAdapter = require('@socket.io/redis-adapter');
 const logger = require('../Log/logger');
 const defaultConfig = require('../Common/DefaultConfig');
 const serverConfig = require('../Common/ServerConfig');
@@ -9,6 +7,8 @@ const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
 const io = new SocketIO.Server(defaultWebServerConfig.socketioPort);
 io.adapter(createAdapter());
+const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
+const ClusterData = require('../Common/ClusterData');
 
 /**
  * is valid token
@@ -56,28 +56,28 @@ io.use(async (socket, next) => {
 let defaultNS = io.of('/');
 
 io.on('connection', async (socket) => {
-    // socket.join('default');
-    let clientId = socket.handshake.auth.clientId;
+
+    let currentConnectSocketIoClientId = socket.handshake.auth.clientId;
     socket.on('disconnect', function () {
         let clientId = socket.handshake.auth.clientId;
         logger.debug(`clientId=${clientId} disconnect,socket.id=${socket.id}`);
-        io.emit('client.disconnect', { clientId: clientId, socketIOSocketId:socket.id });
+        io.emit('client.disconnect', { clientId: clientId, socketIOSocketId: socket.id });
     });
     logger.debug('socket.io new connection,socket.id=' + socket.id);
 
     //-----------判断是否登录到系统了----------
-    let currentSockets = await defaultNS.fetchSockets();
-    let existSockets = currentSockets.filter((value, index, array) => {
-        value.handshake.auth.clientId === clientId;
+    let currentOnlineSockets = await defaultNS.fetchSockets();
+    let existSockets = currentOnlineSockets.filter((value, index, array) => {
+        value.handshake.auth.clientId === currentConnectSocketIoClientId;
     });
 
     if (existSockets && existSockets.length > 1) {
         //已有连接了
         socket.disconnect(true);
-        logger.error('client is already  online,clientId=' + clientId);
+        logger.error('client is already  online,clientId=' + currentConnectSocketIoClientId);
         return;
     }
-    //-------------------------------------------------
+    //------------------------------------------
 
     socket.on('p2p.request.open', async (data, fn) => {
 
@@ -100,6 +100,48 @@ io.on('connection', async (socket) => {
         }
 
     });
+
+    socket.on('client.createUpdTunnelServer', async (udpTunnelItemOption, fn) => {
+        //--------------
+        let tunnelId = udpTunnelItemOption.id;
+        let authenKey = socket.handshake.auth.token;
+
+        let client = await Client.findOne({
+            where: {
+                isAvailable: true,
+                authenKey: authenKey
+            },
+            include: [
+                {
+                    model: Tunnel,
+                    required: true,
+                    where: {
+                        isAvailable: 1,
+                        id: tunnelId
+                    }
+                }
+            ]
+        });
+
+        if (client == null) {
+            fn({
+                success: false,
+                info: 'error client authenKey',
+                data: null
+            });
+            return;
+        }
+
+        //----------------内部自动维护其生命周期-------------------------------
+        let udpTunnelServer = new UpdTunnelServer(udpTunnelItemOption, socket);
+        udpTunnelServer.start();
+        logger.debug('udpTunnelServer started');
+        fn({
+            success: true,
+            info: 'start sucess',
+            data: udpTunnelItemOption
+        });
+    });
 });
 
 
@@ -109,7 +151,7 @@ if (serverConfig.cluster.enabled) {
     // defaultNS = defaultNS.adapter;
 }
 
-module.exports={
-    io:io,
-    defaultNS:defaultNS
+module.exports = {
+    io: io,
+    defaultNS: defaultNS
 }

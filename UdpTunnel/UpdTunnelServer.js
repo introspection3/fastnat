@@ -16,7 +16,21 @@ class UdpTunnelServer {
         this.tunnelId=udpTunnelItemOption.id;
         this.eventName='client.back.udp:'+ this.tunnelId;
         this.stopEventName='server.send.udpserverClosed:' + this.tunnelId;
-      
+        this._started=false;
+
+        //---------
+        socketIOSocket.once('disconnect',  ()=> {
+            let clientId = socket.handshake.auth.clientId;
+            this.stop();
+        });
+    }
+
+    start(){
+        if(this._started){
+            logger.warn('UdpTunnelServer has already started');
+            return;
+        }
+        this._started=true;
         this.socketIOSocket.on(this.eventName,(msg,rinfo)=>{
             this.udpServer.send(msg,rinfo.port,rinfo.address);
         })
@@ -54,6 +68,9 @@ class UdpTunnelServer {
     stop() {
         this.socketIOSocket.emit(this.stopEventName, this.tunnelId);
         this.udpServer.close();
+        this.udpServer=null;
     }
 
 }
+
+module.exports=UdpTunnelServer;
