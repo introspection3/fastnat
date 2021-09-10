@@ -28,7 +28,7 @@
         "port": 80
     },
     "cluster": {
-        "enabled": true,
+        "enabled": false,
         "count": 1
     }
 }

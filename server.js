@@ -10,9 +10,8 @@ const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
 const createProxy = require('./Http/HttpProxy');
 const initdbdata = require('./Db/InitDb');
-const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
-
 if (serverConfig.cluster.enabled) {
+  const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
   if (cluster.isPrimary || cluster.isMaster) {
     let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
     logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
@@ -74,7 +73,7 @@ tcpTunnelServer.start();
 
 require('./P2P/P2PTracker');
 
-//-------------------------------------------------
+//------------------------------------------------
 process.on("uncaughtException", function (err) {
   logger.error(err);
 });

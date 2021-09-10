@@ -4,9 +4,11 @@ const defaultConfig = require('../Common/DefaultConfig');
 const serverConfig = require('../Common/ServerConfig');
 const defaultWebServerConfig = defaultConfig.webserver;
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
-const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
 const io = new SocketIO.Server(defaultWebServerConfig.socketioPort);
-io.adapter(createAdapter());
+if (serverConfig.cluster.enabled) {
+    const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
+    io.adapter(createAdapter());
+}
 const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
 const ClusterData = require('../Common/ClusterData');
 

@@ -615,6 +615,11 @@
   dependencies:
     "is-arrayish" "^0.2.1"
 
+"es7-sleep@^1.0.0":
+  "integrity" "sha1-1Yo3wlBOgdUK2Yhbp2uvPoqLWoc="
+  "resolved" "https://registry.npmjs.org/es7-sleep/-/es7-sleep-1.0.0.tgz"
+  "version" "1.0.0"
+
 "escape-html@~1.0.3":
   "integrity" "sha1-Aljq5NPQwJdN4cFpGI7wBR0dGYg="
   "resolved" "https://registry.nlark.com/escape-html/download/escape-html-1.0.3.tgz"

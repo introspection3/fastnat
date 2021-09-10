@@ -5,7 +5,7 @@ const logger = require('./Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
-const UdpTunnelClient=require('./UdpTunnel/UdpTunnelClient');
+const UdpTunnelClient = require('./UdpTunnel/UdpTunnelClient');
 const clientConfig = require('./Common/ClientConfig');
 const os = require('os');
 const getMAC = require('getmac').default;
@@ -13,7 +13,7 @@ const { program } = require('commander');
 const startConnect2SocketIO = require('./Communication/Soldier');
 const net = require('net');
 const Socket = require('socket.io-client').Socket;
-
+const sleep = require('es7-sleep');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -29,6 +29,7 @@ const p2pmtu = defaultConfig.p2p.mtu;
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
+    .option('-r, --restart', 'restart')
     .parse(process.argv);
 const options = program.opts();
 axios.defaults.timeout = 5000;
@@ -272,6 +273,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
         logger.warn(`socket.io-client disconnecting  reason:` + reason);
         SocketIOCreateUtpServerMap.clear();
         SocketIOCreateUtpClientMap.clear();
+        isWorkingFine=false;
     });
 
 }
@@ -284,7 +286,10 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
 }
 
 async function main(params) {
-
+    if (options.restart) {
+        logger.debug('sleep 1s');
+        await sleep(1000);
+    }
     let clientResult = null;
     try {
         clientResult = await getClient(authenKey);
@@ -361,7 +366,7 @@ async function main(params) {
         }
 
         if (tunnelItem.type === 'udp') {
-            let udpTunnelClient=new UdpTunnelClient(socketIOSocket,tunnelItem);
+            let udpTunnelClient = new UdpTunnelClient(socketIOSocket, tunnelItem);
             udpTunnelClient.start();
             continue;
         }
@@ -606,19 +611,17 @@ async function checkServerStatus() {
         return result.success;
     } catch (error) {
         logger.trace(error);
+        isWorkingFine == false;
         return false;
     }
 
 }
 
 setInterval(async () => {
-    if (isWorkingFine == false) {
-        let serverOk = await checkServerStatus();
-        logger.trace('server status:' + serverOk);
-        if (serverOk) {
-            isWorkingFine = true;
-            main();
-        }
+    let serverOk = await checkServerStatus();
+    if (serverOk && isWorkingFine == false) {
+        isWorkingFine = true;
+        restartApplication();
     }
 }, 10 * 1000);
 
@@ -705,7 +708,21 @@ async function updateClientSystemInfo(natType) {
     return result;
 }
 
-
+function restartApplication() {
+    logger.debug("restartApplication  pid= " + process.pid);
+    let exe = process.argv.shift();
+    if (!process.argv.includes('-r')) {
+        process.argv.push('-r')
+    }
+    setTimeout(function () {
+        require("child_process").spawn(exe, process.argv, {
+            cwd: __dirname,
+            detached: true,
+            stdio: "inherit"
+        });
+        process.exit();
+    }, 500);
+}
 
 process.on("exit", function (code) {
 
