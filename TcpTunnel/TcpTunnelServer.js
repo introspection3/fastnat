@@ -49,7 +49,7 @@ class TcpTunnelServer {
                 ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
             }
         });
-        this.authenMap = new Map();
+       // this.authenMap = new Map();
     }
 
     /**

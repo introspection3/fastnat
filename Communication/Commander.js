@@ -109,4 +109,7 @@ if (serverConfig.cluster.enabled) {
     // defaultNS = defaultNS.adapter;
 }
 
-module.exports = io;
+module.exports={
+    io:io,
+    defaultNS:defaultNS
+}

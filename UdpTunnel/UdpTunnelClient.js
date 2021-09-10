@@ -1,50 +1,92 @@
 const dgram = require('dgram');
 const logger = require('../Log/logger');
-const RpCTcpClient = require('../Rpc/RpcTcpClient');
+const Socket = require('socket.io-client').Socket;
 
 class UdpTunnelClient {
 
+    outTime = new Date('2000/03/28 10:17:22');
     /**
      * 
-     * @param {string} authenKey 
-     * @param {Object} rpcServerAddress 
-     * @param {Object} localAddress 
+     * @param {Socket} socketIOSocket 
+     * @param {Tunnel} udpTunnelItemOption 
      */
-    constructor(authenKey, rpcServerAddress, localAddress) {
-        this.authenKey = authenKey;
-        this.udpTunnelServerAddress = rpcServerAddress;
-        this.localAddress = localAddress;
-        this.rcpClient = new RpCTcpClient(rpcServerAddress);
+    constructor(socketIOSocket, udpTunnelItemOption,clientTimeout=5000) {
+        this.udpTunnelItemOption = udpTunnelItemOption;
+        this.socketIOSocket = socketIOSocket;
+        this.eventName = 'server.send.udp:' + this.udpTunnelItemOption.id;
+        this.backEventName = 'client.back.udp:' + this.udpTunnelItemOption.id;
+
+        this.socketIOSocket.on(this.eventName, (msg, rInfo) => {
+            let udpClient = this.#getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
+            //转发udp包
+            udpClient.send(msg);
+        });
+
+        this.udpClientMap = new Map();
+        this._checkUdpClientTimer = this.#checkUdpClient(clientTimeout);
     }
 
-    async start() {
+    stop() {
+        this.socketIOSocket.off(this.eventName);
+        this.destoryAllUdpClient();
+        clearInterval(this._checkUdpClientTimer);
+    }
 
-        await this.rcpClient.start();
+    destoryAllUdpClient() {
+        for (let [key, udpClient] of this.udpClientMap) {
+            udpClient.close();
+        }
+        this.udpClientMap.clear();
+    }
 
+    #checkUdpClient(ms) {
+        let timer = setInterval(() => {
+            for (let [key, udpClient] of this.udpClientMap) {
+                let ms = parseInt(new Date() - udpClient.lastMessageTime);
+                if (ms == 11111) {
+                    udpClient.close();
+                    this.udpClientMap.delete(key);
+                }
+            }
+        }, ms);
+        return timer;
+    }
+
+    #getUdpClient(localIp, localPort, tunnelId, rInfo) {
+        let clientName = `udpClient-${tunnelId}-(${rInfo.address}:${rInfo.port})`;
+        if (this.udpClientMap.has(clientName)) {
+            return this.udpClientMap.get(clientName);
+        } else {
+            let udpClient = this.#createUdpClient(udpTunnelItemOption);
+            this.udpClientMap.set(clientName, udpClient);
+            return udpClient;
+        }
+    }
+
+    #createUdpClient(localIp, localPort, tunnelId, vistorRemoteInfo) {
+        let clientName = `udpClient-${tunnelId}-(${vistorRemoteInfo.address}:${vistorRemoteInfo.port})`;
         let udpClient = dgram.createSocket('udp4');
-
-        udpClient.on('close', function () {
-            console.log('udp client closed.')
+        udpClient.lastMessageTime = new Date();
+        udpClient.on('close', () => {
+            logger.debug(clientName + ' close');
         });
 
         //错误处理
-        udpClient.on('error', function () {
-            console.log('some error on udp client.')
+        udpClient.on('error', (err) => {
+            logger.warn(clientName + ' err:' + err)
         })
 
         // 接收消息
-        udpClient.on('message', function (msg, rinfo) {
-            console.log(`receive message from ${rinfo.address}:${rinfo.port}：${msg}`);
+        udpClient.on('message', (msg, rinfo) => {
+            udpClient.lastMessageTime = new Date();
+            this.socketIOSocket.emit(this.backEventName, msg, vistorRemoteInfo); //必须告诉服务器访问者的端口地址信息
         });
 
-        const message = Buffer.from('Some bytes');
-
-        udpClient.connect(udpPort, '192.168.1.3', (err) => {
-            udpClient.send(message, (err) => {
-
-            });
+        udpClient.connect(localPort, localIp, (err) => {
+            udpClient.lastMessageTime = outTime;
+            logger.warn(err);
         });
-
+        return udpClient;
     }
 
 }

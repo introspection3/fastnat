@@ -19,7 +19,7 @@ const Socket = require('socket.io-client').Socket;
 const p2pHost = defaultConfig.p2p.host;
 const trackerPort = defaultConfig.p2p.trackerPort;
 const isStunTracker = defaultConfig.p2p.isStun;
-const sampleCount=defaultConfig.p2p.sampleCount;
+const sampleCount = defaultConfig.p2p.sampleCount;
 const p2pmtu = defaultConfig.p2p.mtu;
 program.version('1.0.0');
 program
@@ -266,7 +266,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
     socketIOSocket.on('disconnecting', (reason) => {
         logger.warn(`socket.io-client disconnecting  reason:` + reason);
         SocketIOCreateUtpServerMap.clear();
-        SocketIOCreateUtpServerMap.clear();
+        SocketIOCreateUtpClientMap.clear();
     });
 
 }
@@ -458,7 +458,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                                 tcpSocket.destroy();
                                 logger.trace('Tcp Client error: ' + err + " ," + this.toString());
                             });
-                             //----fallover connect to tcp server---e
+                            //----fallover connect to tcp server---e
                             return;
                         }
                         //---------tryConnect2Public------

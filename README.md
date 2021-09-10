@@ -1,6 +1,7 @@
 
 # fastnat
- fastnat is a lightweight, high-performance, powerful intranet penetration proxy server, with a powerful web management terminal.
+ - fastnat is a  high-performance, powerful intranet penetration proxy server, with a powerful web management terminal.
+ - fastnat has funtion about  network building
 
 ## Feature
 

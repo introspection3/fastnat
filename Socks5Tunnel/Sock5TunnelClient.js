@@ -26,7 +26,12 @@ class Sock5TunnelClient {
         }
 
     }
-
+    stop(){
+        this.socks5Server.close();
+        if(this.tcpTunnelClient){
+            this.tcpTunnelClient.stop();
+        }
+    }
     async start() {
         if (this.started) {
             logger.trace('Sock5TunnelClient has started already');
@@ -71,12 +76,7 @@ class Sock5TunnelClient {
             await this.tcpTunnelClient.startTunnel(this.tunnel.id);
         });
     }
-    stop(){
-        this.socks5Server.close();
-        if(this.tcpTunnelClient){
-            this.tcpTunnelClient.stop();
-        }
-    }
+    
 }
 
 module.exports = Sock5TunnelClient;

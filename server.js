@@ -44,7 +44,7 @@ if (serverConfig.cluster.enabled) {
 
 createProxy();
 
-require('./Communication/Commander');
+const { io, defaultNS } = require('./Communication/Commander');
 //----------------express------------------
 const app = express();
 const bodyParser = require('body-parser');
