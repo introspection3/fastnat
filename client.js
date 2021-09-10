@@ -287,7 +287,7 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
 
 async function main(params) {
     if (options.restart) {
-        logger.debug('sleep 1s');
+        logger.debug('sleep 1s,restarted,new pid='+process.pid);
         await sleep(1000);
     }
     let clientResult = null;
@@ -610,7 +610,7 @@ async function checkServerStatus() {
         let result = await ret.data;
         return result.success;
     } catch (error) {
-        logger.trace(error);
+        logger.trace('checkServerStatus error');
         isWorkingFine == false;
         return false;
     }
@@ -709,7 +709,7 @@ async function updateClientSystemInfo(natType) {
 }
 
 function restartApplication() {
-    logger.debug("restartApplication  pid= " + process.pid);
+    logger.debug("restart now,current pid= " + process.pid);
     let exe = process.argv.shift();
     if (!process.argv.includes('-r')) {
         process.argv.push('-r')
