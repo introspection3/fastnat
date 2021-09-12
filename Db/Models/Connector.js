@@ -14,8 +14,11 @@ const Connector = sequelize.define('connector', {
     p2pTunnelId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: -1,
-        comment: 'p2p tunnel id'
+        comment: 'p2p tunnel id',
+        references: {
+            model: 'tunnels', //  refers to table name
+            key: 'id', //  refers to column name in fathers table
+        }
     },
 
     p2pPassword: {
@@ -48,9 +51,23 @@ const Connector = sequelize.define('connector', {
         allowNull: false,
         defaultValue: true,
         comment: 'is available'
+    },
+    clientId: {
+        type: Sequelize.INTEGER,
+        references: {
+            model: 'clients', //  refers to table name
+            key: 'id', //  refers to column name in fathers table
+        }
     }
 }, {
-
+    indexes: [
+        {
+            name: 'unique_connetctor_name_for_client',
+            unique: true,
+            fields: ['name','clientId']
+        }
+       
+    ]
 });
 module.exports = Connector;
 

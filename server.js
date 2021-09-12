@@ -38,6 +38,8 @@ if (serverConfig.cluster.enabled) {
     return;
   }
   ClusterData.register2Worker();
+}else{
+  initdbdata();
 }
 
 

@@ -42,7 +42,7 @@ console.log(axios.defaults.baseURL)
 
 let authenKey = clientConfig.authenKey;
 if (options.test) {
-    authenKey = '2';
+    authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
 }
 
 if (defaultConfig.monitor.enabled) {
@@ -450,8 +450,8 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         if (backData.success == false) {
                             logger.warn(`can't connect to p2p client for:` + backData.info);
                             utpclient.close();
-                            logger.warn('start fallover to tcp tunnel');
-                            // tcpSocket.end();//------fallover
+                            logger.warn('start failover to tcp tunnel');
+                            // tcpSocket.end();//------failover
                             //----fallover connect to tcp server---s-
                             let address = { host: defaultConfig.host, port: remotePort };
                             let tcpClient = net.createConnection(address, () => {

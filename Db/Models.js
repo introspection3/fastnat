@@ -13,6 +13,13 @@ Client.Tunnels = Client.hasMany(Tunnel, { onDelete: 'CASCADE', onUpdate: 'CASCAD
 Connector.Client = Connector.belongsTo(Client);
 Client.Connectors = Client.hasMany(Connector, { onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
+
+Connector.Tunnel = Connector.belongsTo(Tunnel, { foreignKey: { field: 'p2pTunnelId' } });
+Tunnel.Connectors = Tunnel.hasMany(Connector, {
+    onDelete: 'CASCADE', onUpdate: 'CASCADE', constraints: true
+
+});
+
 module.exports = {
     Client,
     Tunnel,

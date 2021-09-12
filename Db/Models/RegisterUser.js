@@ -51,7 +51,23 @@ const RegisterUser = sequelize.define('registerUser', {
         comment: 'is available'
     }
 }, {
-    // 这是其他模型参数
+    indexes: [
+        {
+            name: 'unique_username',
+            unique: true,
+            fields: ['username']
+        },
+        {
+            name: 'unique_email',
+            unique: true,
+            fields: ['email']
+        },
+        {
+            name: 'unique_telphone',
+            unique: true,
+            fields: ['telphone']
+        },
+    ]
 });
 module.exports = RegisterUser;
 

@@ -3,13 +3,13 @@
         "dbType": "sqlite",
         "host": "0.0.0.0",
         "port": 3306,
-        "logging": false,
+        "logging": true,
         "database": "database",
         "username": "root",
         "password": "root"
     },
     "init": {
-        "firstInit": false
+        "firstInit": true
     },
     "admin": {
         "username": "root",
