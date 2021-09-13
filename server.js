@@ -13,6 +13,7 @@ const initdbdata = require('./Db/InitDb');
 if (serverConfig.cluster.enabled) {
   const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
   if (cluster.isPrimary || cluster.isMaster) {
+    require('./P2P/P2PTracker');
     let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
     logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
     initdbdata();
@@ -38,8 +39,9 @@ if (serverConfig.cluster.enabled) {
     return;
   }
   ClusterData.register2Worker();
-}else{
+} else {
   initdbdata();
+  require('./P2P/P2PTracker');
 }
 
 
@@ -72,8 +74,6 @@ const server = app.listen(defaultWebServerConfig.port, function () {
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.port });
 tcpTunnelServer.start();
 
-
-require('./P2P/P2PTracker');
 
 //------------------------------------------------
 process.on("uncaughtException", function (err) {

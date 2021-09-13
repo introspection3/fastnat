@@ -18,7 +18,8 @@ const DomainMap = new Map();
 
 async function getPortBySecondDomainName(secondDomainName) {
     if (DomainMap.has(secondDomainName)) {
-        return DomainMap.get(secondDomainName);
+        let data = DomainMap.get(secondDomainName);
+        return data.remotePort;
     }
     let result = await Tunnel.findOne({
         where: {
@@ -27,16 +28,20 @@ async function getPortBySecondDomainName(secondDomainName) {
         },
         attributes: ['remotePort']
     });
-    DomainMap.set(secondDomainName, result.remotePort);
-    console.log(result.remotePort);
-    return result;
+    DomainMap.set(secondDomainName, { remotePort: result.remotePort, time: new Date() });
+    return result.remotePort;
 }
 
 function createProxy() {
-
+    let fiveMinutes = 5 * 60 * 1000;
     setInterval(() => {
-        DomainMap.clear();
-    }, 5 * 60 * 1000);
+        for (const [key, item] of DomainMap) {
+            let passTime = new Date() - item.time;
+            if (passTime > fiveMinutes) {
+                DomainMap.delete(key);
+            }
+        }
+    }, 15 * 1000);
 
     let proxy = httpProxy.createProxy({});
     proxy.on('error', function (e) {
@@ -63,12 +68,16 @@ function createProxy() {
         let server = https.createServer(serverOptions, async function (req, res) {
             //获取二级域名的名字,然后从数据里找到对应的端口
             let hostname = req.headers['host'];
+            if(net.isIPv4(hostname)){
+                logger.error('you should config domain');
+                return;
+            }
             let secondDomainName = hostname.split('.')[0];
             let targetUrl = `http://127.0.0.1:`;
             if (secondDomainName === 'www') {
+                logger.error('www is not your domain now');
                 return;//暂时不处理
             } else {
-                console.log('secondDomainName', secondDomainName)
                 let port = await getPortBySecondDomainName(secondDomainName);
                 targetUrl += port;
             }
@@ -94,12 +103,16 @@ function createProxy() {
     let server = http.createServer({}, async function (req, res) {
         //获取二级域名的名字,然后从数据里找到对应的端口
         let hostname = req.headers['host'];
+        if(net.isIPv4(hostname)){
+            logger.warn('you should config domain');
+            return;
+        }
         let secondDomainName = hostname.split('.')[0];
         let targetUrl = `http://127.0.0.1:`;
         if (secondDomainName === 'www') {
+            logger.error('www is not your domain now');
             return;//暂时不处理
         } else {
-            console.log('secondDomainName', secondDomainName)
             let port = await getPortBySecondDomainName(secondDomainName);
             targetUrl += port;
         }
@@ -118,7 +131,7 @@ function createProxy() {
     server.listen(serverHttpConfig.port, () => {
         logger.info('server http proxy start:' + JSON.stringify(server.address()))
     });
- 
+
 }
 
 module.exports = createProxy;

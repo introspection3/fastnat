@@ -35,6 +35,5 @@ udpSocket.on('listening', () => {
     logger.debug(`p2p tracker listening ${address.address}:${address.port}`);
 });
 
-udpSocket.bind({ port: trackerPort, exclusive: true });
-
+udpSocket.bind({ port: trackerPort, exclusive: false });//默认就是false,可以用于集群模式,但windows udp目前不支持,所以放到cluster里
 module.exports = udpSocket;

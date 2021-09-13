@@ -435,7 +435,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         message.host = res.address;
                         message.port = res.port;
                     }
-                    logger.info(`p2p info:` + JSON.stringify(message))
+                    logger.info(`p2p client remote address info:` + JSON.stringify(message));
                     //通知对应的客户端进行同时打洞操作
                     socketIOSocket.emit('p2p.request.open', {
                         targetTunnelId: connectorItem.p2pTunnelId,
