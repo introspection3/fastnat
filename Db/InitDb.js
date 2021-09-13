@@ -93,6 +93,7 @@ async function initdbdata() {
         p2pPassword: 'fastnat',
         clientId: 2
     });
+
     let tunnel3 = await Tunnel.create({
         type: 'http',
         name: 'http',
@@ -100,11 +101,33 @@ async function initdbdata() {
         localPort: 80,
         remotePort: 8000,
         clientId: 2,
-        uniqueName:'uniqueName3',
+        uniqueName:'test',
         lowProtocol:'tcp'
     });
 
-   
+   let tunnel4= await Tunnel.create({
+        type: 'udp',
+        name: 'udp',
+        localIp: '8.8.8.8',
+        localPort: 53,
+        remotePort: 53,
+        clientId: 2,
+        uniqueName:'udptest',
+        lowProtocol:'udp'
+    });
+
+
+    let tunnel5= await Tunnel.create({
+        type: 'socks5',
+        name: 'socks5',
+        localIp: '0.0.0.0',
+        localPort: 1080,
+        remotePort: 10800,
+        clientId: 2,
+        uniqueName:'socks5test',
+        lowProtocol:'tcp',
+        other:`{"authenEnabled":true,"username":"fastnat","password":"fastnat"}`
+    });
 
     logger.debug(`db install ok`);
 

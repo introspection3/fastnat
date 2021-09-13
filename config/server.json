@@ -15,7 +15,7 @@
         "username": "root",
         "password": "root321.."
     },
-    "//":"必须要有域名的时候再进行以下配置,无证书时可以设置ssl.enabled:false",
+    "//":"须要有域名的时候再进行以下配置,无证书时可以设置ssl.enabled:false",
     "http": {
         "ssl": {
             "enabled":true,

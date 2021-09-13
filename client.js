@@ -25,7 +25,7 @@ const isStunTracker = defaultConfig.p2p.isStun;
 const sampleCount = defaultConfig.p2p.sampleCount;
 const p2pmtu = defaultConfig.p2p.mtu;
 //---------------p2p config -----e-----
-
+const Sock5TunnelClient=require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')

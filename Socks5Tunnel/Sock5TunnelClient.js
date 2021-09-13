@@ -40,7 +40,7 @@ class Sock5TunnelClient {
         this.socks5Server = null;
         if (this.socks5Config.authenEnabled) {
             const options = {
-                authenticate: function (username, password, socket, callback) {
+                authenticate:  (username, password, socket, callback)=> {
                     if (username === this.socks5Config.username && password === this.socks5Config.password) {
                         return setImmediate(callback);
                     }
@@ -52,27 +52,27 @@ class Sock5TunnelClient {
             this.socks5Server = socks5.createServer();
             
         }
-        socks5Server.on('authenticate', function (username) {
+        this.socks5Server.on('authenticate',   (username)=> {
             logger.debug('user ' + username + ' successfully authenticated!');
         });
-        socks5Server.on('authenticateError', function (username, err) {
+        this.socks5Server.on('authenticateError',   (username, err)=> {
             logger.error('user ' + username + ' failed to authenticate...' + err);
         });
-        socks5Server.on('handshake', function (socket) {
+        this.socks5Server.on('handshake',   (socket)=> {
             logger.trace('new socks5 client from ' + socket.remoteAddress + ':' + socket.remotePort);
         });
-        socks5Server.on('proxyError', function (err) {
+        this.socks5Server.on('proxyError',   (err) =>{
             logger.error('unable to connect to remote server');
             logger.error(err);
         });
-        socks5Server.on('proxyDisconnect', function (originInfo, destinationInfo, hadError) {
+        this.socks5Server.on('proxyDisconnect',   (originInfo, destinationInfo, hadError)=> {
             logger.debug(
                 `client ${originInfo.address}:${originInfo.port} request has disconnected from remote server at${destinationInfo.address}:${destinationInfo.port} with err ${hadError ? '' : 'no '}`);
         });
 
-        socks5Server.listen(this.tunnel.localPort, '0.0.0.0', function () {
-            logger.debug('SOCKS5 proxy server started on 0.0.0.0' + this.tunnel.localPort);
-            this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: this.socks5Config.port, host: '0.0.0.0' });
+        this.socks5Server.listen(this.tunnel.localPort, '0.0.0.0', async   () =>{
+            logger.debug('SOCKS5 proxy server started on 0.0.0.0:' + this.tunnel.localPort);
+            this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port:  this.tunnel.localPort, host: '0.0.0.0' });
             await this.tcpTunnelClient.startTunnel(this.tunnel.id);
         });
     }
