@@ -3,32 +3,33 @@
         "dbType": "sqlite",
         "host": "0.0.0.0",
         "port": 3306,
-        "logging": true,
+        "logging": false,
         "database": "database",
         "username": "root",
         "password": "root"
     },
     "init": {
-        "firstInit": true
+        "firstInit": false
     },
     "admin": {
         "username": "root",
         "password": "root321.."
     },
+    "//":"必须要有域名的时候再进行以下配置,无证书时可以设置isHttps:false",
     "http": {
-        "isHttps": false,
+        "isHttps": true,
         "sslFile": {
-            "type": "pem/pfx",
+            "type": "pem",
             "pemKeyName": "key.pem",
-            "pemCertName": "name.pem",
+            "pemCertName": "cert.pem",
             "pfxName": "name.pfx",
             "pfxPassword": "password"
         },
-        "domain": "www.test.com",
-        "port": 80
+        "domain": "fastnat.com",
+        "port": 443
     },
     "cluster": {
-        "enabled": false,
-        "count": 1
+        "enabled": true ,
+        "count": 10
     }
 }

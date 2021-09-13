@@ -8,11 +8,35 @@ const url = require('url');
 const defaultConfig = require('../config/default.json');
 const serverConfig = require('../config/server.json');
 const serverHttpConfig = serverConfig.http;
+const sslFile = serverHttpConfig.sslFile;
 const rootPath = require('../Common/GlobalData').rootPath;
 const path = require('path');
 const fs = require('fs');
+const configDir = path.join(rootPath, 'config');
+const { RegisterUser, Client, Tunnel } = require('../Db/Models');
+const DomainMap=new Map();
+
+async function getPortBySecondDomainName(secondDomainName) {
+    if(DomainMap.has(secondDomainName)){
+        return DomainMap.get(secondDomainName);
+    }
+    let result = await Tunnel.findOne({
+        where: {
+            uniqueName: secondDomainName,
+            isAvailable: 1
+        },
+        attributes: ['remotePort']
+    });
+    DomainMap.set(secondDomainName,result.remotePort);
+    console.log(result.remotePort);
+    return result;
+}
 
 function createProxy() {
+
+    setInterval(() => {
+        DomainMap.clear();
+    }, 5*60*1000);
 
     let proxy = httpProxy.createProxy({});
     proxy.on('error', function (e) {
@@ -23,15 +47,13 @@ function createProxy() {
     let serverOptions = {};
     if (serverHttpConfig.isHttps === true) {
         httpModule = https;
-        const sslFile = serverHttpConfig.http.sslFile;
-        let configDir = path.join(rootPath, 'config');
         if (sslFile.type == 'pem') {
             serverOptions = {
                 key: fs.readFileSync(path.join(configDir, sslFile.pemKeyName)),
                 cert: fs.readFileSync(path.join(configDir, sslFile.pemCertName)),
             };
         }
-        if (serverHttpConfig.http.sslFile.type == 'pfx') {
+        if (sslFile.type == 'pfx') {
             serverOptions = {
                 pfx: fs.readFileSync(path.join(configDir, sslFile.pfxName)),
                 passphrase: sslFile.pfxPassword
@@ -39,31 +61,37 @@ function createProxy() {
         }
     }
 
-    let server = httpModule.createServer(serverOptions, function (req, res) {
-
-        let targetUrl = req.url;
-        let finalAgent = null;
-        let parsedUrl = url.parse(targetUrl);
-        if (parsedUrl.protocol === 'https:') {
-            finalAgent = https.globalAgent;
+    let server = httpModule.createServer(serverOptions, async function (req, res) {
+        //获取二级域名的名字,然后从数据里找到对应的端口
+        let hostname = req.headers['host'];
+        let secondDomainName = hostname.split('.')[0];
+        let targetUrl = `http://127.0.0.1:`;
+        if (secondDomainName === 'www') {
+            return;//暂时不处理
         } else {
-            finalAgent = http.globalAgent;
+            console.log('secondDomainName', secondDomainName)
+            let port =await getPortBySecondDomainName(secondDomainName);
+            targetUrl += port;
         }
-
+        //对于外界而言必然都是http
+        let finalAgent = http.globalAgent;
         proxy.web(req, res, {
             target: targetUrl,
             agent: finalAgent,
-            headers: { host: parsedUrl.hostname },
+            headers: { host: hostname },
             prependPath: false,
             xfwd: true,
-            hostRewrite: targetUrl.host,
-            protocolRewrite: parsedUrl.protocol
+            hostRewrite: hostname,
+            protocolRewrite: serverHttpConfig.isHttps ? 'https' : 'http'
         });
+
     });
 
     server.listen(serverHttpConfig.port, () => {
         logger.info('Server http proxy start:' + JSON.stringify(server.address()))
     });
+
+
     return server;
 }
 
