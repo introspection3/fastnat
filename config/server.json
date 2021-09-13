@@ -15,10 +15,12 @@
         "username": "root",
         "password": "root321.."
     },
-    "//":"必须要有域名的时候再进行以下配置,无证书时可以设置isHttps:false",
+    "//":"必须要有域名的时候再进行以下配置,无证书时可以设置ssl.enabled:false",
     "http": {
-        "isHttps": true,
-        "sslFile": {
+        "ssl": {
+            "enabled":true,
+            "port":443,
+            "//":"pfx or pem",
             "type": "pem",
             "pemKeyName": "key.pem",
             "pemCertName": "cert.pem",
@@ -26,10 +28,10 @@
             "pfxPassword": "password"
         },
         "domain": "fastnat.com",
-        "port": 443
+        "port": 80
     },
     "cluster": {
-        "enabled": true ,
+        "enabled": false ,
         "count": 10
     }
 }
