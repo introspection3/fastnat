@@ -44,11 +44,11 @@ class TcpClient {
     }
 
     stopCurrentNotify() {
-        this.client.stopNotify = true;
-    }
-    /*启动Tcp隧道客户端程序,只会调用一次
-    * 连接到服务端
-     */
+            this.client.stopNotify = true;
+        }
+        /*启动Tcp隧道客户端程序,只会调用一次
+         * 连接到服务端
+         */
     start() {
 
         let instance = this;
@@ -61,10 +61,10 @@ class TcpClient {
 
         let lastTempBuffer = null;
         /**
-      * 通知有完整的数据来了
-      * @param {Buffer} dataBuffer 
-      * @param {Socket} targetSocket 对应的socket
-      */
+         * 通知有完整的数据来了
+         * @param {Buffer} dataBuffer 
+         * @param {Socket} targetSocket 对应的socket
+         */
         function notify(dataBuffer, targetSocket) {
             instance.eventEmitter.emit('onMessage', dataBuffer, targetSocket);
             if (instance.codec === 'utf8') {
@@ -79,9 +79,9 @@ class TcpClient {
 
 
         /**
-        * 处理socket数据
-        * @param {Buffer} dataBuffer 
-        */
+         * 处理socket数据
+         * @param {Buffer} dataBuffer 
+         */
         function processCommingBuffer(dataBuffer) {
             //没有历史存留的不完整数据
             if (lastTempBuffer == null) {
@@ -115,7 +115,7 @@ class TcpClient {
 
         // 创建用于连接校验服务端的 客户端连接
         let client = net.createConnection(this.serverAddress, () => {
-            logger.trace('Tcp client has created for '+this.toString());
+            //logger.trace('Tcp client has created for '+this.toString());
         });
 
         client.on('connect', () => {
@@ -138,8 +138,8 @@ class TcpClient {
         });
 
         client.on('error', (err) => {
-            this.eventEmitter.emit('error',err);
-            logger.trace('Tcp Client error: ' + err+" ,"+this.toString());
+            this.eventEmitter.emit('error', err);
+            logger.trace('Tcp Client error: ' + err + " ," + this.toString());
         });
 
 
@@ -184,8 +184,8 @@ class TcpClient {
 
     }
 
-    stop(){
-        if(this.client!=null){
+    stop() {
+        if (this.client != null) {
             this.client.end();
             this.client.destroy();
         }

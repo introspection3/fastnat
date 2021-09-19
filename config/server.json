@@ -15,12 +15,12 @@
         "username": "root",
         "password": "root321.."
     },
-    "//":"须要有域名的时候再进行以下配置,无证书时可以设置ssl.enabled:false",
+    "//": "须要有域名的时候再进行以下配置,无证书时可以设置ssl.enabled:false,另外请保证80端口可用",
     "http": {
         "ssl": {
-            "enabled":true,
-            "port":443,
-            "//":"pfx or pem",
+            "enabled": true,
+            "port": 443,
+            "//": "pfx or pem",
             "type": "pem",
             "pemKeyName": "key.pem",
             "pemCertName": "cert.pem",
@@ -31,7 +31,7 @@
         "port": 80
     },
     "cluster": {
-        "enabled": true ,
-        "count": 2
+        "enabled": true,
+        "count": 1
     }
 }

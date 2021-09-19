@@ -14,18 +14,29 @@ const startConnect2SocketIO = require('./Communication/Soldier');
 const net = require('net');
 const Socket = require('socket.io-client').Socket;
 const sleep = require('es7-sleep');
+const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
 const Node = require('utp-punch');
 const stun = require('stun');
 const p2pHost = defaultConfig.p2p.host;
+checkType(isString, p2pHost, 'p2pHost');
+
 const trackerPort = defaultConfig.p2p.trackerPort;
-const isStunTracker = defaultConfig.p2p.isStun;
+checkType(isNumber, trackerPort, 'trackerPort');
+
+const isStun = defaultConfig.p2p.isStun;
+checkType(isBoolean, isStun, 'isStun');
+
 const sampleCount = defaultConfig.p2p.sampleCount;
+checkType(isNumber, sampleCount, 'sampleCount');
+
 const p2pmtu = defaultConfig.p2p.mtu;
+checkType(isNumber, p2pmtu, 'p2pmtu');
+
 //---------------p2p config -----e-----
-const Sock5TunnelClient=require('./Socks5Tunnel/Sock5TunnelClient');
+const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
@@ -64,7 +75,7 @@ const SocketIOCreateUtpClientMap = new Map();
  */
 async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
-    socketIOSocket.on('p2p.request.open', async (data, fn) => {
+    socketIOSocket.on('p2p.request.open', async(data, fn) => {
         if (currentClientTunnelsMap.has(data.targetTunnelId)) {
             let tunnel = currentClientTunnelsMap.get(data.targetTunnelId);
             if (data.targetTunnelId != tunnel.id || data.targetP2PPassword != tunnel.p2pPassword) {
@@ -118,7 +129,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             //---------------
 
             let utpSocketaddress = utpSocket.address();
-            utpSocket.pipe(tcpClient);  //--
+            utpSocket.pipe(tcpClient); //--
             utpSocket.on('end', () => {
                 logger.debug(`p2p client utpserver: remote disconnected  ${utpSocketaddress.address}:${utpSocketaddress.port}`);
                 server.close();
@@ -148,15 +159,14 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
                 if (rinfo.port === trackerPort) {
                     udpSocket.removeListener('message', onMessage);
                     let message = {};
-                    if (isStunTracker == false) {
+                    if (isStun == false) {
                         if (timer != null)
                             clearInterval(timer);
                         if (timeout != null)
                             clearTimeout(timeout);
                         const text = msg.toString();
                         message = JSON.parse(text);
-                    }
-                    else {
+                    } else {
                         const res = stun.decode(msg).getXorAddress();
                         message.host = res.address;
                         message.port = res.port;
@@ -198,7 +208,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             //---------来至tracker的回应------------------
             udpSocket.on('message', onMessage);
 
-            if (isStunTracker) {
+            if (isStun) {
                 stun.request(`${p2pHost}:${trackerPort}`, { socket: udpSocket }, (err, res) => {
                     if (err) {
                         logger.error(err);
@@ -207,8 +217,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
                         logger.log('your public:', address, port);
                     }
                 });
-            }
-            else {
+            } else {
                 timer = setInterval(() => {
                     udpSocket.send(
                         msg,
@@ -230,7 +239,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
     });
 
-    socketIOSocket.on('client.disconnect', async (data) => {
+    socketIOSocket.on('client.disconnect', async(data) => {
         logger.debug('client.disconnect=>' + data.clientId);
         logger.debug('SocketIOCreateUtpServerMap.size', SocketIOCreateUtpServerMap.size)
         if (SocketIOCreateUtpServerMap.has(data.clientId)) {
@@ -264,7 +273,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
     });
 
-    socketIOSocket.on('errorToken', async (data) => {
+    socketIOSocket.on('errorToken', async(data) => {
         socketIOSocket.disconnect(true);
         logger.error('error token:' + data.token);
     });
@@ -273,7 +282,23 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
         logger.warn(`socket.io-client disconnecting  reason:` + reason);
         SocketIOCreateUtpServerMap.clear();
         SocketIOCreateUtpClientMap.clear();
-        isWorkingFine=false;
+        isWorkingFine = false;
+    });
+
+    socketIOSocket.on('stop.tunnel', async(data, fn) => {
+
+    });
+
+    socketIOSocket.on('delete.tunnel', async(data, fn) => {
+
+    });
+
+    socketIOSocket.on('start.tunnel', async(data, fn) => {
+
+    });
+
+    socketIOSocket.on('add.tunnel', async(data, fn) => {
+
     });
 
 }
@@ -285,11 +310,27 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
     }
 }
 
+/**
+ * check current nat type
+ */
+async function checkNatType() {
+    try {
+        currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
+    } catch (error) {
+        logger.warn(error);
+        currentClientNatType = 'Error';
+    }
+
+    logger.info('client nat\'s type:', currentClientNatType);
+    await updateClientSystemInfo(currentClientNatType);
+}
+
 async function main(params) {
     if (options.restart) {
-        logger.debug('sleep 1s,restarted,new pid='+process.pid);
+        logger.debug('sleep 1s,then restart,new pid=' + process.pid);
         await sleep(1000);
     }
+
     let clientResult = null;
     try {
         clientResult = await getClient(authenKey);
@@ -303,21 +344,11 @@ async function main(params) {
         logger.error(clientResult.info);
         return;
     }
+
     let currentClientTunnels = clientResult.data.tunnels;
     setCurrentClientTunnelsMap(currentClientTunnels)
     let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id);
     registerSocketIOEvent(socketIOSocket, clientResult.data.id);
-
-    //----------
-    try {
-        currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
-    } catch (error) {
-        logger.warn(error);
-        currentClientNatType = 'Error';
-    }
-
-    logger.info('client nat\'s type:', currentClientNatType);
-    await updateClientSystemInfo(currentClientNatType);
 
     const ownClientId = clientResult.data.id;
     for (const tunnelItem of currentClientTunnels) {
@@ -333,12 +364,10 @@ async function main(params) {
 
         if (tunnelItem.type === 'tcp' || tunnelItem.type === 'p2p') {
             let tcpTunnelClient = new TcpTunnelClient(
-                authenKey,
-                {
+                authenKey, {
                     host: defaultConfig.host,
                     port: defaultBridgeConfig.port
-                },
-                {
+                }, {
                     host: tunnelItem.localIp,
                     port: tunnelItem.localPort
                 }
@@ -383,6 +412,8 @@ async function main(params) {
             logger.error(result.info);
         }
     }
+
+    checkNatType();
 }
 
 
@@ -422,15 +453,14 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                     udpSocket.removeListener('message', onMessage);
 
                     let message = {};
-                    if (isStunTracker == false) {
+                    if (isStun == false) {
                         if (timer != null)
                             clearInterval(timer);
                         if (timeout != null)
                             clearTimeout(timeout);
                         const text = msg.toString();
                         message = JSON.parse(text);
-                    }
-                    else {
+                    } else {
                         const res = stun.decode(msg).getXorAddress();
                         message.host = res.address;
                         message.port = res.port;
@@ -539,7 +569,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
             //---------来至tracker的回应------------------
             udpSocket.on('message', onMessage);
 
-            if (isStunTracker) {
+            if (isStun) {
                 stun.request(`${p2pHost}:${trackerPort}`, { socket: udpSocket }, (err, res) => {
                     if (err) {
                         console.error(err);
@@ -548,8 +578,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         console.log('your ip', address, port);
                     }
                 });
-            }
-            else {
+            } else {
                 let msg = JSON.stringify({ authenKey: authenKey, command: 'connector_report_tunnel_info' });
                 timer = setInterval(() => {
                     udpSocket.send(
@@ -617,7 +646,7 @@ async function checkServerStatus() {
 
 }
 
-setInterval(async () => {
+setInterval(async() => {
     let serverOk = await checkServerStatus();
     if (serverOk && isWorkingFine == false) {
         isWorkingFine = true;
@@ -643,7 +672,7 @@ async function trayIcon(params) {
     if (os.platform() == 'win32') {
         ext = '.ico';
     }
-    let bitmap = await readFile('./config/tray' + ext);
+    let bitmap = await readFile('./config/img/tray' + ext);
     let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
     const systray = new SysTray({
         menu: {
@@ -714,7 +743,7 @@ function restartApplication() {
     if (!process.argv.includes('-r')) {
         process.argv.push('-r')
     }
-    setTimeout(function () {
+    setTimeout(function() {
         require("child_process").spawn(exe, process.argv, {
             cwd: __dirname,
             detached: true,
@@ -724,16 +753,16 @@ function restartApplication() {
     }, 500);
 }
 
-process.on("exit", function (code) {
+process.on("exit", function(code) {
 
 });
 
-process.on('SIGINT', function () {
+process.on('SIGINT', function() {
     console.log('Exit now!');
     process.exit();
 });
 
-process.on("uncaughtException", function (err) {
+process.on("uncaughtException", function(err) {
     console.error(err.stack)
     logger.error(err);
 });

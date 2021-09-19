@@ -44,7 +44,7 @@ function createProxy() {
     }, 15 * 1000);
 
     let proxy = httpProxy.createProxy({});
-    proxy.on('error', function (e) {
+    proxy.on('error', function(e) {
         logger.error(e);
     });
 
@@ -53,30 +53,42 @@ function createProxy() {
         let serverOptions = {};
         if (sslConfig.type == 'pem') {
             serverOptions = {
-                key: fs.readFileSync(path.join(configDir, sslConfig.pemKeyName)),
-                cert: fs.readFileSync(path.join(configDir, sslConfig.pemCertName)),
+                key: fs.readFileSync(path.join(configDir, 'ssl', sslConfig.pemKeyName)),
+                cert: fs.readFileSync(path.join(configDir, 'ssl', sslConfig.pemCertName)),
             };
         }
 
         if (sslConfig.type == 'pfx') {
             serverOptions = {
-                pfx: fs.readFileSync(path.join(configDir, sslConfig.pfxName)),
+                pfx: fs.readFileSync(path.join(configDir, 'ssl', sslConfig.pfxName)),
                 passphrase: sslConfig.pfxPassword
             };
         }
 
-        let server = https.createServer(serverOptions, async function (req, res) {
+        let server = https.createServer(serverOptions, async function(req, res) {
             //获取二级域名的名字,然后从数据里找到对应的端口
             let hostname = req.headers['host'];
-            if(net.isIPv4(hostname)){
-                logger.error('you should config domain');
+            console.log(hostname)
+            if (net.isIPv4(hostname)) {
+                res.end('you should config domain');
+                logger.warn(`bad hostname:${hostname}`)
                 return;
             }
-            let secondDomainName = hostname.split('.')[0];
+            let array = hostname.split('.');
+            if (array.length == 1) {
+                res.end('domain error');
+                return;
+            }
+            let secondDomainName = array[0];
+            console.log(secondDomainName)
+            if (secondDomainName == null || secondDomainName == '') {
+                res.end('secondDomainName not exist');
+                return;
+            }
             let targetUrl = `http://127.0.0.1:`;
             if (secondDomainName === 'www') {
                 logger.error('www is not your domain now');
-                return;//暂时不处理
+                return; //暂时不处理
             } else {
                 let port = await getPortBySecondDomainName(secondDomainName);
                 targetUrl += port;
@@ -100,18 +112,29 @@ function createProxy() {
 
     }
 
-    let server = http.createServer({}, async function (req, res) {
+    let server = http.createServer({}, async function(req, res) {
         //获取二级域名的名字,然后从数据里找到对应的端口
         let hostname = req.headers['host'];
-        if(net.isIPv4(hostname)){
-            logger.warn('you should config domain');
+        if (net.isIPv4(hostname)) {
+            res.end('you should config domain');
+            logger.warn(`bad hostname:${hostname}`)
             return;
         }
-        let secondDomainName = hostname.split('.')[0];
+        let array = hostname.split('.');
+        if (array.length == 1) {
+            res.end('domain error');
+            return;
+        }
+        let secondDomainName = array[0];
+        console.log(secondDomainName)
+        if (secondDomainName == null || secondDomainName == '') {
+            res.end('secondDomainName not exist');
+            return;
+        }
         let targetUrl = `http://127.0.0.1:`;
         if (secondDomainName === 'www') {
             logger.error('www is not your domain now');
-            return;//暂时不处理
+            return; //暂时不处理
         } else {
             let port = await getPortBySecondDomainName(secondDomainName);
             targetUrl += port;

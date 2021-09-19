@@ -2,7 +2,7 @@
 const logger = require('../Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const io = require('socket.io-client').io;
-const Socket= require('socket.io-client').Socket;
+const Socket = require('socket.io-client').Socket;
 
 /**
  * 
@@ -24,13 +24,13 @@ function startConnect2SocketIO(authenKey, clientId) {
         transports: ["websocket"]
     });
 
-   
+
     let p = new Promise((resolve, reject) => {
         let t = setTimeout(() => {
             reject('socket.io client  to server timeout,please check the server status')
-        }, 2000);
+        }, 3000);
 
-        socketIOSocket.on('connect', function () {
+        socketIOSocket.on('connect', function() {
             clearTimeout(t);
             logger.debug('socket.io client has connected to server,socket.id=' + socketIOSocket.id);
             resolve(socketIOSocket);

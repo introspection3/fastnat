@@ -10,46 +10,51 @@ const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
 const createProxy = require('./Http/HttpProxy');
 const initdbdata = require('./Db/InitDb');
+const { isTcpPortAvailable } = require('./Utils/PortUtil');
+const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
+const defaultBridgeConfigPort = defaultBridgeConfig.port;
+checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
+
 if (serverConfig.cluster.enabled) {
-  const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
-  if (cluster.isPrimary || cluster.isMaster) {
-    require('./P2P/P2PTracker');
-    let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
-    logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
-    initdbdata();
-    setupPrimary();
-    for (let i = 0; i < instanceCount; i++) {
-      cluster.fork();
+    const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
+    if (cluster.isPrimary || cluster.isMaster) {
+        require('./P2P/P2PTracker');
+        let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
+        logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
+        initdbdata();
+        setupPrimary();
+        for (let i = 0; i < instanceCount; i++) {
+            cluster.fork();
+        }
+        cluster.on('online', function(worker) {
+            logger.debug(`worker (pid:${worker.process.pid}) online`);
+        });
+
+        cluster.on('listening', function(worker, address) {
+            logger.debug(`worker (pid:${worker.process.pid}) connected to ${JSON.stringify(address)}`);
+        });
+
+        cluster.on('exit', function(worker, code, signal) {
+            logger.debug(`worker ${worker.process.pid} died with code (${code}),signal(${signal})`);
+            logger.debug('starting a new worker');
+            cluster.fork();
+        });
+
+        ClusterData.register2Cluster();
+        return;
     }
-    cluster.on('online', function (worker) {
-      logger.debug(`worker (pid:${worker.process.pid}) online`);
-    });
-
-    cluster.on('listening', function (worker, address) {
-      logger.debug(`worker (pid:${worker.process.pid}) connected to ${JSON.stringify(address)}`);
-    });
-
-    cluster.on('exit', function (worker, code, signal) {
-      logger.debug(`worker ${worker.process.pid} died with code (${code}),signal(${signal})`);
-      logger.debug('starting a new worker');
-      cluster.fork();
-    });
-
-    ClusterData.register2Cluster();
-    return;
-  }
-  ClusterData.register2Worker();
+    ClusterData.register2Worker();
 } else {
-  initdbdata();
-  require('./P2P/P2PTracker');
+    initdbdata();
+    require('./P2P/P2PTracker');
 }
 
 
 createProxy();
 
 //-----------------------socket.io-----------------
-
 const { io, defaultNS } = require('./Communication/Commander');
+
 //----------------express------------------
 const app = express();
 const bodyParser = require('body-parser');
@@ -59,23 +64,26 @@ app.use('/user', require('./Routers/User'));
 app.use('/client', require('./Routers/Client'));
 app.use(express.urlencoded({ extended: true }));
 app.use('/', express.static('public'));
-app.get('/checkServerStatus', function (req, res) {
-  res.send({ success: true });
+app.get('/checkServerStatus', function(req, res) {
+    res.send({ success: true });
 });
-app.get('/version', async function (req, res) {
-  res.send(defaultConfig.version);
-});
-
-const server = app.listen(defaultWebServerConfig.port, function () {
-  logger.debug(`fastnat web start at:${JSON.stringify(server.address())}`)
+app.get('/version', async function(req, res) {
+    res.send(defaultConfig.version);
 });
 
-//----------------tcp tunnel server---------------
-const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfig.port });
+const server = app.listen(defaultWebServerConfig.port, function() {
+    logger.debug(`fastnat web start at:${JSON.stringify(server.address())}`)
+});
+
+
+
+
+const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfigPort });
 tcpTunnelServer.start();
 
 
+
 //------------------------------------------------
-process.on("uncaughtException", function (err) {
-  logger.error(err);
+process.on("uncaughtException", function(err) {
+    logger.error(err);
 });

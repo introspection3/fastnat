@@ -4,7 +4,7 @@
     "webserver": {
         "https": false,
         "port": 8081,
-        "socketioPort": 8082
+        "socketioPort": 8080
     },
     "bridge": {
         "port": 3927
@@ -19,9 +19,11 @@
         "sampleCount": 1
     },
     "log": {
-        "level": "trace"
+        "level": "trace",
+        "enableCallStack": false
     },
     "monitor": {
         "enabled": false
-    }
+    },
+    "supernode": "2.8.0"
 }

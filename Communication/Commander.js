@@ -4,6 +4,8 @@ const defaultConfig = require('../Common/DefaultConfig');
 const serverConfig = require('../Common/ServerConfig');
 const defaultWebServerConfig = defaultConfig.webserver;
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
+const { checkType, isNumber, isEmpty, isString, isBoolean } = require('../Utils/TypeCheckUtil');
+checkType(isNumber, defaultWebServerConfig.socketioPort, 'defaultWebServerConfig.socketioPort');
 const io = new SocketIO.Server(defaultWebServerConfig.socketioPort);
 if (serverConfig.cluster.enabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
@@ -44,7 +46,7 @@ async function getClientByTunnelId(targetTunnelId, targetP2PPassword) {
     return tunnel;
 }
 
-io.use(async (socket, next) => {
+io.use(async(socket, next) => {
     let isValid = await isValidToken(socket.handshake.auth);
     if (isValid) {
         return next();
@@ -57,10 +59,10 @@ io.use(async (socket, next) => {
 
 let defaultNS = io.of('/');
 
-io.on('connection', async (socket) => {
+io.on('connection', async(socket) => {
 
     let currentConnectSocketIoClientId = socket.handshake.auth.clientId;
-    socket.on('disconnect', function () {
+    socket.on('disconnect', function() {
         let clientId = socket.handshake.auth.clientId;
         logger.debug(`clientId=${clientId} disconnect,socket.id=${socket.id}`);
         io.emit('client.disconnect', { clientId: clientId, socketIOSocketId: socket.id });
@@ -81,7 +83,7 @@ io.on('connection', async (socket) => {
     }
     //------------------------------------------
 
-    socket.on('p2p.request.open', async (data, fn) => {
+    socket.on('p2p.request.open', async(data, fn) => {
 
         let targetClientId = data.targetClientId;
         let result = false;
@@ -95,15 +97,14 @@ io.on('connection', async (socket) => {
             targetSocket.emit('p2p.request.open', data, (ret) => {
                 fn(ret);
             });
-        }
-        else {
+        } else {
             info = `targetTunnelId's client is not online:targetClientId=` + targetClientId;
             fn({ success: result, data: data, info: info });
         }
 
     });
 
-    socket.on('client.createUpdTunnelServer', async (udpTunnelItemOption, fn) => {
+    socket.on('client.createUpdTunnelServer', async(udpTunnelItemOption, fn) => {
         //--------------
         let tunnelId = udpTunnelItemOption.id;
         let authenKey = socket.handshake.auth.token;
@@ -113,16 +114,14 @@ io.on('connection', async (socket) => {
                 isAvailable: true,
                 authenKey: authenKey
             },
-            include: [
-                {
-                    model: Tunnel,
-                    required: true,
-                    where: {
-                        isAvailable: 1,
-                        id: tunnelId
-                    }
+            include: [{
+                model: Tunnel,
+                required: true,
+                where: {
+                    isAvailable: 1,
+                    id: tunnelId
                 }
-            ]
+            }]
         });
 
         if (client == null) {

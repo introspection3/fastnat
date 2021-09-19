@@ -1,6 +1,7 @@
-
 const defaultConfig = require('../Common/DefaultConfig');
+const { checkType, isNumber } = require('../Utils/TypeCheckUtil');
 const trackerPort = defaultConfig.p2p.trackerPort;
+checkType(isNumber, trackerPort, 'trackerPort');
 const dgram = require('dgram');
 const udpSocket = dgram.createSocket('udp4');
 const logger = require('../Log/logger');
@@ -10,7 +11,7 @@ udpSocket.on('error', (err) => {
 });
 
 
-udpSocket.on('message', async (msg, rinfo) => {
+udpSocket.on('message', async(msg, rinfo) => {
 
     const text = msg.toString();
 
@@ -35,5 +36,5 @@ udpSocket.on('listening', () => {
     logger.debug(`p2p tracker listening ${address.address}:${address.port}`);
 });
 
-udpSocket.bind({ port: trackerPort, exclusive: false });//默认就是false,可以用于集群模式,但windows udp目前不支持,所以放到cluster里
+udpSocket.bind({ port: trackerPort, exclusive: false }); //默认就是false,可以用于集群模式,但windows udp目前不支持,所以放到cluster里
 module.exports = udpSocket;
