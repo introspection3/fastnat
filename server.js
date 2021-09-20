@@ -16,10 +16,12 @@ const defaultBridgeConfigPort = defaultBridgeConfig.port;
 checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
 const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
+const P2PTracker = require('./P2P/P2PTracker');
+
 if (serverConfig.cluster.enabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     if (cluster.isPrimary || cluster.isMaster) {
-        require('./P2P/P2PTracker');
+        P2PTracker.start();
         let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
@@ -47,7 +49,7 @@ if (serverConfig.cluster.enabled) {
     ClusterData.register2Worker();
 } else {
     initdbdata();
-    require('./P2P/P2PTracker');
+    P2PTracker.start();
 }
 
 
@@ -60,11 +62,13 @@ const { io, defaultNS } = require('./Communication/Commander');
 const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
+app.use(express.urlencoded({ extended: true }));
 app.use('/user', require('./Routers/User'));
 app.use('/client', require('./Routers/Client'));
-app.use(express.urlencoded({ extended: true }));
+app.use('/tunnel', require('./Routers/Tunnel'));
 app.use('/', express.static('public'));
+
 app.get('/checkServerStatus', function(req, res) {
     res.send({ success: true });
 });
@@ -79,8 +83,6 @@ const server = app.listen(defaultWebServerConfigPort, function() {
 
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfigPort });
 tcpTunnelServer.start();
-
-
 
 //------------------------------------------------
 process.on("uncaughtException", function(err) {

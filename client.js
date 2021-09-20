@@ -216,7 +216,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
                         logger.error(err);
                     } else {
                         const { address, port } = res.getXorAddress();
-                        logger.log('your public:', address, port);
+                        logger.trace(`your public address ${address}:${port}`);
                     }
                 });
             } else {
@@ -329,6 +329,7 @@ async function checkNatType() {
 
     logger.info('client nat\'s type:', currentClientNatType);
     await updateClientSystemInfo(currentClientNatType);
+    return currentClientNatType;
 }
 
 async function main(params) {
@@ -748,7 +749,7 @@ async function updateClientSystemInfo(natType) {
 }
 
 function restartApplication() {
-    logger.debug("restart now,current pid= " + process.pid);
+    logger.debug("restart now,new pid= " + process.pid);
     let exe = process.argv.shift();
     if (!process.argv.includes('-r')) {
         process.argv.push('-r')
@@ -768,7 +769,7 @@ process.on("exit", function(code) {
 });
 
 process.on('SIGINT', function() {
-    console.log('Exit now!');
+    console.log('Exit by SIGINT');
     process.exit();
 });
 
