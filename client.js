@@ -15,6 +15,8 @@ const net = require('net');
 const Socket = require('socket.io-client').Socket;
 const sleep = require('es7-sleep');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
+const { startEdge, stopEdge } = require('./N2N/N2NClient');
+
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -49,7 +51,7 @@ if (defaultWebSeverConfig.https == true) {
 } else {
     axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 }
-console.log(axios.defaults.baseURL)
+console.log(axios.defaults.baseURL);
 
 let authenKey = clientConfig.authenKey;
 if (options.test) {
@@ -100,7 +102,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
             logger.info('utpSocket client is comming');
 
             //-----------tcpClient-----
-            // let address = { host: '127.0.0.1', port: 3306 };
+
             let address = { host: tunnel.localIp, port: tunnel.localPort };
             let tcpClient = net.createConnection(address, () => {
                 logger.trace('p2p tcp client has created to ' + JSON.stringify(address));
@@ -303,6 +305,10 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId) {
 
 }
 
+/**
+ * set current TunnelMap(id,Tunnel)
+ * @param {Array<Tunnel>} currentClientTunnels 
+ */
 function setCurrentClientTunnelsMap(currentClientTunnels) {
     currentClientTunnelsMap.clear();
     for (let item of currentClientTunnels) {
@@ -414,8 +420,12 @@ async function main(params) {
     }
 
     checkNatType();
+    startEdgeProcess()
 }
 
+function startEdgeProcess() {
+    startEdge('mainc', 'abcd', '192.168.77.1', 'n2n.x0x.cn:10086');
+}
 
 
 /**

@@ -29,7 +29,7 @@ class TcpServer {
 
     /**all clients socket */
     clients = new Set();
-    
+
     constructor(props) {
         this.props = props;
         this.host = props.host || this.host;
@@ -40,13 +40,13 @@ class TcpServer {
         this.eventEmitter = new events.EventEmitter();
         this.codec = 'utf8';
         this.stopNotify = false;
-        
+
     }
 
     /**
-    * 设置编解码器
-    * @param {Object} codec 实现了implement enode,decode function的编解码器
-    */
+     * 设置编解码器
+     * @param {Object} codec 实现了implement enode,decode function的编解码器
+     */
     setCodec(codec) {
         if (codec !== 'utf8') {
             let ok = ClassUtil.hasMethods(codec, 'encode', 'decode');
@@ -64,7 +64,7 @@ class TcpServer {
     stop() {
         if (this.server) {
             this.clients.clear();
-            this.server.close(function (error) {
+            this.server.close(function(error) {
                 if (error) {
                     logger.log('close回调：服务端异常：' + error.message);
                 } else {
@@ -118,10 +118,10 @@ class TcpServer {
     }
 
     stopNotify(targetSocket) {
-        targetSocket.stopNotify = true;
-    }
-    /*启动Tcp隧道服务端程序,只会调用一次
-     */
+            targetSocket.stopNotify = true;
+        }
+        /*启动Tcp隧道服务端程序,只会调用一次
+         */
     start() {
 
         if (this.started) {
@@ -158,10 +158,11 @@ class TcpServer {
                 }
             }
 
-            0            /**
-            * 处理socket数据
-            * @param {Buffer} dataBuffer 
-            */
+            0
+            /**
+             * 处理socket数据
+             * @param {Buffer} dataBuffer 
+             */
             function processCommingBuffer(dataBuffer) {
                 //没有历史存留的不完整数据
                 if (lastTempBuffer == null) {
@@ -231,9 +232,9 @@ class TcpServer {
             });
 
         });
-        
-        this.server.on('error',(err)=>{
-            logger.error('tcp server err: ',err);
+
+        this.server.on('error', (err) => {
+            logger.error('tcp server err: ', err);
         });
         let listenOption = { port: this.port, host: this.host };
 
@@ -243,13 +244,13 @@ class TcpServer {
 
         this.server.listen(listenOption, () => {
             //在大多数操作系统中，监听未指定的 IPv6 地址 (::) 可能会导致 net.Server 也监听未指定的 IPv4 地址 (0.0.0.0)
-            logger.trace("Tcp  server started success=>" + JSON.stringify(listenOption));
+            logger.trace("tcp  server started success," + JSON.stringify(listenOption));
         });
 
         return this.server;
     }
-    stop(){
-        if(this.server){
+    stop() {
+        if (this.server) {
             this.server.close();
         }
     }

@@ -1,6 +1,6 @@
 const getPluginPath = require('../Utils/PluginUtil').getPluginPath;
 const path = require('path');
-const basePath = getPluginPath('n2n', 'client');
+const basePath = getPluginPath('n2n', 'server');
 const os = require('os');
 const { spawn } = require('child_process');
 const elevate = require('node-windows').elevate;
@@ -9,7 +9,7 @@ const fs = require('fs');
 const checkFileExists = require('../Utils/FsUtil').checkFileExists;
 const iconvLite = require('iconv-lite');
 const wincmd = require('node-windows');
-let edgePs = null;
+let supernodePs = null;
 
 function start(port, config) {
     let cmd = getPath();

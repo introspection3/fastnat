@@ -70,7 +70,7 @@ function createProxy() {
             let hostname = req.headers['host'];
             console.log(hostname)
             if (net.isIPv4(hostname)) {
-                res.end('you should config domain');
+                res.end('you should config domain,do not use ip');
                 logger.warn(`bad hostname:${hostname}`)
                 return;
             }
@@ -107,7 +107,7 @@ function createProxy() {
         });
 
         server.listen(sslConfig.port, () => {
-            logger.info('server https proxy start:' + JSON.stringify(server.address()))
+            logger.debug('server https proxy start:' + JSON.stringify(server.address()))
         });
 
     }
@@ -116,7 +116,7 @@ function createProxy() {
         //获取二级域名的名字,然后从数据里找到对应的端口
         let hostname = req.headers['host'];
         if (net.isIPv4(hostname)) {
-            res.end('you should config domain');
+            res.end('you should config domain,do not use ip');
             logger.warn(`bad hostname:${hostname}`)
             return;
         }
@@ -152,7 +152,7 @@ function createProxy() {
         });
     });
     server.listen(serverHttpConfig.port, () => {
-        logger.info('server http proxy start:' + JSON.stringify(server.address()))
+        logger.debug('server http proxy start:' + JSON.stringify(server.address()))
     });
 
 }

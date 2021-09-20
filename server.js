@@ -14,20 +14,21 @@ const { isTcpPortAvailable } = require('./Utils/PortUtil');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
 const defaultBridgeConfigPort = defaultBridgeConfig.port;
 checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
-
+const defaultWebServerConfigPort = defaultWebServerConfig.port;
+checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
 if (serverConfig.cluster.enabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     if (cluster.isPrimary || cluster.isMaster) {
         require('./P2P/P2PTracker');
         let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
-        logger.debug(`app starts with cluster mode instanceCount=${instanceCount}`);
+        logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
         setupPrimary();
         for (let i = 0; i < instanceCount; i++) {
             cluster.fork();
         }
         cluster.on('online', function(worker) {
-            logger.debug(`worker (pid:${worker.process.pid}) online`);
+            //logger.debug(`worker (pid:${worker.process.pid}) online`);
         });
 
         cluster.on('listening', function(worker, address) {
@@ -71,11 +72,9 @@ app.get('/version', async function(req, res) {
     res.send(defaultConfig.version);
 });
 
-const server = app.listen(defaultWebServerConfig.port, function() {
+const server = app.listen(defaultWebServerConfigPort, function() {
     logger.debug(`fastnat web start at:${JSON.stringify(server.address())}`)
 });
-
-
 
 
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfigPort });

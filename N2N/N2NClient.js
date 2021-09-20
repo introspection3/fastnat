@@ -92,4 +92,9 @@ async function checkFileExist(name) {
     let fullPath = path.join(basePath, name);
     return await checkFileExists(fullPath);
 }
-start('mainc', '', '192.168.77.1', 'n2n.x0x.cn:10086');
+
+
+module.exports = {
+    startEdge: start,
+    stopEdge: stop
+}
