@@ -435,6 +435,7 @@ function startEdgeProcess() {
  * @param {Socket} socketIOSocket 
  * @param {Number} ownClientId 
  * @param {Number} targetClientId 
+ * @param {Number} remotePort remote tcp port
  */
 async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort) {
 
@@ -570,7 +571,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                                     tcpSocket.end();
                                     tcpSocket.destroy();
                                 });
-                                //-------------------------------------------------a----------------
+                                //-------------------------------------------------e----------------
                             });
                         });
                         //------------------
@@ -665,7 +666,7 @@ setInterval(async() => {
     }
 }, 10 * 1000);
 
-if (require('os').arch() != 'arm64') {
+if (require('os').platform() != 'linux') {
     trayIcon();
 }
 

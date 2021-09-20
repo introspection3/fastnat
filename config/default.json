@@ -20,7 +20,7 @@
     },
     "log": {
         "level": "trace",
-        "enableCallStack": false
+        "enableCallStack": true
     },
     "monitor": {
         "enabled": false

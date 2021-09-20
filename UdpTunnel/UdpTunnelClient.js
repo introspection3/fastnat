@@ -18,20 +18,20 @@ class UdpTunnelClient {
         this.backEventName = 'client.back.udp:' + this.udpTunnelItemOption.id;
         this.socketIOSocket.on(this.eventName, (data) => {
             let msg = data.msg;
-           
+
             let rInfo = data.rInfo;
-            let udpClient = this.#getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
+            let udpClient = this._getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
             //转发udp包
-            udpClient.send(msg,udpTunnelItemOption.localPort, udpTunnelItemOption.localIp);
+            udpClient.send(msg, udpTunnelItemOption.localPort, udpTunnelItemOption.localIp);
         });
 
         this.udpClientMap = new Map();
-        this._checkUdpClientTimer = this.#checkUdpClient(udpClientTtl);
+        this._checkUdpClientTimer = this._checkUdpClient(udpClientTtl);
     }
 
     start() {
         this.socketIOSocket.emit('client.createUpdTunnelServer', this.udpTunnelItemOption, (backData) => {
-            if(backData.success===false){
+            if (backData.success === false) {
                 logger.error(backData.info);
                 this.stop();
             }
@@ -51,11 +51,11 @@ class UdpTunnelClient {
         this.udpClientMap.clear();
     }
 
-    #checkUdpClient(udpClientTtl) {
+    _checkUdpClient(udpClientTtl) {
         let timer = setInterval(() => {
             for (let [key, udpClient] of this.udpClientMap) {
                 let time = parseInt(new Date() - udpClient.lastMessageTime);
-                if (time>udpClientTtl) {
+                if (time > udpClientTtl) {
                     udpClient.close();
                     this.udpClientMap.delete(key);
                 }
@@ -72,18 +72,18 @@ class UdpTunnelClient {
      * @param {Object} rInfo 
      * @returns {dgram.Socket}
      */
-    #getUdpClient(localIp, localPort, tunnelId, rInfo) {
+    _getUdpClient(localIp, localPort, tunnelId, rInfo) {
         let clientName = `udpClient-${tunnelId}-(${rInfo.address}:${rInfo.port})`;
         if (this.udpClientMap.has(clientName)) {
             return this.udpClientMap.get(clientName);
         } else {
-            let udpClient = this.#createUdpClient(localIp, localPort, tunnelId, rInfo);
+            let udpClient = this._createUdpClient(localIp, localPort, tunnelId, rInfo);
             this.udpClientMap.set(clientName, udpClient);
             return udpClient;
         }
     }
 
-    #createUdpClient(localIp, localPort, tunnelId, vistorRemoteInfo) {
+    _createUdpClient(localIp, localPort, tunnelId, vistorRemoteInfo) {
         let clientName = `udpClient-${tunnelId}-(${vistorRemoteInfo.address}:${vistorRemoteInfo.port})`;
         let udpClient = dgram.createSocket('udp4');
         udpClient.lastMessageTime = new Date();

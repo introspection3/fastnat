@@ -3,17 +3,20 @@ const path = require('path');
 const basePath = getPluginPath('n2n', 'client');
 const os = require('os');
 const { spawn } = require('child_process');
-const elevate = require('node-windows').elevate;
+const shell = require('shelljs');
 const tapName = 'tap0901'
 const fs = require('fs');
 const checkFileExists = require('../Utils/FsUtil').checkFileExists;
 const iconvLite = require('iconv-lite');
-const wincmd = require('node-windows');
+
 let edgePs = null;
 
 
 function start(communityName, communityPassword, virtualIp, serverAddress) {
     let cmd = getPath();
+    if (os.platform() != 'win32') {
+        shell.chmod('+x', cmd);
+    }
     let args = [`-c${communityName}`, `-k${communityPassword}`, `-a${virtualIp}`, `-l${serverAddress}`];
     if (communityPassword == null || communityPassword === '') {
         args = [`-c${communityName}`, `-a${virtualIp}`, `-l${serverAddress}`];
@@ -71,6 +74,7 @@ function getWinTapPath() {
 
 /**安装wintap,仅在windows下使用 */
 function installWinTap() {
+    const elevate = require('node-windows').elevate;
     let wintap = getWinTapPath();
     let cmd = wintap + ` install OemVista.inf  ${tapName}`;
     elevate(cmd, { cwd: basePath }, () => {
@@ -81,6 +85,7 @@ function installWinTap() {
 
 /**卸载wintap,仅在windows下使用 */
 function unInstallWinTap() {
+    const elevate = require('node-windows').elevate;
     let wintap = getWinTapPath();
     let cmd = wintap + ` remove   ${tapName}`;
     elevate(cmd, { cwd: basePath }, () => {

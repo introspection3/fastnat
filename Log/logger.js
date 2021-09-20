@@ -2,7 +2,7 @@
 const log4js = require('log4js');
 const path = require('path');
 const { checkType, isBoolean, isString } = require('../Utils/TypeCheckUtil');
-const parentDir = path.resolve(__dirname, '..');
+const parentDir = require('../Common/GlobalData').rootPath;
 const logPath = path.join(parentDir, "logs/fastnat.log");
 const defaultConfig = require('../Common/DefaultConfig');
 const enableCallStack = defaultConfig.log.enableCallStack;

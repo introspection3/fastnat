@@ -8,7 +8,7 @@ const tapName = 'tap0901'
 const fs = require('fs');
 const checkFileExists = require('../Utils/FsUtil').checkFileExists;
 const iconvLite = require('iconv-lite');
-const wincmd = require('node-windows');
+
 let supernodePs = null;
 
 function start(port, config) {
