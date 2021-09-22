@@ -6,4 +6,5 @@ const clientConfig = path.join(configDir, 'client.json');
 // module.exports = result;
 
 const fs = require('fs');
+console.warn('locad client config');
 module.exports = JSON.parse(fs.readFileSync(clientConfig));
