@@ -33,5 +33,11 @@
     "cluster": {
         "enabled": true,
         "count": 1
+    },
+    "netbuilding": {
+        "version": "2.9.0",
+        "host2": "n2n.lu8.win",
+        "host": "192.168.1.4",
+        "port": 10090
     }
 }

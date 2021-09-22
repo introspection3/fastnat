@@ -8,21 +8,30 @@ const tapName = 'tap0901'
 const fs = require('fs');
 const checkFileExists = require('../Utils/FsUtil').checkFileExists;
 const iconvLite = require('iconv-lite');
-
-let edgePs = null;
+const logger = require('../Log/logger');
+let _edgePs = null;
 
 
 function start(communityName, communityPassword, virtualIp, serverAddress) {
+    if (_edgePs != null) {
+        logger.warn('edge has already started,you can top it first');
+        return;
+    }
     let cmd = getPath();
+    let args = [`-c${communityName}`, `-l${serverAddress}`];
+    if (virtualIp) {
+        args.push(`-a${virtualIp}`);
+    }
     if (os.platform() != 'win32') {
         shell.chmod('+x', cmd);
+        args.push('-f'); //目前2.9windows不支持
     }
-    let args = [`-c${communityName}`, `-k${communityPassword}`, `-a${virtualIp}`, `-l${serverAddress}`];
-    if (communityPassword == null || communityPassword === '') {
-        args = [`-c${communityName}`, `-a${virtualIp}`, `-l${serverAddress}`];
+    let env = {...process.env };
+    if (communityPassword != null && communityPassword !== '') {
+        env['N2N_KEY'] = communityPassword;
     }
-    edgePs = spawn(cmd, args, { windowsHide: true });
-    edgePs.stdout.on('data', (data) => {
+    _edgePs = spawn(cmd, args, { windowsHide: true, env: env });
+    _edgePs.stdout.on('data', (data) => {
         let result = null;
         if (os.platform() !== 'win32') {
             result = data.toString('utf8');
@@ -30,20 +39,20 @@ function start(communityName, communityPassword, virtualIp, serverAddress) {
             result = iconvLite.decode(data, 'cp936');
         }
 
-        console.log(result);
+        logger.trace(result);
     });
 
-    edgePs.stderr.on('data', (data) => {
+    _edgePs.stderr.on('data', (data) => {
         let result = null;
         if (os.platform() !== 'win32') {
             result = data.toString('utf8');
         } else {
             result = iconvLite.decode(data, 'cp936');
         }
-        console.error(result);
+        logger.error(result);
     });
 
-    edgePs.on('close', (code) => {
+    _edgePs.on('close', (code) => {
         if (code !== 0) {
             console.log(`edge quit as code: ${code}`);
         }
@@ -51,8 +60,9 @@ function start(communityName, communityPassword, virtualIp, serverAddress) {
 }
 
 function stop() {
-    if (edgePs) {
-        edgePs.kill();
+    if (_edgePs) {
+        _edgePs.kill();
+        _edgePs = null;
     }
 }
 
@@ -89,7 +99,7 @@ function unInstallWinTap() {
     let wintap = getWinTapPath();
     let cmd = wintap + ` remove   ${tapName}`;
     elevate(cmd, { cwd: basePath }, () => {
-        console.log('uninstall ok')
+        logger.trace('uninstall ok')
     });
 }
 

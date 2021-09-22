@@ -16,6 +16,7 @@ const Socket = require('socket.io-client').Socket;
 const sleep = require('es7-sleep');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
 const { startEdge, stopEdge } = require('./N2N/N2NClient');
+const AesUtil = require('./Utils/AesUtil');
 
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
@@ -36,8 +37,10 @@ checkType(isNumber, sampleCount, 'sampleCount');
 
 const p2pmtu = defaultConfig.p2p.mtu;
 checkType(isNumber, p2pmtu, 'p2pmtu');
-
 //---------------p2p config -----e-----
+
+
+//------------------netbuilding---e-------
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
 program
@@ -321,7 +324,7 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
  */
 async function checkNatType() {
     try {
-        currentClientNatType = await getNatType({ logsEnabled: true, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
+        currentClientNatType = await getNatType({ logsEnabled: false, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
     } catch (error) {
         logger.warn(error);
         currentClientNatType = 'Error';
@@ -421,11 +424,19 @@ async function main(params) {
     }
 
     checkNatType();
-    startEdgeProcess()
+    startEdgeProcessAsync(authenKey)
 }
 
-function startEdgeProcess() {
-    startEdge('mainc', 'abcd', '192.168.77.1', 'n2n.x0x.cn:10086');
+async function startEdgeProcessAsync(authenKey) {
+    let ret = await axios.get('/n2n/' + authenKey);
+    let result = await ret.data;
+    if (result.success) {
+        console.log(JSON.stringify(result.data))
+        startEdge(AesUtil.decrypt(result.data.community), '', result.data.virtualIp, `${result.data.host}:${result.data.port}`);
+    } else {
+        logger.warn(result.info);
+    }
+
 }
 
 
@@ -667,7 +678,7 @@ setInterval(async() => {
 }, 10 * 1000);
 
 if (require('os').platform() != 'linux') {
-    trayIcon();
+    // trayIcon();
 }
 
 main();
@@ -676,8 +687,7 @@ main();
 
 
 async function trayIcon(params) {
-    const SysTray = require('systray').default;
-    const open = require('open');
+
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
@@ -685,6 +695,17 @@ async function trayIcon(params) {
         ext = '.ico';
     }
     let bitmap = await readFile('./config/img/tray' + ext);
+    let Tray = require("ctray");
+
+    let tray = new Tray(bitmap, [
+        { text: "管理" },
+        { text: "退出", callback: _ => tray.stop() }
+    ])
+
+    tray.start().then(() => console.log("Tray Closed"))
+    return;
+    const SysTray = require('systray').default;
+    const open = require('open');
     let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
     const systray = new SysTray({
         menu: {
@@ -757,7 +778,7 @@ function restartApplication() {
     }
     setTimeout(function() {
         require("child_process").spawn(exe, process.argv, {
-            cwd: __dirname,
+            cwd: process.cwd(),
             detached: true,
             stdio: "inherit"
         });

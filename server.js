@@ -17,11 +17,20 @@ checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
 const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
 const P2PTracker = require('./P2P/P2PTracker');
+const N2NServer = require('./N2N/N2NServer');
+let communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
+
+//------------------netbuilding---s-------
+const netbuilding = serverConfig.netbuilding;
+const netbuildingHost = netbuilding.host;
+const netbuildingPort = netbuilding.port;
+//------------------netbuilding---e-------
 
 if (serverConfig.cluster.enabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     if (cluster.isPrimary || cluster.isMaster) {
         P2PTracker.start();
+        N2NServer.startSuperNode(communityListPath, netbuildingPort);
         let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
@@ -50,6 +59,7 @@ if (serverConfig.cluster.enabled) {
 } else {
     initdbdata();
     P2PTracker.start();
+    N2NServer.startSuperNode(communityListPath, netbuildingPort);
 }
 
 
@@ -61,12 +71,17 @@ const { io, defaultNS } = require('./Communication/Commander');
 //----------------express------------------
 const app = express();
 const bodyParser = require('body-parser');
+const GlobalData = require('./Common/GlobalData');
+const path = require('path');
+const { pwd } = require('shelljs');
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
 app.use(express.urlencoded({ extended: true }));
 app.use('/user', require('./Routers/User'));
 app.use('/client', require('./Routers/Client'));
 app.use('/tunnel', require('./Routers/Tunnel'));
+app.use('/n2n', require('./Routers/N2N'));
 app.use('/', express.static('public'));
 
 app.get('/checkServerStatus', function(req, res) {

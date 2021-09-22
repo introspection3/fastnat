@@ -1,0 +1,1 @@
+ pkg . --no-bytecode --public-packages "*" --public

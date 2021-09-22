@@ -20,10 +20,9 @@
     },
     "log": {
         "level": "trace",
-        "enableCallStack": true
+        "enableCallStack": false
     },
     "monitor": {
         "enabled": false
-    },
-    "supernode": "2.8.0"
+    }
 }
