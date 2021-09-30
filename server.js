@@ -8,7 +8,7 @@ const defaultBridgeConfig = defaultConfig.bridge;
 const cluster = require('cluster');
 const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
-const createProxy = require('./Http/HttpProxy');
+const createHttpProxy = require('./Http/HttpProxy');
 const initdbdata = require('./Db/InitDb');
 const { isTcpPortAvailable } = require('./Utils/PortUtil');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
@@ -64,7 +64,7 @@ if (serverConfig.cluster.enabled) {
 }
 
 
-createProxy();
+createHttpProxy();
 
 //-----------------------socket.io-----------------
 const { io, defaultNS } = require('./Communication/Commander');
@@ -73,9 +73,9 @@ const { io, defaultNS } = require('./Communication/Commander');
 const app = express();
 const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
-const path = require('path');
-const { pwd } = require('shelljs');
-
+const LoginAuthen = require('./ExpressMiddleWare/LoginAuthen');
+app.use('/', express.static('public'));
+app.use(LoginAuthen);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
 app.use(express.urlencoded({ extended: true }));
@@ -83,7 +83,6 @@ app.use('/user', require('./Routers/User'));
 app.use('/client', require('./Routers/Client'));
 app.use('/tunnel', require('./Routers/Tunnel'));
 app.use('/n2n', require('./Routers/N2N'));
-app.use('/', express.static('public'));
 
 app.get('/checkServerStatus', function(req, res) {
     res.send({ success: true });
