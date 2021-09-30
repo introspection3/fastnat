@@ -4,6 +4,6 @@
  const defaultConfig = path.join(configDir, 'default.json');
  //  const result = require(defaultConfig);
  //  module.exports = result;
- console.warn('locad default config');
+
  const fs = require('fs');
  module.exports = JSON.parse(fs.readFileSync(defaultConfig));

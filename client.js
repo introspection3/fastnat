@@ -15,9 +15,10 @@ const net = require('net');
 const Socket = require('socket.io-client').Socket;
 const sleep = require('es7-sleep');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
-const { startEdge, stopEdge } = require('./N2N/N2NClient');
+const N2NClient = require('./N2N/N2NClient');
 const AesUtil = require('./Utils/AesUtil');
-
+const PlatfromUtil = require('./Utils/PlatfromUtil');
+const ServiceUtil = require('./Utils/ServiceUtil');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -45,7 +46,7 @@ const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
-    .option('-r, --restart', 'restart')
+    .option('-r, --restart', 'only tell application ,this is a restart process')
     .parse(process.argv);
 const options = program.opts();
 axios.defaults.timeout = 5000;
@@ -54,7 +55,7 @@ if (defaultWebSeverConfig.https == true) {
 } else {
     axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
 }
-console.log(axios.defaults.baseURL);
+logger.info('axios.defaults.baseURL=' + axios.defaults.baseURL);
 
 let authenKey = clientConfig.authenKey;
 if (options.test) {
@@ -62,8 +63,8 @@ if (options.test) {
 }
 
 if (defaultConfig.monitor.enabled) {
-    const easyMonitor = require('easy-monitor');
-    easyMonitor('client');
+    // const easyMonitor = require('easy-monitor');
+    // easyMonitor('client');
 }
 
 let isWorkingFine = true;
@@ -390,7 +391,7 @@ async function main(params) {
             tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
                 isWorkingFine = false;
                 logger.error('process will quit for : ' + data.info);
-                process.exit(1);
+                PlatfromUtil.processExit();
             });
             continue;
         }
@@ -431,12 +432,14 @@ async function startEdgeProcessAsync(authenKey) {
     let ret = await axios.get('/n2n/' + authenKey);
     let result = await ret.data;
     if (result.success) {
-        console.log(JSON.stringify(result.data))
-        startEdge(AesUtil.decrypt(result.data.community), '', result.data.virtualIp, `${result.data.host}:${result.data.port}`);
+        let n2nInfo = result.data;
+        console.log(JSON.stringify(n2nInfo))
+        N2NClient.startEdge(AesUtil.decrypt(n2nInfo.community), n2nInfo.communityKey, n2nInfo.virtualIp, `${n2nInfo.host}:${n2nInfo.port}`, n2nInfo.username, n2nInfo.password);
     } else {
         logger.warn(result.info);
     }
 
+    ServiceUtil.installService('testabc', process.execPath);
 }
 
 
@@ -677,8 +680,8 @@ setInterval(async() => {
     }
 }, 10 * 1000);
 
-if (require('os').platform() != 'linux') {
-    // trayIcon();
+if (require('os').platform() == 'win32') {
+    trayIcon();
 }
 
 main();
@@ -687,72 +690,34 @@ main();
 
 
 async function trayIcon(params) {
-
+    return;
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
     if (os.platform() == 'win32') {
         ext = '.ico';
     }
-    let bitmap = await readFile('./config/img/tray' + ext);
+    // let bitmap = await readFile('./config/img/tray' + ext);
     let Tray = require("ctray");
 
-    let tray = new Tray(bitmap, [
-        { text: "管理" },
-        { text: "退出", callback: _ => tray.stop() }
+    let tray = new Tray('./config/img/tray' + ext, [{
+            text: "show",
+            callback: _ => {
+                console.log('show')
+            }
+        },
+        {
+            text: "exit",
+            callback: _ => {
+                tray.stop();
+                PlatfromUtil.processExit();
+            }
+        }
     ])
 
-    tray.start().then(() => console.log("Tray Closed"))
+    tray.start().then(() => console.log("Tray Closed"));
     return;
-    const SysTray = require('systray').default;
-    const open = require('open');
-    let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
-    const systray = new SysTray({
-        menu: {
-            // using .png icon in macOS/Linux, but .ico format in windows
-            icon: base64str,
-            title: "fastnat",
-            tooltip: "fastnat",
-            items: [{
-                title: "显示",
-                tooltip: "display",
-                // checked is implement by plain text in linux
-                checked: true,
-                enabled: true
-            }, {
-                title: "管理",
-                tooltip: "manage",
-                checked: false,
-                enabled: true
-            }, {
-                title: "退出",
-                tooltip: "quit",
-                checked: false,
-                enabled: true
-            }]
-        },
-        debug: false,
-        copyDir: true, // copy go tray binary to outside directory, useful for packing tool like pkg.
-    });
 
-    systray.onClick(action => {
-        if (action.seq_id === 0) {
-            systray.sendAction({
-                type: 'update-item',
-                item: {
-                    ...action.item,
-                    checked: !action.item.checked,
-                },
-                seq_id: action.seq_id,
-            })
-        } else if (action.seq_id === 1) {
-            // opens the url in the default browser 
-            open(axios.defaults.baseURL);
-            // console.log('open the url', action)
-        } else if (action.seq_id === 2) {
-            systray.kill()
-        }
-    });
 }
 
 async function updateClientSystemInfo(natType) {
@@ -782,7 +747,7 @@ function restartApplication() {
             detached: true,
             stdio: "inherit"
         });
-        process.exit();
+        PlatfromUtil.processExit();
     }, 500);
 }
 
@@ -792,7 +757,7 @@ process.on("exit", function(code) {
 
 process.on('SIGINT', function() {
     console.log('Exit by SIGINT');
-    process.exit();
+    PlatfromUtil.processExit();
 });
 
 process.on("uncaughtException", function(err) {

@@ -1,4 +1,5 @@
 const logger = require('../Log/logger');
+const PlatfromUtil = require('./PlatfromUtil');
 
 function isString(arg) {
     return arg && typeof(arg) == "string";
@@ -45,7 +46,7 @@ function checkType(func, arg, varName = '') {
         let needType = matches[1];
         let info = `you need data's type  ${needType},but the data '${varName}' type is ${typeName}`;
         logger.error(info);
-        process.exit(1);
+        PlatfromUtil.processExit(1);
     } else {
         return true;
     }

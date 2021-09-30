@@ -11,10 +11,10 @@
         "axios": "^0.21.1",
         "commander": "^8.1.0",
         "crypto-js": "^4.1.1",
-        "ctray": "^0.0.10",
-        "easy-monitor": "^2.2.8",
+        "ctray": "^0.0.11",
         "es7-sleep": "^1.0.0",
         "express": "^4.17.1",
+        "ffi-napi": "^4.0.3",
         "generic-pool": "^3.8.2",
         "get-port": "^5.1.1",
         "getmac": "^5.20.0",
@@ -22,35 +22,34 @@
         "log4js": "^6.3.0",
         "mysql2": "^2.3.0",
         "nat-type-identifier": "^2.0.11",
-        "node-notifier": "^10.0.0",
         "node-windows": "^1.0.0-beta.5",
         "node-worker-threads-pool": "^1.5.0",
-        "open": "^8.2.1",
         "sequelize": "^6.6.5",
         "shelljs": "^0.8.4",
         "simple-socks": "^2.2.1",
         "socket.io": "^4.1.3",
         "socket.io-client": "^4.1.3",
-        "sqlite3": "^5.0.2",
         "stun": "^2.1.0",
         "systray": "^1.0.5",
         "utp-punch": "^1.0.1",
         "vs-stun": "^0.0.7"
     },
     "bin": "client.js",
+    "//": "node14-linux-arm64",
     "pkg": {
-        "scripts": "*.js",
+        "//": "./**/*.js",
         "assets": [
-            "config/**/*",
+            "config/plugins/**/*",
             "logs/**/*",
             "dist",
             "pkgbt.bat",
-            "pkgno.bat"
+            "pkgno.bat",
+            "fastnat-node16-win-x64",
+            "config.zip"
         ],
         "targets": [
             "node16-win-x64",
-            "node16-linux-x64",
-            "node14-linux-arm64"
+            "node16-linux-x64"
         ],
         "outputPath": "dist"
     }

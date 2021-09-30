@@ -2,9 +2,11 @@ const express = require(`express`);
 const router = express.Router();
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const serverConfig = require('../Common/ServerConfig');
+const defaultConfig = require('../Common/DefaultConfig');
 const netbuilding = serverConfig.netbuilding;
 const netbuildingHost = netbuilding.host;
 const netbuildingPort = netbuilding.port;
+const netbuildingCommunityKey = netbuilding.communityKey;
 const netbuildingVersion = netbuilding.version;
 const fs = require('fs').promises;
 const AesUtil = require('../Utils/AesUtil');
@@ -27,7 +29,7 @@ router.get('/:authenKey', async function(req, res, next) {
         });
         return;
     }
-    let data = await getN2NAsync(client.id);
+    let data = await getN2NAsync(client.id, req.params.authenKey);
     res.send({
         success: true,
         data: data,
@@ -35,7 +37,7 @@ router.get('/:authenKey', async function(req, res, next) {
     });
 });
 
-async function getN2NAsync(clientId) {
+async function getN2NAsync(clientId, authenKey) {
     let virtualIp = await getVirtualIpAsync(clientId);
     let community = await getFirstCommunityAsync();
     let result = {
@@ -43,11 +45,16 @@ async function getN2NAsync(clientId) {
         port: netbuildingPort,
         version: netbuildingVersion,
         community: community,
-        communityKey: '',
-        username: '',
-        password: '',
+        communityKey: netbuildingCommunityKey,
+        username: clientId,
+        password: authenKey,
         virtualIp: virtualIp,
         mode: 'M1'
+    };
+    //别人的服务器
+    if (defaultConfig.host !== serverConfig.host) {
+        result.username = '';
+        result.password = '';
     }
     return result;
 }

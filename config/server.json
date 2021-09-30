@@ -1,6 +1,6 @@
 {
     "db": {
-        "dbType": "sqlite",
+        "dbType": "mysql",
         "host": "0.0.0.0",
         "port": 3306,
         "logging": false,
@@ -36,8 +36,9 @@
     },
     "netbuilding": {
         "version": "2.9.0",
-        "host2": "n2n.lu8.win",
-        "host": "192.168.1.4",
-        "port": 10090
+        "host": "n2n.lu8.win",
+        "host2": "192.168.1.4",
+        "port": 10090,
+        "communityKey": "fastnatkey"
     }
 }

@@ -31,6 +31,7 @@ if (serverConfig.cluster.enabled) {
     if (cluster.isPrimary || cluster.isMaster) {
         P2PTracker.start();
         N2NServer.startSuperNode(communityListPath, netbuildingPort);
+
         let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
@@ -103,3 +104,8 @@ tcpTunnelServer.start();
 process.on("uncaughtException", function(err) {
     logger.error(err);
 });
+
+async function test(params) {
+    N2NServer.createUser(communityListPath, 1, '742af98b-e977-48a8-b1c8-1a2a091b93a7');
+}
+test();

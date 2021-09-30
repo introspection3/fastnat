@@ -17,19 +17,16 @@ async function initdbdata() {
     }
     logger.debug('start init db data...');
     let firstUser = 'fastnat';
-    let existUser = await RegisterUser.findOne(
-        {
-            where: {
-                username: firstUser
-            },
+    let existUser = await RegisterUser.findOne({
+        where: {
+            username: firstUser
+        },
 
-            include: [{
-                association: RegisterUser.Clients,
-                as: 'clients'
-            }
-            ]
-        }
-    );
+        include: [{
+            association: RegisterUser.Clients,
+            as: 'clients'
+        }]
+    });
 
     if (existUser != null && existUser.username === firstUser) {
         return;
@@ -42,24 +39,21 @@ async function initdbdata() {
         password: firstUser,
         telphone: '010-123456',
         email: 'fastnat@fastnat.com',
-        clients: [
-            {
+        clients: [{
                 authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a7'
             },
             {
                 authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a2'
             }
         ]
-    },
-        {
-            include: [{
-                association: RegisterUser.Clients,
-                as: 'clients'
-            }
-            ]
-        }
-    );
-
+    }, {
+        include: [{
+            association: RegisterUser.Clients,
+            as: 'clients'
+        }]
+    });
+    await N2NServer.createUser(communityListPath, 1, '742af98b-e977-48a8-b1c8-1a2a091b93a7');
+    await N2NServer.createUser(communityListPath, 2, '742af98b-e977-48a8-b1c8-1a2a091b93a2');
     let clientData = user.clients[0];
     console.log(JSON.stringify(clientData));
     let clientId = clientData.id;
@@ -71,8 +65,8 @@ async function initdbdata() {
         localPort: 3306,
         remotePort: 13306,
         clientId: 2,
-        uniqueName:'uniqueName1',
-        lowProtocol:'tcp'
+        uniqueName: 'uniqueName1',
+        lowProtocol: 'tcp'
     });
 
     let tunnel2 = await Tunnel.create({
@@ -82,10 +76,10 @@ async function initdbdata() {
         localPort: 22,
         remotePort: 2222,
         clientId: 1,
-        uniqueName:'uniqueName2',
-        lowProtocol:'tcp'
+        uniqueName: 'uniqueName2',
+        lowProtocol: 'tcp'
     });
-    
+
     let connector1 = await Connector.create({
         name: 'p2ptest',
         p2pTunnelId: tunnel2.id,
@@ -101,32 +95,32 @@ async function initdbdata() {
         localPort: 80,
         remotePort: 8000,
         clientId: 2,
-        uniqueName:'test',
-        lowProtocol:'tcp'
+        uniqueName: 'test',
+        lowProtocol: 'tcp'
     });
 
-   let tunnel4= await Tunnel.create({
+    let tunnel4 = await Tunnel.create({
         type: 'udp',
         name: 'udp',
         localIp: '8.8.8.8',
         localPort: 53,
         remotePort: 53,
         clientId: 2,
-        uniqueName:'udptest',
-        lowProtocol:'udp'
+        uniqueName: 'udptest',
+        lowProtocol: 'udp'
     });
 
 
-    let tunnel5= await Tunnel.create({
+    let tunnel5 = await Tunnel.create({
         type: 'socks5',
         name: 'socks5',
         localIp: '0.0.0.0',
         localPort: 1080,
         remotePort: 10800,
         clientId: 2,
-        uniqueName:'socks5test',
-        lowProtocol:'tcp',
-        other:`{"authenEnabled":true,"username":"fastnat","password":"fastnat"}`
+        uniqueName: 'socks5test',
+        lowProtocol: 'tcp',
+        other: `{"authenEnabled":true,"username":"fastnat","password":"fastnat"}`
     });
 
     logger.debug(`db install ok`);

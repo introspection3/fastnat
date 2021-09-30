@@ -3,7 +3,7 @@ const path = require('path');
 const basePath = getPluginPath('n2n', 'server');
 const os = require('os');
 const { spawn } = require('child_process');
-const fs = require('fs');
+const fs = require('fs').promises;
 const checkFileExists = require('../Utils/FsUtil').checkFileExists;
 const iconvLite = require('iconv-lite');
 let _supernodePs = null;
@@ -11,16 +11,17 @@ let _managementPort = 5645;
 let _ManagementUdpSocket = null;
 const logger = require('../Log/logger');
 const dgram = require('dgram');
+const shell = require('shelljs');
 
 function start(communityListPath, port = 7654, managementPort = 5645) {
 
     if (_supernodePs) {
-        logger.warn('supernode has already started,,you can top it first');
+        logger.warn('supernode has already started,you should top it first');
         return;
     }
     _managementPort = managementPort;
     let cmd = getPath();
-    let args = [`-p${port}`, `-t${managementPort}`];
+    let args = [`-p${port}`, `-t${managementPort}`, ``];
 
     if (communityListPath) {
         args.push(`-c${communityListPath}`);
@@ -64,7 +65,7 @@ function start(communityListPath, port = 7654, managementPort = 5645) {
  * @param {Number} managementPort 
  * @returns {dgram.Socket}
  */
-function createManagementUdpSocket(managementPort) {
+async function createManagementUdpSocket(managementPort) {
     let prefix = 'supernode udp:';
     let udpClient = dgram.createSocket('udp4');
     udpClient.on('close', () => {
@@ -76,10 +77,16 @@ function createManagementUdpSocket(managementPort) {
         logger.warn(prefix + error);
     })
 
-    udpClient.connect('127.0.0.1', managementPort, () => {
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            reject('create edge upd client timeout');
+        }, 1000);
 
+        udpClient.connect(managementPort, '127.0.0.1', () => {
+            resolve(udpClient);
+        });
     });
-    return udpClient;
+    return p;
 }
 
 /**
@@ -87,13 +94,45 @@ function createManagementUdpSocket(managementPort) {
  * @param {Number} managementPort 
  * @returns {dgram.Socket}
  */
-function getManagementUdpSocket(managementPort) {
+async function getManagementUdpSocket(managementPort) {
     if (_ManagementUdpSocket == null) {
-        _ManagementUdpSocket = createManagementUdpSocket(managementPort);
+        _ManagementUdpSocket = await createManagementUdpSocket(managementPort);
     }
     return _ManagementUdpSocket;
 }
 
+async function reload_communities() {
+    return executeManangementCommand('reload_communities');
+}
+
+/**
+ * 
+ * @param {String} communityName 
+ * @param {String} username 
+ * @param {String} password 
+ */
+async function createUser(communityListPath, username, password) {
+
+    let exit = await existUserInCommmunityList(communityListPath, username, password);
+    let result = false;
+    if (exit == false) {
+        appendUser2CommunityList(communityListPath, username, password);
+        await reload_communities();
+        result = true;
+    }
+    return result;
+}
+
+async function deleteUser(communityListPath, username, password) {
+    let exit = await existUserInCommmunityList(communityListPath, username, password);
+    let result = false;
+    if (exit == false) {
+        deleteUserInCommunityList(communityListPath, username, password);
+        await reload_communities();
+        result = true;
+    }
+    return result;
+}
 /**
  * 
  * @param {string} cmd 
@@ -105,8 +144,8 @@ async function executeManangementCommand(cmd) {
     }
     let command = cmd + '\n';
     let udpClient = getManagementUdpSocket(_managementPort);
+    udpClient.send(command, _managementPort, '127.0.0.1');
     let p = new Promise((resolve, reject) => {
-        udpClient.send(cmd);
         let t = setTimeout(() => {
             reject('executeManangementCommand timeout:');
         }, 3000);
@@ -141,8 +180,76 @@ function getPath() {
     return path.join(basePath, 'supernode' + ext);
 }
 
+function getn2nKeygenPath() {
+    let ext = os.platform() === 'win32' ? '.exe' : '';
+    return path.join(basePath, 'n2n-keygen' + ext);
+}
+
+async function exeN2nKeygen(username, password) {
+    let cmd = getn2nKeygenPath();
+    if (os.platform() != 'win32') {
+        shell.chmod('+x', cmd);
+    }
+    let args = [username, password];
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            reject('execute N2nKeygen  timeout:');
+        }, 5000);
+
+        let n2nKeygenProcess = spawn(cmd, args, { windowsHide: true, killSignal: 'SIGINT' });
+        n2nKeygenProcess.stdout.on('data', (data) => {
+            clearTimeout(t);
+            let result = null;
+            if (os.platform() !== 'win32') {
+                result = data.toString('utf8');
+            } else {
+                result = iconvLite.decode(data, 'cp936');
+            }
+            resolve(result.trim());
+        });
+
+        n2nKeygenProcess.stderr.on('data', (data) => {
+            clearTimeout(t);
+            let result = '';
+            if (os.platform() !== 'win32') {
+                result = data.toString('utf8');
+            } else {
+                result = iconvLite.decode(data, 'cp936');
+            }
+            reject(result);
+        });
+
+        n2nKeygenProcess.on('close', (code, signal) => {
+            console.log(`N2nKeygen quit as code: ${code},signal:${signal}`);
+        });
+    });
+    return p;
+}
+
+async function existUserInCommmunityList(communityListPath, username, password) {
+    let content = (await fs.readFile(communityListPath)).toString();
+    let encryptStr = await exeN2nKeygen(username, password);
+    return content.indexOf(encryptStr) > -1;
+}
+
+async function appendUser2CommunityList(communityListPath, username, password) {
+    let encryptStr = await exeN2nKeygen(username, password);
+    await fs.appendFile(communityListPath, encryptStr + '\n');
+}
+
+async function deleteUserInCommunityList(communityListPath, username, password) {
+    let content = (await fs.readFile(communityListPath)).toString();
+    let encryptStr = await exeN2nKeygen(username, password);
+    let newContent = content.replace(encryptStr, '');
+    await fs.writeFile(communityListPath, newContent);
+}
+
+
 module.exports = {
     startSuperNode: start,
     stopSuperNode: stop,
-    executeManangementCommand: executeManangementCommand
+    executeManangementCommand: executeManangementCommand,
+    reload_communities: reload_communities,
+    createUser,
+    deleteUser
 }

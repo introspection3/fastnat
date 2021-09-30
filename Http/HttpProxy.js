@@ -28,6 +28,9 @@ async function getPortBySecondDomainName(secondDomainName) {
         },
         attributes: ['remotePort']
     });
+    if (result == null) {
+        logger.error(`${secondDomainName}'s tunnel is not exist'`);
+    }
     DomainMap.set(secondDomainName, { remotePort: result.remotePort, time: new Date() });
     return result.remotePort;
 }

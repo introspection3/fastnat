@@ -2,7 +2,7 @@ const getPluginPath = require('../Utils/PluginUtil').getPluginPath;
 const path = require('path');
 const basePath = getPluginPath('n2n', 'client');
 const os = require('os');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 const shell = require('shelljs');
 const tapName = 'tap0901'
 const fs = require('fs');
@@ -10,27 +10,41 @@ const checkFileExists = require('../Utils/FsUtil').checkFileExists;
 const iconvLite = require('iconv-lite');
 const logger = require('../Log/logger');
 let _edgePs = null;
+let _managementPort = 5644;
+let _ManagementUdpSocket = null;
+const dgram = require('dgram');
+const util = require('util');
 
-
-function start(communityName, communityPassword, virtualIp, serverAddress) {
+function start(communityName, communityPassword, virtualIp = '', serverAddress, username = '', password = '') {
     if (_edgePs != null) {
         logger.warn('edge has already started,you can top it first');
         return;
     }
     let cmd = getPath();
     let args = [`-c${communityName}`, `-l${serverAddress}`];
-    if (virtualIp) {
+    if (virtualIp != '') {
         args.push(`-a${virtualIp}`);
+    }
+    if (username && username !== '') {
+        args.push(`-I${username}`);
+        args.push(`-A4`);
+
+    }
+    if (password && password !== '') {
+        args.push(`-J${password}`);
     }
     if (os.platform() != 'win32') {
         shell.chmod('+x', cmd);
         args.push('-f'); //目前2.9windows不支持
     }
+
     let env = {...process.env };
-    if (communityPassword != null && communityPassword !== '') {
+    env['N2N_COMMUNITY'] = communityName;
+    if (communityPassword && communityPassword !== '') {
+        args.push(`-k${communityPassword}`);
         env['N2N_KEY'] = communityPassword;
     }
-    _edgePs = spawn(cmd, args, { windowsHide: true, env: env });
+    _edgePs = spawn(cmd, args, { windowsHide: true, env: env, killSignal: 'SIGINT' });
     _edgePs.stdout.on('data', (data) => {
         let result = null;
         if (os.platform() !== 'win32') {
@@ -43,27 +57,115 @@ function start(communityName, communityPassword, virtualIp, serverAddress) {
     });
 
     _edgePs.stderr.on('data', (data) => {
-        let result = null;
+        let result = '';
         if (os.platform() !== 'win32') {
             result = data.toString('utf8');
         } else {
             result = iconvLite.decode(data, 'cp936');
         }
+        result.replaceAll('fastnatcommon', '');
         logger.error(result);
     });
 
-    _edgePs.on('close', (code) => {
-        if (code !== 0) {
-            console.log(`edge quit as code: ${code}`);
-        }
+    _edgePs.on('close', (code, signal) => {
+        console.log(`edge quit as code: ${code},signal:${signal}`);
     });
+
 }
 
-function stop() {
+async function stop() {
     if (_edgePs) {
-        _edgePs.kill();
+        if (os.platform() === 'win32') {
+            let baseLocation = getPluginPath('windows-kill', 'client');
+            let cmd = path.join(baseLocation, `windows-kill.exe`);
+            let kill = spawn(cmd, ['-SIGINT', _edgePs.pid], { windowsHide: true });
+            //    let kill2 = spawn(cmd, ['-SIGINT', _edgePs.pid], { windowsHide: true });
+            kill.stdout.on('data', (data) => {
+                let result = null;
+                result = iconvLite.decode(data, 'cp936');
+                logger.trace(result);
+            });
+
+            return;
+        } else {
+            _edgePs.kill('SIGINT');
+        }
+
         _edgePs = null;
     }
+}
+
+/**
+ * 
+ * @param {string} cmd 
+ * @returns  {Promise<string>} 返回的内容
+ */
+async function executeManangementCommand(cmd) {
+    if (_edgePs == null) {
+        return 'edgePs not started,you cant not execute command';
+    }
+    let command = cmd + '\n';
+
+    let udpClient = await getManagementUdpSocket(_managementPort);
+    udpClient.send(command, _managementPort, '127.0.0.1');
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            reject('execute edge Manangement Command timeout:' + command);
+        }, 5000);
+
+        udpClient.once('message', (message, rInfo) => {
+            clearTimeout(t);
+            let result = null;
+            if (os.platform() !== 'win32') {
+                result = message.toString('utf8');
+            } else {
+                result = iconvLite.decode(message, 'cp936');
+            }
+            resolve(result);
+        });
+    });
+    return p;
+}
+
+/**
+ * 
+ * @param {Number} managementPort 
+ * @returns {dgram.Socket}
+ */
+async function getManagementUdpSocket(managementPort) {
+    if (_ManagementUdpSocket == null) {
+        _ManagementUdpSocket = await createManagementUdpSocket(managementPort);
+    }
+    return _ManagementUdpSocket;
+}
+
+/**
+ * 
+ * @param {Number} managementPort 
+ * @returns {dgram.Socket}
+ */
+async function createManagementUdpSocket(managementPort) {
+    let prefix = 'edge udp:';
+    let udpClient = dgram.createSocket('udp4');
+    udpClient.on('close', () => {
+        logger.debug(prefix + 'close');
+    });
+
+    //错误处理
+    udpClient.on('error', (err) => {
+        logger.warn(prefix + error);
+    })
+
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            reject('create edge upd client timeout');
+        }, 1000);
+
+        udpClient.connect(managementPort, '127.0.0.1', () => {
+            resolve(udpClient);
+        });
+    });
+    return p;
 }
 
 function prepareAndCheck(params) {
@@ -111,5 +213,6 @@ async function checkFileExist(name) {
 
 module.exports = {
     startEdge: start,
-    stopEdge: stop
+    stopEdge: stop,
+    executeManangementCommand: executeManangementCommand
 }
