@@ -35,7 +35,7 @@ async function getPortBySecondDomainName(secondDomainName) {
     return result.remotePort;
 }
 
-function createProxy() {
+function createHttpProxy() {
     let fiveMinutes = 5 * 60 * 1000;
     setInterval(() => {
         for (const [key, item] of DomainMap) {
@@ -160,4 +160,4 @@ function createProxy() {
 
 }
 
-module.exports = createProxy;
+module.exports = createHttpProxy;

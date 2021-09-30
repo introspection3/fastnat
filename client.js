@@ -6,7 +6,7 @@ const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 const UdpTunnelClient = require('./UdpTunnel/UdpTunnelClient');
-const clientConfig = require('./Common/ClientConfig');
+
 const os = require('os');
 const getMAC = require('getmac').default;
 const { program } = require('commander');
@@ -19,6 +19,8 @@ const N2NClient = require('./N2N/N2NClient');
 const AesUtil = require('./Utils/AesUtil');
 const PlatfromUtil = require('./Utils/PlatfromUtil');
 const ServiceUtil = require('./Utils/ServiceUtil');
+const ConfigCheckUtil = require('./Utils/ConfigCheckUtil');
+
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -40,7 +42,6 @@ const p2pmtu = defaultConfig.p2p.mtu;
 checkType(isNumber, p2pmtu, 'p2pmtu');
 //---------------p2p config -----e-----
 
-
 //------------------netbuilding---e-------
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
@@ -49,18 +50,14 @@ program
     .option('-r, --restart', 'only tell application ,this is a restart process')
     .parse(process.argv);
 const options = program.opts();
-axios.defaults.timeout = 5000;
-if (defaultWebSeverConfig.https == true) {
-    axios.defaults.baseURL = `https://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
-} else {
-    axios.defaults.baseURL = `http://${defaultConfig.host}:${defaultWebSeverConfig.port}`;
-}
-logger.info('axios.defaults.baseURL=' + axios.defaults.baseURL);
 
-let authenKey = clientConfig.authenKey;
-if (options.test) {
-    authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
+function setAxiosDefaultConfig(isHttps, host, port, authenKey) {
+    axios.defaults.timeout = 5000;
+    axios.defaults.baseURL = `http${isHttps?'s':''}://${host}:${port}`;
+    logger.info('axios.defaults.baseURL=' + axios.defaults.baseURL);
+    axios.defaults.headers['authenKey'] = authenKey;
 }
+
 
 if (defaultConfig.monitor.enabled) {
     // const easyMonitor = require('easy-monitor');
@@ -79,7 +76,7 @@ const SocketIOCreateUtpClientMap = new Map();
  * @param {Socket} socketIOSocket 
  * @param {Number} ownClientId 
  */
-async function registerSocketIOEvent(socketIOSocket, ownClientId) {
+async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
 
     socketIOSocket.on('p2p.request.open', async(data, fn) => {
         if (currentClientTunnelsMap.has(data.targetTunnelId)) {
@@ -323,7 +320,7 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
 /**
  * check current nat type
  */
-async function checkNatType() {
+async function checkNatType(authenKey) {
     try {
         currentClientNatType = await getNatType({ logsEnabled: false, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
     } catch (error) {
@@ -331,12 +328,25 @@ async function checkNatType() {
         currentClientNatType = 'Error';
     }
 
-    logger.info('client nat\'s type:', currentClientNatType);
-    await updateClientSystemInfo(currentClientNatType);
+    logger.info('current nat\'s type:', currentClientNatType);
+    await updateClientSystemInfo(currentClientNatType, authenKey);
     return currentClientNatType;
 }
 
-async function main(params) {
+async function main() {
+
+    let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
+    if (existClientConfig === false) {
+        logger.error('the client.json file in config directory not exist');
+        return;
+    }
+    const clientConfig = require('./Common/ClientConfig');
+    let authenKey = clientConfig.authenKey;
+    if (options.test) {
+        authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
+    }
+    setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
+
     if (options.restart) {
         logger.debug('sleep 1s,then restart,new pid=' + process.pid);
         await sleep(1000);
@@ -346,7 +356,7 @@ async function main(params) {
     try {
         clientResult = await getClient(authenKey);
     } catch (error) {
-        console.error('connect to server failed,waiting...' + error);
+        logger.error('connect to server failed,waiting...' + error);
         isWorkingFine = false;
         return;
     }
@@ -359,7 +369,7 @@ async function main(params) {
     let currentClientTunnels = clientResult.data.tunnels;
     setCurrentClientTunnelsMap(currentClientTunnels)
     let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id);
-    registerSocketIOEvent(socketIOSocket, clientResult.data.id);
+    registerSocketIOEvent(socketIOSocket, clientResult.data.id, authenKey);
 
     const ownClientId = clientResult.data.id;
     for (const tunnelItem of currentClientTunnels) {
@@ -418,14 +428,28 @@ async function main(params) {
         if (result.success) {
             let targetClientId = result.data.clientId;
             let remotePort = result.data.remotePort;
-            startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort);
+            startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey);
         } else {
             logger.error(result.info);
         }
     }
 
-    checkNatType();
+    checkNatType(authenKey);
     startEdgeProcessAsync(authenKey)
+
+    setInterval(async() => {
+        let serverOk = await checkServerStatus();
+        if (serverOk && isWorkingFine == false) {
+            isWorkingFine = true;
+            restartApplication();
+        }
+    }, 10 * 1000);
+
+
+    if (require('os').platform() == 'win32') {
+        trayIcon();
+    }
+
 }
 
 async function startEdgeProcessAsync(authenKey) {
@@ -450,8 +474,9 @@ async function startEdgeProcessAsync(authenKey) {
  * @param {Number} ownClientId 
  * @param {Number} targetClientId 
  * @param {Number} remotePort remote tcp port
+ * @param {string} authenKey current authenKey
  */
-async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort) {
+async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey) {
 
     let server = net.createServer((tcpSocket) => {
         let socketAddressInfo = `remoteAddress=${tcpSocket.remoteAddress}:${tcpSocket.remotePort},localAddress=${tcpSocket.localAddress}:${tcpSocket.localPort}`;
@@ -672,25 +697,12 @@ async function checkServerStatus() {
 
 }
 
-setInterval(async() => {
-    let serverOk = await checkServerStatus();
-    if (serverOk && isWorkingFine == false) {
-        isWorkingFine = true;
-        restartApplication();
-    }
-}, 10 * 1000);
-
-if (require('os').platform() == 'win32') {
-    trayIcon();
-}
-
 main();
 
 
 
 
 async function trayIcon(params) {
-    return;
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
@@ -720,7 +732,7 @@ async function trayIcon(params) {
 
 }
 
-async function updateClientSystemInfo(natType) {
+async function updateClientSystemInfo(natType, authenKey) {
     let osInfo = {
         cpuCount: os.cpus().length,
         arch: os.arch(),
@@ -756,11 +768,11 @@ process.on("exit", function(code) {
 });
 
 process.on('SIGINT', function() {
-    console.log('Exit by SIGINT');
+    logger.warn('process exit by SIGINT');
     PlatfromUtil.processExit();
 });
 
 process.on("uncaughtException", function(err) {
-    console.error(err.stack)
+    console.error(err.stack);
     logger.error(err);
 });
