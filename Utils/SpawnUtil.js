@@ -13,7 +13,7 @@ async function execute(cmd, args = [], noResult = false, newEnv = {}, timeout = 
     Object.assign(env, newEnv);
     let p = new Promise((resolve, reject) => {
         let t = setTimeout(() => {
-            reject('execute N2nKeygen  timeout:' + timeout);
+            reject(`execute ${exeName} timeout:` + timeout);
         }, timeout);
 
         let targetProcess = spawn(cmd, args, { windowsHide: true, env: env, killSignal: 'SIGINT', detached: true });

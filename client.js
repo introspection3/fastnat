@@ -7,6 +7,7 @@ const defaultBridgeConfig = defaultConfig.bridge;
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 const UdpTunnelClient = require('./UdpTunnel/UdpTunnelClient');
 const UpnpUtil = require('./Utils/UpnpUtil');
+const NetUtil = require('./Utils/NetUtil');
 const os = require('os');
 const getMAC = require('getmac').default;
 const { program } = require('commander');
@@ -148,12 +149,13 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         }
         SocketIOCreateUtpServerMap.get(data.connectorclientId).push(server);
         //-----------------
-        server.bind(0);
-
+        let freeUdpPort = await NetUtil.freeUdpPortAsync();
+        server.bind(freeUdpPort);
+        await UpnpUtil.addMap(freeUdpPort, freeUdpPort);
         server.listen(async() => {
             let udpSocket = server.getUdpSocket();
             logger.debug('p2p client utpServer is ready,bindPort=' + udpSocket.address().port);
-            await UpnpUtil.addMap(udpSocket.address().port, udpSocket.address().port);
+
             let msg = JSON.stringify({ authenKey: authenKey, command: 'client_report_tunnel_info' });
             let timer = null;
             let timeout = null;
@@ -324,6 +326,7 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
 async function checkNatType(clientConfig) {
     try {
         currentClientNatType = await getNatType({ logsEnabled: false, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
+        currentClientNatType = 'NAT1';
     } catch (error) {
         logger.warn(error);
         currentClientNatType = 'Error';
@@ -346,6 +349,7 @@ async function main() {
     if (options.test) {
         authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
     }
+
     setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
 
     if (options.restart) {
@@ -436,7 +440,7 @@ async function main() {
     }
 
     checkNatType(clientConfig);
-    startEdgeProcessAsync(authenKey)
+    //startEdgeProcessAsync(authenKey)
 
     setInterval(async() => {
         let serverOk = await checkServerStatus();
@@ -479,7 +483,7 @@ async function startEdgeProcessAsync(authenKey) {
  */
 async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey) {
 
-    let server = net.createServer((tcpSocket) => {
+    let server = net.createServer(async(tcpSocket) => {
         let socketAddressInfo = `remoteAddress=${tcpSocket.remoteAddress}:${tcpSocket.remotePort},localAddress=${tcpSocket.localAddress}:${tcpSocket.localPort}`;
         //-----------utpclient----------
         let utpclient = new Node({ mtu: p2pmtu });
@@ -489,11 +493,13 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
         logger.warn('targetClientId', targetClientId);
         SocketIOCreateUtpClientMap.get(targetClientId).push({ UtpClient: utpclient, TcpSocket: tcpSocket });
 
-        utpclient.bind(0, async() => {
+        let freeUdpPort = await NetUtil.freeUdpPortAsync();
+        await UpnpUtil.addMap(freeUdpPort, freeUdpPort);
+        utpclient.bind(freeUdpPort, async() => {
 
             let udpSocket = utpclient.getUdpSocket();
             logger.debug('p2p connector utpclient bindPort=' + udpSocket.address().port);
-            UpnpUtil.addMap(udpSocket.address().port, udpSocket.address().port);
+
             //--------向tracker汇报--------------------------
 
             let timer = null;
@@ -536,27 +542,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                             logger.warn('start failover to tcp tunnel');
                             // tcpSocket.end();//------failover
                             //----fallover connect to tcp server---s-
-                            let address = { host: defaultConfig.host, port: remotePort };
-                            let tcpClient = net.createConnection(address, () => {
-                                logger.trace('p2p tcp client has created to ' + JSON.stringify(address));
-
-                            });
-                            tcpClient.on('connect', () => {
-                                tcpClient.pipe(tcpSocket);
-                                tcpSocket.pipe(tcpClient);
-                            });
-
-                            tcpClient.on('close', (hadError) => {
-                                logger.trace('Tcp Client Closed:' + this.toString());
-                                tcpSocket.end();
-                                tcpSocket.destroy();
-                            });
-
-                            tcpClient.on('error', (err) => {
-                                tcpSocket.end();
-                                tcpSocket.destroy();
-                                logger.trace('Tcp Client error: ' + err + " ," + this.toString());
-                            });
+                            let tcpClient = failoverTcp(remotePort, tcpSocket);
                             //----fallover connect to tcp server---e
                             return;
                         }
@@ -569,7 +555,10 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
 
                             if (!success) {
                                 utpclient.close();
-                                tcpSocket.end();
+                                // tcpSocket.end(); //注意观察
+                                //----fallover connect to tcp server---s-
+                                let tcpClient = failoverTcp(remotePort, tcpSocket);
+                                //----fallover connect to tcp server---e
                                 return;
                             }
 
@@ -701,7 +690,30 @@ async function checkServerStatus() {
 
 main();
 
+function failoverTcp(remotePort, tcpSocket) {
+    let address = { host: defaultConfig.host, port: remotePort };
+    let addressStr = JSON.stringify(address);
+    let tcpClient = net.createConnection(address, () => {
+        logger.trace('p2p tcp client has created to ' + addressStr);
 
+    });
+    tcpClient.on('connect', () => {
+        tcpClient.pipe(tcpSocket);
+        tcpSocket.pipe(tcpClient);
+    });
+
+    tcpClient.on('close', (hadError) => {
+        logger.trace('Tcp Client Closed:' + addressStr + `,hadError=${hadError}`);
+        tcpSocket.end();
+        tcpSocket.destroy();
+    });
+
+    tcpClient.on('error', (err) => {
+        tcpSocket.end();
+        tcpSocket.destroy();
+        logger.trace('Tcp Client error: ' + err + " ," + addressStr);
+    });
+}
 
 
 async function trayIcon(params) {

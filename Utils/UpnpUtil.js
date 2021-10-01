@@ -1,6 +1,6 @@
 const SpawnUtil = require('./SpawnUtil');
 const getPluginPath = require('../Utils/PluginUtil').getPluginPath;
-const PlatfromUtil = require('./PlatfromUtil');
+const logger = require('../Log/logger');
 const path = require('path');
 const basePath = getPluginPath('upnp', 'client');
 let upnpcPath = path.join(basePath, `upnpc`);
@@ -8,27 +8,26 @@ const os = require('os')
 if (os.platform() === 'win32') {
     upnpcPath += '.exe';
 }
-async function addMap(localPort, externalPort, protocol = 'udp', localIp = 'default', duration = -1) {
-    if (localIp === 'default') {
-        localIp = PlatfromUtil.getIPAdress();
-    }
-    console.log(localIp);
+async function addMap(localPort, externalPort, protocol = 'udp') {
     let args = ['-r', localPort, externalPort, protocol];
-    if (duration > 0) {
-        args.push(duration);
+    try {
+        let result = await SpawnUtil.execute(upnpcPath, args, false, {}, 2000);
+        return result;
+    } catch (error) {
+        logger.error(error);
+        return 'error';
     }
-    let result = await SpawnUtil.execute(upnpcPath, args);
-    console.log(result);
-    return result;
+
 }
 async function removeMap(externalPort, protocol = 'udp') {
     let args = ['-d', externalPort, protocol];
-    if (duration > 0) {
-        args.push(duration);
+    try {
+        let result = await SpawnUtil.execute(upnpcPath, args, false, {}, 2000);
+        return result;
+    } catch (error) {
+        logger.error(error);
+        return 'error';
     }
-    let result = await SpawnUtil.execute(upnpcPath, args);
-    console.log(result);
-    return result;
 }
 
 

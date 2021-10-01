@@ -49,7 +49,7 @@ class TcpTunnelServer {
                 ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
             }
         });
-       // this.authenMap = new Map();
+        // this.authenMap = new Map();
     }
 
     /**
@@ -60,7 +60,7 @@ class TcpTunnelServer {
      */
     createProxyServer(fromSocket, config) {
 
-        let proxyServer = net.createServer(async (proxySocket) => {
+        let proxyServer = net.createServer(async(proxySocket) => {
             let info = `remote{${proxySocket.remoteAddress}:${proxySocket.remotePort}}->local:{${proxySocket.localAddress}:${proxySocket.localPort}}`;
             let commingInfo = `proxyServer new tcp  client ` + info;
             logger.trace(commingInfo);
@@ -116,10 +116,10 @@ class TcpTunnelServer {
         });
 
         proxyServer.on('error', (err) => {
-            logger.error(`proxyServer error ${proxyServer.address()} ` + +err);
+            logger.error(`proxyServer error ${proxyServer.address()} ` + err);
 
         });
-
+        logger.log('config' + JSON.stringify(config))
         proxyServer.listen(config, () => {
             logger.trace("Tcp  server started success:" + JSON.stringify(proxyServer.address()));
         });
@@ -183,13 +183,13 @@ class TcpTunnelServer {
      * @param {string} info 
      */
     notifyCloseClient(socket, info) {
-        this.tcpServer.sendCodecData2OneClient({ command: 'quitClient', info: info }, socket);
-    }
-    /**
-     * 处理来之客户端的授权信息
-     * @param {TcpTunnelProtocal} data 
-     * @param {net.Socket} socket 
-     */
+            this.tcpServer.sendCodecData2OneClient({ command: 'quitClient', info: info }, socket);
+        }
+        /**
+         * 处理来之客户端的授权信息
+         * @param {TcpTunnelProtocal} data 
+         * @param {net.Socket} socket 
+         */
     async authen(data, socket) {
 
         let clientInfo = await Client.findOne({
@@ -229,10 +229,10 @@ class TcpTunnelServer {
         }
 
         let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
-       
+
         let exist = await ClusterData.existAsync(authenKeyAndTunnelId);
         if (exist) {
-            let msg=`this authenKey&tunnelId (${authenKeyAndTunnelId}) is already online`;
+            let msg = `this authenKey&tunnelId (${authenKeyAndTunnelId}) is already online`;
             logger.debug(msg);
             this.notifyCloseClient(socket, msg);
             return;
