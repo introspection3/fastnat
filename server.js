@@ -75,7 +75,7 @@ const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
 const LoginAuthen = require('./ExpressMiddleWare/LoginAuthen');
 app.use('/', express.static('public'));
-app.use(LoginAuthen);
+//app.use(LoginAuthen);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
 app.use(express.urlencoded({ extended: true }));
@@ -101,6 +101,7 @@ tcpTunnelServer.start();
 
 //------------------------------------------------
 process.on("uncaughtException", function(err) {
+    logger.error(err.stack);
     logger.error(err);
 });
 

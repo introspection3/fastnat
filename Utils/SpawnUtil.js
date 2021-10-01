@@ -51,5 +51,5 @@ async function execute(cmd, args = [], noResult = false, newEnv = {}, timeout = 
 }
 
 module.exports = {
-    execute
+    execute: execute
 }

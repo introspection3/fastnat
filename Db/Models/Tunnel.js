@@ -40,15 +40,14 @@ const Tunnel = sequelize.define('tunnel', {
     localIp: {
         type: DataTypes.STRING(50),
         allowNull: false,
-        comment: 'local ip',
-        unique: 'uniqueTag'
+        comment: 'local ip'
     },
 
     localPort: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        comment: 'local port',
-        unique: 'uniqueTag'
+        comment: 'local port'
+
     },
 
     remotePort: {
@@ -82,22 +81,21 @@ const Tunnel = sequelize.define('tunnel', {
             key: 'id', //  refers to column name in fathers table
         }
     },
-    uniqueName:{
+    uniqueName: {
         type: DataTypes.STRING(50),
         allowNull: false,
         comment: 'unique server name(domain name eg.)',
     }
 }, {
-    indexes: [
-        {
+    indexes: [{
             name: 'unique_name_for_client',
             unique: true,
-            fields: ['name','clientId']
+            fields: ['name', 'clientId']
         },
         {
             name: 'unique_port_for_server',
             unique: true,
-            fields: ['remotePort','lowProtocol']
+            fields: ['remotePort', 'lowProtocol']
         },
         {
             name: 'unique_uniqueName',
@@ -107,9 +105,8 @@ const Tunnel = sequelize.define('tunnel', {
         {
             name: 'unique_loalAddress_for_client',
             unique: true,
-            fields: ['localIp','localPort','clientId','lowProtocol']
+            fields: ['localIp', 'localPort', 'clientId', 'lowProtocol']
         },
     ]
 });
 module.exports = Tunnel;
-

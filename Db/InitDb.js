@@ -4,8 +4,8 @@ const sequelize = require('./Db');
 const { RegisterUser, Client, Tunnel, Connector } = require('./Models');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../Log/logger');
-
-
+const N2NServer = require('../N2N/N2NServer');
+let communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
 /**
  * 初始化数据库
  * @returns 
@@ -72,11 +72,12 @@ async function initdbdata() {
     let tunnel2 = await Tunnel.create({
         type: 'p2p',
         name: 'p2ptest',
-        localIp: '192.168.1.3',
-        localPort: 22,
-        remotePort: 2222,
+        localIp: '127.0.0.1',
+        localPort: 3306,
+        remotePort: 33060,
         clientId: 1,
         uniqueName: 'uniqueName2',
+        p2pPassword: 'fastnat',
         lowProtocol: 'tcp'
     });
 

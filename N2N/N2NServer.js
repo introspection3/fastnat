@@ -102,7 +102,7 @@ async function getManagementUdpSocket(managementPort) {
 }
 
 async function reload_communities() {
-    return executeManangementCommand('reload_communities');
+    return await executeManangementCommand('reload_communities');
 }
 
 /**

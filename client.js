@@ -6,7 +6,7 @@ const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 const UdpTunnelClient = require('./UdpTunnel/UdpTunnelClient');
-
+const UpnpUtil = require('./Utils/UpnpUtil');
 const os = require('os');
 const getMAC = require('getmac').default;
 const { program } = require('commander');
@@ -150,9 +150,10 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         //-----------------
         server.bind(0);
 
-        server.listen(() => {
+        server.listen(async() => {
             let udpSocket = server.getUdpSocket();
             logger.debug('p2p client utpServer is ready,bindPort=' + udpSocket.address().port);
+            await UpnpUtil.addMap(udpSocket.address().port, udpSocket.address().port);
             let msg = JSON.stringify({ authenKey: authenKey, command: 'client_report_tunnel_info' });
             let timer = null;
             let timeout = null;
@@ -320,7 +321,7 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
 /**
  * check current nat type
  */
-async function checkNatType(authenKey) {
+async function checkNatType(clientConfig) {
     try {
         currentClientNatType = await getNatType({ logsEnabled: false, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
     } catch (error) {
@@ -329,7 +330,7 @@ async function checkNatType(authenKey) {
     }
 
     logger.info('current nat\'s type:', currentClientNatType);
-    await updateClientSystemInfo(currentClientNatType, authenKey);
+    await updateClientSystemInfo(currentClientNatType, clientConfig.authenKey);
     return currentClientNatType;
 }
 
@@ -434,7 +435,7 @@ async function main() {
         }
     }
 
-    checkNatType(authenKey);
+    checkNatType(clientConfig);
     startEdgeProcessAsync(authenKey)
 
     setInterval(async() => {
@@ -488,10 +489,11 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
         logger.warn('targetClientId', targetClientId);
         SocketIOCreateUtpClientMap.get(targetClientId).push({ UtpClient: utpclient, TcpSocket: tcpSocket });
 
-        utpclient.bind(0, () => {
+        utpclient.bind(0, async() => {
 
             let udpSocket = utpclient.getUdpSocket();
             logger.debug('p2p connector utpclient bindPort=' + udpSocket.address().port);
+            UpnpUtil.addMap(udpSocket.address().port, udpSocket.address().port);
             //--------向tracker汇报--------------------------
 
             let timer = null;
