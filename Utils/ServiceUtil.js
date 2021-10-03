@@ -47,7 +47,8 @@ async function removeService(servicename) {
         let result = await existService(servicename);
         if (result.exist && result.status === 'RUNNING') {
             await SpawnUtil.execute(nssmPath, ['stop', `${servicename}`, `confirm`]);
-        } else {
+        }
+        if (result.exist) {
             await SpawnUtil.execute(nssmPath, ['remove', `${servicename}`, `confirm`])
         }
     }

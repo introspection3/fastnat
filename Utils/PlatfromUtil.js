@@ -5,7 +5,7 @@ function processExit(code = 0) {
     N2NClient.stopEdge();
     setTimeout(() => {
         process.exit(code);
-    }, 1000);
+    }, 1500);
 }
 
 function cpus() {
@@ -19,10 +19,7 @@ function getIPAdress() {
 
         for (let i = 0; i < iface.length; i++) {
             let alias = iface[i];
-
             if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
-
-
                 return alias.address;
             }
         }

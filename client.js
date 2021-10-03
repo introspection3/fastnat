@@ -21,7 +21,8 @@ const AesUtil = require('./Utils/AesUtil');
 const PlatfromUtil = require('./Utils/PlatfromUtil');
 const ServiceUtil = require('./Utils/ServiceUtil');
 const ConfigCheckUtil = require('./Utils/ConfigCheckUtil');
-
+const Piscina = require('piscina');
+const path = require('path');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -317,23 +318,17 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
  * check current nat type
  */
 async function checkNatType(clientConfig) {
-    try {
-        currentClientNatType = await getNatType({ logsEnabled: false, sampleCount: sampleCount, stunHost: clientConfig.stunHost });
-        currentClientNatType = 'NAT1';
-    } catch (error) {
-        logger.warn(error);
-        currentClientNatType = 'Error';
-    }
-
+    const piscina = new Piscina({
+        filename: path.join(process.cwd(), 'Utils', 'StunUtil.js')
+    });
+    currentClientNatType = await piscina.run({ sampleCount: sampleCount, stunHost: clientConfig.stunHost })
     logger.info('current nat\'s type:', currentClientNatType);
     await updateClientSystemInfo(currentClientNatType, clientConfig.authenKey);
     return currentClientNatType;
 }
 
 async function main() {
-    if (require('os').platform() == 'win32') {
-        trayIcon();
-    }
+    trayIcon();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
         logger.error('the client.json file in config directory not exist');
@@ -361,7 +356,7 @@ async function main() {
         timerCheckServerStatus();
         return;
     }
-
+    checkNatType(clientConfig);
     if (!clientResult.success) {
         logger.error(clientResult.info);
         return;
@@ -435,7 +430,7 @@ async function main() {
         }
     }
 
-    checkNatType(clientConfig);
+
     startEdgeProcessAsync(authenKey)
     timerCheckServerStatus();
 }
@@ -467,7 +462,7 @@ async function startEdgeProcessAsync(authenKey) {
         logger.warn(result.info);
     }
 
-    // ServiceUtil.installService('testabc', process.execPath);
+    // ServiceUtil.installService('fastnat', process.execPath);
 }
 
 
@@ -716,6 +711,12 @@ function failoverTcp(remotePort, tcpSocket) {
 
 
 async function trayIcon(params) {
+    let archFine = os.arch() === "x32" || os.arch() === "x64";
+    let platformFine = os.platform() === 'win32' || os.platform() === 'linux';
+    if (!(archFine && platformFine)) {
+        return;
+    }
+
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
@@ -780,9 +781,15 @@ process.on("exit", function(code) {
 
 });
 
+let _SIGINT_Started = false;
 process.on('SIGINT', function() {
-    logger.warn('process exit by SIGINT');
-    PlatfromUtil.processExit();
+    if (_SIGINT_Started === false) {
+        _SIGINT_Started = true;
+        logger.warn('process exit by SIGINT');
+        PlatfromUtil.processExit();
+    } else {
+        logger.trace('process is closing,please waiting...');
+    }
 });
 
 process.on("uncaughtException", function(err) {
