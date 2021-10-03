@@ -100,31 +100,24 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         let connectorPort = data.connectorPort;
         let tunnel = currentClientTunnelsMap.get(data.targetTunnelId);
         let server = new Node({ mtu: p2pmtu }, utpSocket => {
-
             logger.info('utpSocket client is comming');
-
             //-----------tcpClient-----
-
             let address = { host: tunnel.localIp, port: tunnel.localPort };
             let tcpClient = net.createConnection(address, () => {
                 logger.trace('p2p tcp client has created to ' + JSON.stringify(address));
             });
             //-----------------记录此UtpServer所用tcpclient-----------
-
             server.TcpClient = tcpClient;
-
             tcpClient.on('connect', () => {
                 logger.trace('p2p tcp client has connected to ' + JSON.stringify(address));
 
             });
-
             tcpClient.pipe(utpSocket); //--
             tcpClient.on('close', (hadError) => {
                 tempTcpClient = null;
                 logger.trace('p2p tcp Client Closed:' + JSON.stringify(address));
                 server.close();
             });
-
             tcpClient.on('error', (err) => {
                 tempTcpClient = null;
                 logger.warn('p2p tcp Client error: ' + err + " ," + JSON.stringify(address));
@@ -338,7 +331,9 @@ async function checkNatType(clientConfig) {
 }
 
 async function main() {
-
+    if (require('os').platform() == 'win32') {
+        trayIcon();
+    }
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
         logger.error('the client.json file in config directory not exist');
@@ -361,8 +356,9 @@ async function main() {
     try {
         clientResult = await getClient(authenKey);
     } catch (error) {
-        logger.error('connect to server failed,waiting...' + error);
+        logger.error('connect to server failed,please waiting,' + error);
         isWorkingFine = false;
+        timerCheckServerStatus();
         return;
     }
 
@@ -440,21 +436,24 @@ async function main() {
     }
 
     checkNatType(clientConfig);
-    //startEdgeProcessAsync(authenKey)
+    startEdgeProcessAsync(authenKey)
+    timerCheckServerStatus();
+}
 
-    setInterval(async() => {
+let _timerCheckServerStatusStarted = false;
+async function timerCheckServerStatus(seconds = 10) {
+    if (_timerCheckServerStatusStarted) {
+        return;
+    }
+    _timerCheckServerStatusStarted = true;
+    let timer = setInterval(async() => {
         let serverOk = await checkServerStatus();
         if (serverOk && isWorkingFine == false) {
             isWorkingFine = true;
             restartApplication();
         }
-    }, 10 * 1000);
-
-
-    if (require('os').platform() == 'win32') {
-        trayIcon();
-    }
-
+    }, seconds * 1000);
+    return timer;
 }
 
 async function startEdgeProcessAsync(authenKey) {
@@ -468,7 +467,7 @@ async function startEdgeProcessAsync(authenKey) {
         logger.warn(result.info);
     }
 
-    ServiceUtil.installService('testabc', process.execPath);
+    // ServiceUtil.installService('testabc', process.execPath);
 }
 
 
@@ -741,7 +740,7 @@ async function trayIcon(params) {
         }
     ])
 
-    tray.start().then(() => console.log("Tray Closed"));
+    tray.start().then(() => console.log("app closed"));
     return;
 
 }

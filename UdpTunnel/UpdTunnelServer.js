@@ -1,4 +1,3 @@
-
 const dgram = require('dgram');
 const logger = require('../Log/logger');
 const Socket = require('socket.io-client').Socket;
@@ -11,7 +10,7 @@ class UdpTunnelServer {
      * @param {Socket} socketIOSocket 
      */
     constructor(udpTunnelItemOption, socketIOSocket) {
-        this.udpServer = this.#createUdpServer(udpTunnelItemOption.remotePort, udpTunnelItemOption.id);
+        this.udpServer = this._createUdpServer(udpTunnelItemOption.remotePort, udpTunnelItemOption.id);
         this.socketIOSocket = socketIOSocket;
         this.tunnelId = udpTunnelItemOption.id;
         this.eventName = 'client.back.udp:' + this.tunnelId;
@@ -36,7 +35,7 @@ class UdpTunnelServer {
         })
     }
 
-    #createUdpServer(port, tunnelId) {
+    _createUdpServer(port, tunnelId) {
 
         let serverName = 'udpServer:' + tunnelId;
         //创建 udp server

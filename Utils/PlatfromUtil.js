@@ -5,7 +5,7 @@ function processExit(code = 0) {
     N2NClient.stopEdge();
     setTimeout(() => {
         process.exit(code);
-    }, 2000);
+    }, 1000);
 }
 
 function cpus() {

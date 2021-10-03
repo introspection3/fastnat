@@ -40,7 +40,7 @@ async function execute(cmd, args = [], noResult = false, newEnv = {}, timeout = 
         });
 
         targetProcess.on('close', (code, signal) => {
-            console.log(`${exeName} quit as code: ${code},signal:${signal}`);
+            //console.log(`${exeName} quit as code: ${code},signal:${signal}`);
             if (noResult) {
                 clearTimeout(t);
                 resolve(code);

@@ -33,7 +33,7 @@ function freeTcpPort(callback) {
         server.removeAllListeners()
         if (callback) callback(error)
     })
-    server.listen(0)
+    server.listen(0);
 }
 
 

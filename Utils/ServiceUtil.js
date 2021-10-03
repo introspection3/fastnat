@@ -4,23 +4,52 @@ const basePath = getPluginPath('nssm', 'client');
 const nssmPath = path.join(basePath, `nssm.exe`);
 const SpawnUtil = require('./SpawnUtil');
 const os = require('os');
-const logger = require('../Log/logger')
+const logger = require('../Log/logger');
+
 async function installService(servicename, applicationPath) {
-    let dirPath = path.dirname(applicationPath);
+    await removeService(servicename);
+    let dirPath = process.cwd();
     let newArr = JSON.parse(JSON.stringify(process.argv));
     if (os.platform() === 'win32') {
-        newArr.shift();
-        await SpawnUtil.execute(nssmPath, ['set', `${servicename}`, `Application`, `${applicationPath }`], true);
-        await SpawnUtil.execute(nssmPath, ['set', `${servicename}`, `AppDirectory `, `${dirPath }`], true);
-        if (newArr && newArr.length > 0) {
-            await SpawnUtil.execute(nssmPath, ['set', `${servicename}`, `AppParameters `, `${newArr.join(' ')}`], true);
+        applicationPath = newArr.shift();
+        await SpawnUtil.execute(nssmPath, [`install`, `${servicename}`, `${applicationPath}`, `${newArr.join(' ')}`], true);
+        await SpawnUtil.execute(nssmPath, ['set', `${servicename}`, `AppDirectory`, `${dirPath }`], true);
+        try {
+            await SpawnUtil.execute(nssmPath, ['start', `${servicename}`], true);
+        } catch (error) {
+            logger.warn(error);
         }
     }
 }
-
-async function removeService(servicename, applicationPath) {
+async function existService(servicename) {
+    let result = {
+        exist: false,
+        status: 'STOPPED'
+    }
     if (os.platform() === 'win32') {
-        await SpawnUtil.execute(nssmPath, ['remove', `${servicename}`, `confirm`])
+        let content = await SpawnUtil.execute('sc', ['queryex', `${servicename}`]);
+        console.log(content);
+
+        if (content.indexOf('1060') > -1) {
+            result.exist = false;
+        } else {
+            result.exist = true;
+        }
+        if (content.indexOf('RUNNING') > -1) {
+            result.status = 'RUNNING';
+        }
+    }
+    return result;
+}
+
+async function removeService(servicename) {
+    if (os.platform() === 'win32') {
+        let result = await existService(servicename);
+        if (result.exist && result.status === 'RUNNING') {
+            await SpawnUtil.execute(nssmPath, ['stop', `${servicename}`, `confirm`]);
+        } else {
+            await SpawnUtil.execute(nssmPath, ['remove', `${servicename}`, `confirm`])
+        }
     }
 }
 
