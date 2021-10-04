@@ -18,7 +18,8 @@ const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
 const P2PTracker = require('./P2P/P2PTracker');
 const N2NServer = require('./N2N/N2NServer');
-let communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
+const rootPath = require('./Common/GlobalData.js').rootPath;
+let communityListPath = require('path').join(rootPath, 'config', 'community.list');
 
 //------------------netbuilding---s-------
 const netbuilding = serverConfig.netbuilding;

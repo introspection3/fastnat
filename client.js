@@ -21,8 +21,10 @@ const AesUtil = require('./Utils/AesUtil');
 const PlatfromUtil = require('./Utils/PlatfromUtil');
 const ServiceUtil = require('./Utils/ServiceUtil');
 const ConfigCheckUtil = require('./Utils/ConfigCheckUtil');
-const Piscina = require('piscina');
 const path = require('path');
+const rootPath = require('./Common/GlobalData.js').rootPath;
+const SysTray = require('./SysTray/SysTray');
+const getPluginPath = require('./Utils/PluginUtil').getPluginPath;
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -318,11 +320,7 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
  * check current nat type
  */
 async function checkNatType(clientConfig) {
-    const piscina = new Piscina({
-        filename: path.join(process.cwd(), 'Utils', 'StunUtil.js')
-    });
-    currentClientNatType = await piscina.run({ sampleCount: sampleCount, stunHost: clientConfig.stunHost })
-    logger.info('current nat\'s type:', currentClientNatType);
+    currentClientNatType = await require('./Utils/StunUtil')({ sampleCount: sampleCount, stunHost: clientConfig.stunHost })
     await updateClientSystemInfo(currentClientNatType, clientConfig.authenKey);
     return currentClientNatType;
 }
@@ -462,7 +460,7 @@ async function startEdgeProcessAsync(authenKey) {
         logger.warn(result.info);
     }
 
-    // ServiceUtil.installService('fastnat', process.execPath);
+    //ServiceUtil.installService('fastnat');
 }
 
 
@@ -711,39 +709,68 @@ function failoverTcp(remotePort, tcpSocket) {
 
 
 async function trayIcon(params) {
-    let archFine = os.arch() === "x32" || os.arch() === "x64";
-    let platformFine = os.platform() === 'win32' || os.platform() === 'linux';
-    if (!(archFine && platformFine)) {
+    if (os.arch().indexOf('arm') > -1 || os.arch().indexOf('mip') > -1) {
         return;
     }
-
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
     if (os.platform() == 'win32') {
         ext = '.ico';
     }
-    // let bitmap = await readFile('./config/img/tray' + ext);
-    let Tray = require("ctray");
+    let bitmap = await readFile('./config/img/tray' + ext);
+    const basePath = getPluginPath('tray', 'client');
+    let trayPath = path.join(basePath, `tray`);
+    if (os.platform() === 'win32') {
+        trayPath += '.exe';
+    }
+    let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
 
-    let tray = new Tray('./config/img/tray' + ext, [{
-            text: "show",
-            callback: _ => {
-                console.log('show')
-            }
+    const systray = new SysTray({
+        menu: {
+            // using .png icon in macOS/Linux, but .ico format in windows
+            icon: base64str,
+            title: "fastnat",
+            tooltip: "fastnat",
+            items: [{
+                title: "显示",
+                tooltip: "display",
+                // checked is implement by plain text in linux
+                checked: true,
+                enabled: true
+            }, {
+                title: "管理",
+                tooltip: "manage",
+                checked: false,
+                enabled: true
+            }, {
+                title: "退出",
+                tooltip: "quit",
+                checked: false,
+                enabled: true
+            }]
         },
-        {
-            text: "exit",
-            callback: _ => {
-                tray.stop();
-                PlatfromUtil.processExit();
-            }
+        binPath: trayPath
+    });
+
+    systray.onClick(action => {
+        if (action.seq_id === 0) {
+            systray.sendAction({
+                type: 'update-item',
+                item: {
+                    ...action.item,
+                    checked: !action.item.checked,
+                },
+                seq_id: action.seq_id,
+            })
+        } else if (action.seq_id === 1) {
+            // opens the url in the default browser 
+            console.log(axios.defaults.baseURL);
+            // console.log('open the url', action)
+        } else if (action.seq_id === 2) {
+            PlatfromUtil.processExit(0);
         }
-    ])
-
-    tray.start().then(() => console.log("app closed"));
-    return;
-
+    });
 }
 
 async function updateClientSystemInfo(natType, authenKey) {
@@ -769,7 +796,7 @@ function restartApplication() {
     }
     setTimeout(function() {
         require("child_process").spawn(exe, process.argv, {
-            cwd: process.cwd(),
+            cwd: rootPath,
             detached: true,
             stdio: "inherit"
         });

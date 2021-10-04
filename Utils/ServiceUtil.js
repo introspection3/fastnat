@@ -5,13 +5,13 @@ const nssmPath = path.join(basePath, `nssm.exe`);
 const SpawnUtil = require('./SpawnUtil');
 const os = require('os');
 const logger = require('../Log/logger');
-
-async function installService(servicename, applicationPath) {
+const rootPath = require('../Common/GlobalData.js').rootPath;
+async function installService(servicename) {
     await removeService(servicename);
-    let dirPath = process.cwd();
+    let dirPath = rootPath;
     let newArr = JSON.parse(JSON.stringify(process.argv));
     if (os.platform() === 'win32') {
-        applicationPath = newArr.shift();
+        let applicationPath = newArr.shift();
         await SpawnUtil.execute(nssmPath, [`install`, `${servicename}`, `${applicationPath}`, `${newArr.join(' ')}`], true);
         await SpawnUtil.execute(nssmPath, ['set', `${servicename}`, `AppDirectory`, `${dirPath }`], true);
         try {

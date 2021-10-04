@@ -4,9 +4,9 @@ const logger = require('../Log/logger');
 const net = require('net');
 const events = require('events');
 const TcpServer = require('../Tcp/TcpServer');
-const {RpcClientProtocal,RpcServerProtocal}=require('./RpcProtocal');
+const { RpcClientProtocal, RpcServerProtocal } = require('./RpcProtocal');
 const path = require('path');
-
+const rootPath = require('../Common/GlobalData.js').rootPath;
 /**
  * Tcp隧道服务端程序
  */
@@ -16,7 +16,7 @@ class RpcTcpServer {
      * 
      * @param {Object} tcpServer' config
      */
-    constructor(tcpServerConfig,dirPath=null) {
+    constructor(tcpServerConfig, dirPath = null) {
         this.setServicesDirLocation(dirPath);
         this.tcpServer = new TcpServer(tcpServerConfig);
     }
@@ -25,13 +25,13 @@ class RpcTcpServer {
      * set services js directory path
      * @param {string} dirPath 
      */
-    setServicesDirLocation(dirPath){
-        if(dirPath===null||dirPath===''){
-            dirPath='./RpcServices'
+    setServicesDirLocation(dirPath) {
+        if (dirPath === null || dirPath === '') {
+            dirPath = './RpcServices'
         }
-        dirPath=path.join(process.cwd(),dirPath);
+        dirPath = path.join(rootPath, dirPath);
         console.log(dirPath);
-        this.path=dirPath;
+        this.path = dirPath;
     }
 
     /*启动Tcp隧道服务端程序,只会调用一次
@@ -45,13 +45,13 @@ class RpcTcpServer {
         });
 
         this.tcpServer.eventEmitter.on('onCodecMessage', (data, socket) => {
-            let serverSignaturePath=path.join(this.path,data.serverSignature);
-            let targetObj=require(serverSignaturePath);
+            let serverSignaturePath = path.join(this.path, data.serverSignature);
+            let targetObj = require(serverSignaturePath);
             let result = targetObj[data.method](...data.args);
-            let response=new RpcServerProtocal({});
-            response.result=result;
-            response.uuid=data.uuid;
-            this.tcpServer.sendCodecData2OneClient(response,socket);
+            let response = new RpcServerProtocal({});
+            response.result = result;
+            response.uuid = data.uuid;
+            this.tcpServer.sendCodecData2OneClient(response, socket);
         });
 
     }

@@ -2,7 +2,8 @@ const express = require(`express`);
 const router = express.Router();
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const N2NServer = require('../N2N/N2NServer');
-const communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
+const rootPath = require('../Common/GlobalData.js').rootPath;
+const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 router.post('/register', async function(req, res, next) {
     let user = await RegisterUser.create(req.body);
     let client1 = await Client.create({
