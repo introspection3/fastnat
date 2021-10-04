@@ -5,7 +5,7 @@ const { RegisterUser, Client, Tunnel, Connector } = require('./Models');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../Log/logger');
 const N2NServer = require('../N2N/N2NServer');
-const rootPath = require('./Common/GlobalData.js').rootPath;
+const rootPath = require('../Common/GlobalData.js').rootPath;
 let communityListPath = require('path').join(rootPath, 'config', 'community.list');
 /**
  * 初始化数据库
