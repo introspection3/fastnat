@@ -13,6 +13,5 @@ async function getNatType2(sampleCount, stunHost) {
 
 
 module.exports = async({ sampleCount, stunHost }) => {
-    console.log(sampleCount, stunHost);
     return await getNatType2(sampleCount, stunHost);
 };

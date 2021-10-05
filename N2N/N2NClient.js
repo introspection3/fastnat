@@ -1,6 +1,6 @@
 const getPluginPath = require('../Utils/PluginUtil').getPluginPath;
 const path = require('path');
-const basePath = getPluginPath('n2n', 'client');
+const basePath = getPluginPath('p2p', 'client');
 const os = require('os');
 const { spawn, exec } = require('child_process');
 const shell = require('shelljs');
@@ -21,7 +21,7 @@ function start(communityName, communityPassword, virtualIp = '', serverAddress, 
         return;
     }
     let cmd = getPath();
-    let args = [`-c${communityName}`, `-l${serverAddress}`];
+    let args = [`-l${serverAddress}`];
     if (virtualIp != '') {
         args.push(`-a${virtualIp}`);
     }
@@ -33,13 +33,17 @@ function start(communityName, communityPassword, virtualIp = '', serverAddress, 
     if (password && password !== '') {
         args.push(`-J${password}`);
     }
+
+    args.push(`-c${communityName}`);
+
     if (os.platform() != 'win32') {
+
         shell.chmod('+x', cmd);
         args.push('-f'); //目前2.9windows不支持
     }
-
-    let env = {...process.env };
+    let env = Object.create(process.env);
     env['N2N_COMMUNITY'] = communityName;
+    env['N2N_CMTY'] = communityName;
     if (communityPassword && communityPassword !== '') {
         args.push(`-k${communityPassword}`);
         env['N2N_KEY'] = communityPassword;

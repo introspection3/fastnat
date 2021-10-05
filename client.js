@@ -712,13 +712,16 @@ async function trayIcon(params) {
     if (os.arch().indexOf('arm') > -1 || os.arch().indexOf('mip') > -1) {
         return;
     }
+
     const fs = require('fs');
     const readFile = require('util').promisify(fs.readFile);
     let ext = '.png'
     if (os.platform() == 'win32') {
         ext = '.ico';
     }
-    let bitmap = await readFile('./config/img/tray' + ext);
+    let imgPath = path.join(rootPath, 'config', 'img', 'tray');
+
+    let bitmap = await readFile(imgPath + ext);
     const basePath = getPluginPath('tray', 'client');
     let trayPath = path.join(basePath, `tray`);
     if (os.platform() === 'win32') {

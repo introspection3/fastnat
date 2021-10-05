@@ -1,1 +1,0 @@
-mt.exe -manifest "uac.manifest" -outputresource:"edge.exe"

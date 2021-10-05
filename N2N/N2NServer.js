@@ -1,6 +1,6 @@
 const getPluginPath = require('../Utils/PluginUtil').getPluginPath;
 const path = require('path');
-const basePath = getPluginPath('n2n', 'server');
+const basePath = getPluginPath('p2p', 'server');
 const os = require('os');
 const { spawn } = require('child_process');
 const fs = require('fs').promises;
@@ -182,7 +182,7 @@ function getPath() {
 
 function getn2nKeygenPath() {
     let ext = os.platform() === 'win32' ? '.exe' : '';
-    return path.join(basePath, 'n2n-keygen' + ext);
+    return path.join(basePath, 'keygen' + ext);
 }
 
 async function exeN2nKeygen(username, password) {
@@ -220,7 +220,7 @@ async function exeN2nKeygen(username, password) {
         });
 
         n2nKeygenProcess.on('close', (code, signal) => {
-            console.log(`N2nKeygen quit as code: ${code},signal:${signal}`);
+            console.log(`keygen quit as code: ${code},signal:${signal}`);
         });
     });
     return p;
