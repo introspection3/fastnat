@@ -9,7 +9,7 @@
         "password": "root"
     },
     "init": {
-        "firstInit": true
+        "firstInit": false
     },
     "admin": {
         "username": "root",

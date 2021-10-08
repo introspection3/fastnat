@@ -46,7 +46,7 @@ const p2pmtu = defaultConfig.p2p.mtu;
 checkType(isNumber, p2pmtu, 'p2pmtu');
 //---------------p2p config -----e-----
 
-//------------------netbuilding---e-------
+
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
 program
