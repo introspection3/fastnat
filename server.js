@@ -79,7 +79,7 @@ const GlobalData = require('./Common/GlobalData');
 const LoginAuthen = require('./ExpressMiddleWare/LoginAuthen');
 app.use('/', express.static('public'));
 //app.use('/public', express.static('public'));
-//app.use(LoginAuthen);
+app.use(LoginAuthen);
 //app.use(bodyParser.json());
 app.use(express.json());
 //app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
