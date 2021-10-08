@@ -16,6 +16,8 @@ const defaultBridgeConfigPort = defaultBridgeConfig.port;
 checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
 const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
+const clusterEnabled = serverConfig.cluster.enabled;
+checkType(isBoolean, clusterEnabled, 'serverConfig.cluster.enabled');
 const P2PTracker = require('./P2P/P2PTracker');
 const N2NServer = require('./N2N/N2NServer');
 const rootPath = require('./Common/GlobalData.js').rootPath;
@@ -27,7 +29,7 @@ const netbuildingHost = netbuilding.host;
 const netbuildingPort = netbuilding.port;
 //------------------netbuilding---e-------
 
-if (serverConfig.cluster.enabled) {
+if (clusterEnabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     if (cluster.isPrimary || cluster.isMaster) {
         P2PTracker.start();
@@ -76,10 +78,11 @@ const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
 const LoginAuthen = require('./ExpressMiddleWare/LoginAuthen');
 app.use('/', express.static('public'));
-//app.use(LoginAuthen);
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
-app.use(express.urlencoded({ extended: true }));
+app.use(LoginAuthen);
+//app.use(bodyParser.json());
+app.use(express.json());
+//app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
+app.use(express.urlencoded({ extended: false }));
 app.use('/user', require('./Routers/User'));
 app.use('/client', require('./Routers/Client'));
 app.use('/tunnel', require('./Routers/Tunnel'));
@@ -105,8 +108,3 @@ process.on("uncaughtException", function(err) {
     logger.error(err.stack);
     logger.error(err);
 });
-
-async function test(params) {
-    N2NServer.createUser(communityListPath, 1, '742af98b-e977-48a8-b1c8-1a2a091b93a7');
-}
-test();

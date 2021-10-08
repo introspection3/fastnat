@@ -41,10 +41,12 @@ async function initdbdata() {
         telphone: '010-123456',
         email: 'fastnat@fastnat.com',
         clients: [{
-                authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a7'
+                authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a7',
+                clientName: '设备1'
             },
             {
-                authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a2'
+                authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a2',
+                clientName: '设备2'
             }
         ]
     }, {

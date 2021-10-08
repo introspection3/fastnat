@@ -11,6 +11,13 @@ const Client = sequelize.define('client', {
         allowNull: false,
         comment: 'authen Key'
     },
+
+    clientName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'client name'
+    },
     os: {
         type: DataTypes.STRING(500),
         allowNull: false,
@@ -24,7 +31,7 @@ const Client = sequelize.define('client', {
         defaultValue: '',
         comment: 'client public ip'
     },
-    
+
     mac: {
         type: DataTypes.STRING(250),
         allowNull: false,
@@ -56,7 +63,10 @@ const Client = sequelize.define('client', {
         comment: 'is available'
     }
 }, {
-    // 这是其他模型参数
+    indexes: [{
+        name: 'unique_name_for_user',
+        unique: true,
+        fields: ['clientName', 'registerUserId']
+    }]
 });
 module.exports = Client;
-

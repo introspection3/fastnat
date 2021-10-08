@@ -9,7 +9,7 @@
         "password": "root"
     },
     "init": {
-        "firstInit": false
+        "firstInit": true
     },
     "admin": {
         "username": "root",
@@ -27,7 +27,7 @@
             "pfxName": "name.pfx",
             "pfxPassword": "password"
         },
-        "domain": "fastnat.com",
+        "domain": "fastnat.club",
         "port": 80
     },
     "cluster": {

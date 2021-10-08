@@ -1,6 +1,5 @@
 const path = require('path');
-//const parentDir = path.resolve(__dirname, '..');
-
 module.exports = {
-    rootPath: process.cwd()
+    rootPath: process.cwd(),
+    configPath: path.join(process.cwd(), 'config')
 };
