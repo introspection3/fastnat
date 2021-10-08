@@ -13,6 +13,7 @@ if (serverConfig.cluster.enabled) {
 }
 const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
 const ClusterData = require('../Common/ClusterData');
+const DefaultConfig = require('../Common/DefaultConfig');
 
 /**
  * is valid token
@@ -57,6 +58,7 @@ io.use(async(socket, next) => {
     return next(new Error('socketio authen error'));
 });
 
+//Namespace<ListenEvents, EmitEvents, ServerSideEvents>
 let defaultNS = io.of('/');
 
 io.on('connection', async(socket) => {

@@ -1,92 +1,78 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>测试 - layui</title>
-    <!-- 引入 layui.css -->
-    <link rel="stylesheet" href="/layui/css/layui.css" />
-    <!-- 引入 layui.js -->
-    <script type="text/javascript" src="/layui/layui.js"></script>
+    <title>FastNat注册</title>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/w2ui/w2ui.min.js"></script>
+    <script type="text/javascript" src="/w2ui/w2uiSettings.js"></script>
+    <link rel="stylesheet" type="text/css" href="/w2ui/w2ui.min.css" />
+</head>
 
-    <body>
+<body>
 
-        <div class="layui-container">
-            <div class="layui-progress" style="margin: 15px 0 30px;">
-                <div class="layui-progress-bar" lay-percent="100%"></div>
-            </div>
-
-
-            <div class="layui-btn-container">
-                <button class="layui-btn" test-active="test-form">一个按钮</button>
-                <button class="layui-btn layui-btn-normal" id="test2">当前日期</button>
-            </div>
-
-            <blockquote class="layui-elem-quote" style="margin-top: 30px;">
-                <div class="layui-text">
-                    <ul>
-                        <li>你当前预览的是：<span>layui-v<span id="version"></span></span>
-                        </li>
-                        <li>layui 是一套开源的 Web UI（界面）组件库。这是一个极其简洁的演示页面</li>
-                    </ul>
+    <div id="form" style="width: 750px;margin: 0 auto;">
+        <div class="w2ui-page page-0">
+            <div class="w2ui-column col-0">
+                <div class="w2ui-field w2ui-span6" style="">
+                    <label>用户名</label>
+                    <div>
+                        <input class="w2ui-input" id="first_name" name="first_name" style="width: 300px" tabindex="1" type="text" />
+                    </div>
                 </div>
-            </blockquote>
+                <div class="w2ui-field w2ui-span6" style="">
+                    <label>密码</label>
+                    <div>
+                        <input class="w2ui-input" id="last_name" name="last_name" style="width: 300px" tabindex="2" type="text" />
+                    </div>
+                </div>
+                <div class="w2ui-field w2ui-span6" style="">
+                    <label>Comments</label>
+                    <div>
+                        <textarea class="w2ui-input" id="comments" name="comments" style="width: 300px; height: 60px" tabindex="3"></textarea>
+                    </div>
+                </div>
+            </div>
         </div>
+        <div class="w2ui-buttons">
+            <button class="w2ui-btn" name="Reset" tabindex="4" onclick="w2ui.form.clear()">重置</button>
+            <button class="w2ui-btn w2ui-btn-blue" name="Save" tabindex="5" onclick="w2ui.form.save()">保存</button>
+        </div>
+    </div>
 
-
-
-        <!-- 引入 layui.js 的 <script> 标签最好放置在 html 末尾 -->
-
-        <script>
-            console.log('start')
-            layui.use(function() {
-                var layer = layui.layer,
-                    form = layui.form,
-                    laypage = layui.laypage,
-                    element = layui.element,
-                    laydate = layui.laydate,
-                    util = layui.util;
-
-                //欢迎信息
-                layer.alert('Hello World');
-
-                //输出版本号
-                lay('#version').html(layui.v);
-
-                //日期
-                laydate.render({
-                    elem: '#test2',
-                    value: new Date(),
-                    isInitValue: true
-                });
-
-                //触发事件
-                util.event('test-active', {
-                    'test-form': function() {
-                        layer.open({
-                            type: 1,
-                            resize: false,
-                            shadeClose: true,
-                            area: '350px',
-                            title: 'layer + form',
-                            content: ['<ul class="layui-form layui-form-pane" style="margin: 15px;">', '<li class="layui-form-item">', '<label class="layui-form-label">输入框</label>', '<div class="layui-input-block">', '<input class="layui-input" lay-verify="required" name="field1">', '</div>', '</li>', '<li class="layui-form-item">', '<label class="layui-form-label">选择框</label>', '<div class="layui-input-block">', '<select name="field2">', '<option value="A">A</option>', '<option value="B">B</option>', '<select>', '</div>', '</li>', '<li class="layui-form-item" style="text-align:center;">', '<button type="submit" lay-submit lay-filter="*" class="layui-btn">提交</button>', '</li>', '</ul>'].join(''),
-                            success: function(layero, index) {
-                                layero.find('.layui-layer-content').css('overflow', 'visible');
-
-                                form.render().on('submit(*)', function(data) {
-                                    layer.msg(JSON.stringify(data.field), {
-                                        icon: 1
-                                    });
-                                    //layer.close(index); //关闭层
-                                });
-                            }
-                        });
+    <script type="text/javascript">
+        $(function() {
+            $('#form').w2form({
+                name: 'form',
+                url: 'server/post',
+                record: {
+                    first_name: 'John',
+                    last_name: 'Doe'
+                },
+                fields: [{
+                    field: 'first_name',
+                    type: 'text',
+                    required: true
+                }, {
+                    field: 'last_name',
+                    type: 'text',
+                    required: true
+                }, {
+                    field: 'comments',
+                    type: 'text'
+                }],
+                actions: {
+                    reset: function() {
+                        this.clear();
+                    },
+                    save: function() {
+                        this.save();
                     }
-                });
+                }
             });
-        </script>
-    </body>
+        });
+    </script>
+
+</body>
 
 </html>

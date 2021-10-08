@@ -34,18 +34,18 @@ if (clusterEnabled) {
     if (cluster.isPrimary || cluster.isMaster) {
         P2PTracker.start();
         N2NServer.startSuperNode(communityListPath, netbuildingPort);
-
         let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
-        setupPrimary();
+        setupPrimary({
+            serialization: "advanced",
+        });
         for (let i = 0; i < instanceCount; i++) {
             cluster.fork();
         }
         cluster.on('online', function(worker) {
             //logger.debug(`worker (pid:${worker.process.pid}) online`);
         });
-
         cluster.on('listening', function(worker, address) {
             logger.debug(`worker (pid:${worker.process.pid}) connected to ${JSON.stringify(address)}`);
         });
@@ -66,7 +66,7 @@ if (clusterEnabled) {
     N2NServer.startSuperNode(communityListPath, netbuildingPort);
 }
 
-
+//------------------------httpProxy------------------
 createHttpProxy();
 
 //-----------------------socket.io-----------------
@@ -78,7 +78,6 @@ const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
 const LoginAuthen = require('./ExpressMiddleWare/LoginAuthen');
 app.use('/', express.static('public'));
-//app.use('/public', express.static('public'));
 app.use(LoginAuthen);
 //app.use(bodyParser.json());
 app.use(express.json());
@@ -92,6 +91,13 @@ app.use('/n2n', require('./Routers/N2N'));
 app.get('/checkServerStatus', function(req, res) {
     res.send({ success: true });
 });
+
+app.post('/sendSocketIoCmd/:command', function(req, res) {
+    let authenKey = req.headers.authenKey;
+    let command = req.params.command;
+    let parameters = req.body;
+    res.send({ success: true });
+})
 app.get('/version', async function(req, res) {
     res.send(defaultConfig.version);
 });
