@@ -13,6 +13,11 @@ const redisClient = new Redis({
     family: 4, // 4 (IPv4) or 6 (IPv6)
     password: redisPassword,
     db: 0,
+    retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+    },
+    maxRetriesPerRequest: 40
 });
 
 let _isConnected = false;
