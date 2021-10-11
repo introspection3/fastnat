@@ -4,32 +4,45 @@ const sequelize = require('../Db');
 const RegisterUser = sequelize.define('registerUser', {
 
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-     
+
     username: {
         type: DataTypes.STRING(50),
         unique: true,
         allowNull: false,
-        comment: 'user name'
+        comment: 'user name',
+        validate: {
+            len: [2, 50]
+        }
     },
 
     password: {
         type: DataTypes.STRING(150),
         allowNull: false,
-        comment: 'password'
+        comment: 'password',
+        validate: {
+            len: [6, 150]
+        }
     },
 
     email: {
         type: DataTypes.STRING(50),
         unique: true,
         allowNull: false,
-        comment: 'email'
+        comment: 'email',
+        validate: {
+            isEmail: true,
+            len: [5, 150]
+        }
     },
 
     telphone: {
         type: DataTypes.STRING(50),
         unique: true,
         allowNull: false,
-        comment: 'telphone'
+        comment: 'telphone',
+        validate: {
+            len: [7, 20]
+        }
     },
     createdAt: {
         type: DataTypes.DATE,
@@ -51,8 +64,7 @@ const RegisterUser = sequelize.define('registerUser', {
         comment: 'is available'
     }
 }, {
-    indexes: [
-        {
+    indexes: [{
             name: 'unique_username',
             unique: true,
             fields: ['username']
@@ -70,4 +82,3 @@ const RegisterUser = sequelize.define('registerUser', {
     ]
 });
 module.exports = RegisterUser;
-

@@ -31,6 +31,9 @@ w2utils.settings.phrases = {
     "Not a valid email": "不是一个有效的Email地址",
     "is": "是(等于)",
     "Required field": "此项必填",
-    "Save": "保存",
-    "Reset": "重置"
+    "save": "保存",
+    "reset": "重置",
+    "Notification": '提示',
+    "Edit": '编辑',
+    'Edit selected record': '',
 };

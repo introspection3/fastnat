@@ -22,6 +22,7 @@ const PlatfromUtil = require('./Utils/PlatfromUtil');
 const ServiceUtil = require('./Utils/ServiceUtil');
 const ConfigCheckUtil = require('./Utils/ConfigCheckUtil');
 const path = require('path');
+const commandType = require('./Communication/CommandType').commandType;
 const rootPath = require('./Common/GlobalData.js').rootPath;
 const SysTray = require('./SysTray/SysTray');
 const getPluginPath = require('./Utils/PluginUtil').getPluginPath;
@@ -287,19 +288,19 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         isWorkingFine = false;
     });
 
-    socketIOSocket.on('stop.tunnel', async(data, fn) => {
+    socketIOSocket.on(commandType.STOP_TUNNEL, async(data, fn) => {
 
     });
 
-    socketIOSocket.on('delete.tunnel', async(data, fn) => {
+    socketIOSocket.on(commandType.DELETE_TUNNEL, async(data, fn) => {
 
     });
 
-    socketIOSocket.on('start.tunnel', async(data, fn) => {
+    socketIOSocket.on(commandType.START_TUNNEL, async(data, fn) => {
 
     });
 
-    socketIOSocket.on('add.tunnel', async(data, fn) => {
+    socketIOSocket.on(commandType.ADD_TUNNEL, async(data, fn) => {
 
     });
 

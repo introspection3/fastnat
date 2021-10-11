@@ -23,6 +23,8 @@ const N2NServer = require('./N2N/N2NServer');
 const rootPath = require('./Common/GlobalData.js').rootPath;
 let communityListPath = require('path').join(rootPath, 'config', 'community.list');
 
+
+
 //------------------netbuilding---s-------
 const netbuilding = serverConfig.netbuilding;
 const netbuildingHost = netbuilding.host;
@@ -66,19 +68,33 @@ if (clusterEnabled) {
     N2NServer.startSuperNode(communityListPath, netbuildingPort);
 }
 
-//------------------------httpProxy------------------
+//------------------------httpProxy----------------
 createHttpProxy();
 
 //-----------------------socket.io-----------------
 const { io, defaultNS } = require('./Communication/Commander');
 
 //------------------------express------------------
+const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
+const redisUtil = require('./Utils/RedisUtil');
+const redisClient = redisUtil.redisClient;
+const redisStoreInstance = new RedisStore({ client: redisClient });
 const app = express();
+app.use(
+    session({
+        store: redisStoreInstance,
+        saveUninitialized: false,
+        secret: 'fastnatsecretcookie',
+        resave: false,
+    })
+);
+app.set('x-powered-by', false);
 const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
 const LoginAuthen = require('./ExpressMiddleWare/LoginAuthen');
 app.use('/', express.static('public'));
-app.use(LoginAuthen);
+//app.use(LoginAuthen);
 //app.use(bodyParser.json());
 app.use(express.json());
 //app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化

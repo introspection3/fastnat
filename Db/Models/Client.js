@@ -24,14 +24,18 @@ const Client = sequelize.define('client', {
         defaultValue: '{}',
         comment: 'client os info'
     },
-
     publicIp: {
         type: DataTypes.STRING(50),
         allowNull: false,
         defaultValue: '',
         comment: 'client public ip'
     },
-
+    virtualIp: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'client virtual ip'
+    },
     mac: {
         type: DataTypes.STRING(250),
         allowNull: false,
@@ -64,9 +68,15 @@ const Client = sequelize.define('client', {
     }
 }, {
     indexes: [{
-        name: 'unique_name_for_user',
-        unique: true,
-        fields: ['clientName', 'registerUserId']
-    }]
+            name: 'unique_name_for_user',
+            unique: true,
+            fields: ['clientName', 'registerUserId']
+        },
+        {
+            name: 'unique_vip',
+            unique: true,
+            fields: ['virtualIp']
+        }
+    ]
 });
 module.exports = Client;

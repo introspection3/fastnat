@@ -42,11 +42,13 @@ async function initdbdata() {
         email: 'fastnat@fastnat.com',
         clients: [{
                 authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a7',
-                clientName: '设备1'
+                clientName: '设备1',
+                virtualIp: '10.0.0.2'
             },
             {
                 authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a2',
-                clientName: '设备2'
+                clientName: '设备2',
+                virtualIp: '10.0.0.3'
             }
         ]
     }, {

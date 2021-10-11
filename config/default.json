@@ -3,7 +3,7 @@
     "host": "192.168.1.4",
     "webserver": {
         "https": false,
-        "port": 8083,
+        "port": 8081,
         "socketioPort": 8080
     },
     "bridge": {

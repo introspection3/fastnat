@@ -11,62 +11,111 @@
 
 <body>
 
-    <div id="form" style="width: 750px;margin: 0 auto;">
-        <div class="w2ui-page page-0">
-            <div class="w2ui-column col-0">
-                <div class="w2ui-field w2ui-span6" style="">
-                    <label>用户名</label>
-                    <div>
-                        <input class="w2ui-input" id="first_name" name="first_name" style="width: 300px" tabindex="1" type="text" />
-                    </div>
-                </div>
-                <div class="w2ui-field w2ui-span6" style="">
-                    <label>密码</label>
-                    <div>
-                        <input class="w2ui-input" id="last_name" name="last_name" style="width: 300px" tabindex="2" type="text" />
-                    </div>
-                </div>
-                <div class="w2ui-field w2ui-span6" style="">
-                    <label>Comments</label>
-                    <div>
-                        <textarea class="w2ui-input" id="comments" name="comments" style="width: 300px; height: 60px" tabindex="3"></textarea>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="w2ui-buttons">
-            <button class="w2ui-btn" name="Reset" tabindex="4" onclick="w2ui.form.clear()">重置</button>
-            <button class="w2ui-btn w2ui-btn-blue" name="Save" tabindex="5" onclick="w2ui.form.save()">保存</button>
-        </div>
-    </div>
+    <div id="form" style="width: 750px;"></div>
+
+
 
     <script type="text/javascript">
+        function refreshCode(e) {
+            $(e).attr('src', '/user/vcode?_=' + Math.random());
+        }
         $(function() {
+            w2popup.message({
+                width: 200,
+                height: 60,
+                html: '<div class="w2ui-centered"><div style="padding: 10px;">' +
+                    '		message ' +
+                    '</div></div>'
+            });
+            $('#imgCode').click(function() {
+                console.log('aaa')
+                $('#imgCode').attr('src', '/user/vcode?_=' + Math.random());
+            });
             $('#form').w2form({
                 name: 'form',
-                url: 'server/post',
+                header: 'FastNat注册',
+                focus: 'username',
+                url: 'user/register',
                 record: {
-                    first_name: 'John',
-                    last_name: 'Doe'
+
                 },
                 fields: [{
-                    field: 'first_name',
-                    type: 'text',
-                    required: true
-                }, {
-                    field: 'last_name',
-                    type: 'text',
-                    required: true
-                }, {
-                    field: 'comments',
-                    type: 'text'
-                }],
+                        field: 'username',
+                        type: 'text',
+                        required: true,
+                        html: {
+                            label: '用户名',
+                            attr: 'style="width: 200px" maxlength="20" size="60"'
+                        }
+                    }, {
+                        field: 'password',
+                        type: 'password',
+
+                        required: true,
+                        html: {
+                            label: '密码',
+                            attr: 'style="width: 200px" maxlength="150" size="60"'
+                        }
+                    }, {
+                        field: 'email',
+                        type: 'email',
+                        required: true,
+                        html: {
+                            label: '邮箱',
+                            attr: 'style="width: 200px" maxlength="150" size="60"'
+                        }
+                    },
+
+                    {
+                        field: 'img',
+                        type: 'html',
+                        html: {
+                            label: '验证码:',
+                            html: '<div><img style="width: 100px; cursor:pointer" onclick="refreshCode(this)" src="/user/vcode" alt="点击刷新"/></div>'
+                        }
+                    }, {
+                        field: 'vcode',
+                        type: 'text',
+                        required: true,
+                        html: {
+                            label: '',
+                            attr: 'style="width: 200px" maxlength="4" '
+                        }
+                    }, {
+                        field: 'telphone',
+                        type: 'text',
+                        required: true,
+                        html: {
+                            label: '电话',
+                            attr: 'style="width: 200px" maxlength="15" '
+                        }
+                    }
+                ],
                 actions: {
                     reset: function() {
+                        console.log(w2ui['form'].validate());
                         this.clear();
                     },
                     save: function() {
                         this.save();
+                    }
+                },
+                onSave: function(event) {
+                    let result = event.data;
+                    if (result.success) {
+                        w2popup.message({
+                            width: 400,
+                            height: 180,
+                            html: '<div style="padding: 60px; text-align: center">Click on the message to Hide it</div>' +
+                                '<div style="text-align: center"><button class="w2ui-btn" onclick="w2popup.message()">Close</button>'
+                        });
+                    } else {
+                        w2popup.message({
+                            width: 400,
+                            height: 180,
+                            html: '<div style="padding: 60px; text-align: center">Click on the message to Hide it</div>' +
+                                '<div style="text-align: center"><button class="w2ui-btn" onclick="w2popup.message()">Close</button>'
+                        });
                     }
                 }
             });
