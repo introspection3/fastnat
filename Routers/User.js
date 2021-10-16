@@ -8,6 +8,7 @@ const svgCaptcha = require('svg-captcha');
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db/Db');
 const { v4: uuidv4 } = require('uuid');
+const md5 = require('md5');
 
 router.post('/register', async function(req, res, next) {
     let info = JSON.parse(req.body.request).record;
@@ -54,7 +55,7 @@ router.post('/register', async function(req, res, next) {
     try {
         let user = await RegisterUser.create({
             username: info.username,
-            password: info.password,
+            password: md5(info.password),
             telphone: info.telphone,
             email: info.email
         }, { t: transaction });
@@ -81,6 +82,12 @@ router.post('/register', async function(req, res, next) {
 
 });
 
+router.get('/quit', async function(req, res, next) {
+    req.session.captcha = null;
+    req.session.user = null;
+    res.redirect('/login.html');
+});
+
 router.get('/vcode', async function(req, res, next) {
     const codeConfig = {
         size: 4, // 验证码长度
@@ -93,14 +100,69 @@ router.get('/vcode', async function(req, res, next) {
         background: '#eee',
     };
     const captcha = svgCaptcha.create(codeConfig);
-    req.session.captcha = captcha.text;
+    req.session.captcha = captcha.text.toLowerCase();
     res.type('image/svg+xml');
     res.send(captcha.data);
 });
+
+router.post('/doLogin', async function(req, res, next) {
+    let result = {
+        success: false,
+        data: null,
+        info: ''
+    }
+    let info = req.body;
+    let user = await RegisterUser.findOne({
+        where: {
+            username: info.username,
+            password: md5(info.password),
+            isAvailable: true
+        }
+    });
+    if (req.session.captcha !== info.vcode.toLowerCase()) {
+        result = {
+            success: false,
+            data: 'vcode',
+            info: '验证码错误'
+        };
+        res.send(result);
+        return;
+    }
+    let existUser = user != null;
+
+    result.success = existUser;
+    if (result.success === false) {
+        result.info = '用户名或者密码错误';
+    } else {
+        result.info = '登录成功';
+        req.session.user = user;
+        req.session.role = 'user';
+    }
+    res.send(result);
+
+});
+
+router.get('/isOnline', async function(req, res, next) {
+
+    let result = {
+        success: req.session.user != null,
+        data: null,
+        info: md5('fastnat')
+    }
+
+    res.send(result);
+
+});
+
+
 router.get('/clients', async function(req, res, next) {
-    let username = 'fastnat';
-    let request = JSON.parse(req.query.request);
-    console.log(req.query.request);
+    if (!req.session.user) {
+        req.redirect('/login.html');
+        return;
+    }
+    let username = req.session.user.username;
+    // let request = JSON.parse(req.query.request);
+    // console.log(req.query.request);
     let user = await RegisterUser.findOne({
         where: {
             username: username,
@@ -116,12 +178,16 @@ router.get('/clients', async function(req, res, next) {
         });
         return;
     }
-
     let result = {
-        "status": "success",
         "total": user.clients.length,
-        "records": user.clients
+        "rows": user.clients
     }
+
+    // let result = {
+    //     "status": "success",
+    //     "total": user.clients.length,
+    //     "records": user.clients
+    // }
     res.send(result);
 
 });

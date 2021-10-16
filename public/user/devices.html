@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>我的设备</title>
+    <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/default/easyui.css" />
+    <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/icon.css" />
+    <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/default/app.css" />
+    <script type="text/javascript" src="/libs/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="/libs/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src='http://cdn.staticfile.org/moment.js/2.24.0/moment.js'></script>
+    <style>
+        .easyui-datagrid .datagrid-thead {
+            padding: 6px 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        body {
+            display: block;
+            margin: 0px;
+        }
+    </style>
+</head>
+
+<body>
+    <table id='tableDevices' class="easyui-datagrid" title="我的设备列表" style="width:100%;height:250px" data-options="onSelect:onSelectDevice,idField:'id',fitColumns:true,checkbox:true,striped: true,rownumbers:true,singleSelect:true,url:'/user/clients',method:'get',toolbar:toolbarDevice,onClickRow:getDetail">
+        <thead>
+            <tr>
+                <th field="ck" checkbox="true"></th>
+                <th data-options="field:'status', width:fixWidth(5)">状态</th>
+                <th data-options="field:'id', width:fixWidth(5)">ID</th>
+                <th data-options="field:'clientName',width:fixWidth(5),'editor':'text'">设备名称</th>
+                <th data-options="field:'authenKey', width:fixWidth(20)">设备Key</th>
+                <th data-options="field:'os',width:fixWidth(15),formatter:tooLongText">设备信息</th>
+                <th data-options="field:'virtualIp',width:fixWidth(8)">设备IP</th>
+                <th data-options="field:'publicIp',width:fixWidth(8),">出口IP</th>
+                <th data-options="field:'mac',width:fixWidth(9),">MAC地址</th>
+                <th data-options="field:'natType',width:fixWidth(7)">NAT类型</th>
+                <th data-options="field:'createdAt',width:fixWidth(10), formatter:formatDateTime">创建时间</th>
+                <th data-options="field:'updatedAt',width:fixWidth(10), formatter:formatDateTime">更新时间</th>
+            </tr>
+        </thead>
+    </table>
+
+    <table id='tableDevicesTunnel' class="easyui-datagrid" title="设备的映射列表" style="width:100%;" data-options="idField:'id', fitColumns:true,checkbox:true,striped: true,rownumbers:true,singleSelect:true,url:'/client/getTunnelsByClientId',method:'get',toolbar:toolbarTunnel">
+        <thead>
+            <tr>
+                <th field="ck" checkbox="true"></th>
+                <th data-options="field:'id', width:fixWidth(5)">ID</th>
+                <th data-options="field:'name',width:fixWidth(5)">名称</th>
+                <th data-options="field:'uniqueName', width:fixWidth(10)">网路唯一名</th>
+                <th data-options="field:'type',width:fixWidth(5)">映射类型</th>
+                <th data-options="field:'other',width:fixWidth(20),formatter:tooLongText">其他信息</th>
+                <th data-options="field:'p2pPassword',width:fixWidth(8),">P2P密码</th>
+                <th data-options="field:'localIp',width:fixWidth(5),">本地IP</th>
+                <th data-options="field:'localPort',width:fixWidth(5),'editor':'numberbox'">本地端口</th>
+                <th data-options="field:'remotePort',width:fixWidth(5),'editor':'numberbox'">对外端口</th>
+                <th data-options="field:'createdAt',width:fixWidth(10), formatter:formatDateTime">创建时间</th>
+                <th data-options="field:'updatedAt',width:fixWidth(10), formatter:formatDateTime">更新时间</th>
+            </tr>
+        </thead>
+    </table>
+    <script type="text/javascript">
+        $(function() {
+            $("#toolbarDeviceERedo").linkbutton("disable");
+            $("#toolbarDeviceEdit").linkbutton("disable");
+            $("#toolbarDeviceDelete").linkbutton("disable");
+        })
+
+        function onSelectDevice(rowIndex, rowData) {
+            $("#toolbarDeviceEdit").linkbutton("enable");
+            $("#toolbarDeviceDelete").linkbutton("enable");
+        }
+
+        function fixWidth(percent) {
+            return percent;
+            return document.body.clientWidth * percent / 100;
+        }
+
+        function tooLongText(value, row, index) {
+            return '<span title=' + value + '>' + value + '</span>'
+        }
+
+        function getDetail(index, selectdata) {
+            if (selectdata) {
+                $('#tableDevicesTunnel').datagrid('reload', {
+                    id: selectdata.id
+                });
+            }
+        }
+
+        function getGridRowIndex(id) {
+            let rows = $('#' + id).datagrid("getSelections");
+            if (rows.length == 0) {
+                return -1;
+            }
+            let index = $('#' + id).datagrid("getRowIndex", rows[0]);
+            return index;
+        }
+
+        function formatDateTime(val, row) {
+            var now = new Date(val);
+            return new moment(now).format('YYYY-MM-DD HH:mm:ss');
+        }
+        let toolbarDeviceEditRow = null;
+        let toolbarDevice = [{
+            text: '添加',
+            id: 'toolbarDeviceAdd',
+            iconCls: 'icon-add',
+            handler: function() {
+                $.messager.defaults = {
+                    ok: "确定",
+                    cancel: "取消"
+                };
+                $.messager.prompt('新建客户端', '请输入客户端名:', function(r) {
+                    if (r) {
+                        $.post('/client/add', {
+                            clientName: r
+                        }, function(result) {
+                            if (result.success) {
+                                $('#tableDevices').datagrid("reload");
+                            }
+                        });
+                    }
+                });
+            }
+        }, {
+            text: '编辑',
+            id: 'toolbarDeviceEdit',
+            iconCls: 'icon-edit',
+            handler: function() {
+                let index = getGridRowIndex('tableDevices');
+                if (index == -1) {
+                    $.messager.alert('提示', '请选择需要编辑的设备');
+                    return;
+                }
+                $("#toolbarDeviceERedo").linkbutton("enable");
+                $('#tableDevices').datagrid('beginEdit', index);
+                this.disabled();
+            }
+        }, {
+            text: '取消编辑',
+            id: 'toolbarDeviceERedo',
+            iconCls: 'icon-redo',
+            handler: function() {
+                $('#tableDevices').datagrid("rejectChanges");
+                $("#toolbarDeviceERedo").linkbutton("disable");
+            }
+        }, {
+            text: '删除',
+            iconCls: 'icon-clear',
+            id: 'toolbarDeviceDelete',
+            handler: function() {
+                let index = getGridRowIndex('tableDevices');
+                if (index == -1) {
+                    $.messager.alert('提示', '请选择需要删除的设备');
+                    return;
+                }
+                $.messager.defaults = {
+                    ok: "确定",
+                    cancel: "取消"
+                };
+
+                $.messager.confirm("操作提示", "您确定要删除此设备吗？", function(data) {
+                    if (data) {
+                        let id = $('#tableDevices').datagrid("getSelections")[0].id;
+                        $.post('/client/delete', {
+                            id: id
+                        }, function(result) {
+                            $('#tableDevices').datagrid('reload');
+                        });
+                    }
+                });
+            }
+        }, '-', {
+            text: '保存',
+            iconCls: 'icon-save',
+            id: 'toolbarDeviceSave',
+            handler: function() {
+                let index = getGridRowIndex('tableDevices');
+                if (index == -1) {
+                    $.messager.alert('提示', '请选择需要保存的设备');
+                    return;
+                }
+                $('#tableDevices').datagrid('endEdit', index);
+                let row = $('#tableDevices').datagrid("getSelections")[0];
+                if (row.clientName.trim() === '') {
+                    $.messager.alert('提示', '客户名称不能为空');
+                    return;
+                }
+                $.post('/client/update', {
+                    id: row.id,
+                    clientName: row.clientName
+                }, function(result) {
+                    $('#tableDevices').datagrid('reload');
+                });
+            }
+        }];
+
+        let toolbarTunnel = [{
+            text: '添加',
+            id: 'toolbarTunnelAdd',
+            iconCls: 'icon-add',
+            handler: function() {
+                alert('add')
+            }
+        }, {
+            text: '编辑',
+            id: 'toolbarTunnelEdit',
+            iconCls: 'icon-edit',
+            handler: function() {
+                $('#tableDevicesTunnel').datagrid('beginEdit', 1);
+            }
+        }, {
+            text: '删除',
+            id: 'toolbarTunnelDelete',
+            iconCls: 'icon-cut',
+            handler: function() {
+                alert('cut')
+            }
+        }, '-', {
+            text: '保存',
+            id: 'toolbarTunnelSave',
+            iconCls: 'icon-save',
+            handler: function() {
+                $('#tableDevicesTunnel').datagrid("endEdit", 1);
+            }
+        }];
+    </script>
+</body>
+
+</html>

@@ -337,6 +337,7 @@ async function main() {
     let authenKey = clientConfig.authenKey;
     if (options.test) {
         authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
+        clientConfig.authenKey = authenKey;
     }
 
     setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
@@ -769,13 +770,14 @@ async function trayIcon(params) {
             })
         } else if (action.seq_id === 1) {
             // opens the url in the default browser 
-            console.log(axios.defaults.baseURL);
+            PlatfromUtil.openDefaultBrowser(axios.defaults.baseURL);
             // console.log('open the url', action)
         } else if (action.seq_id === 2) {
             PlatfromUtil.processExit(0);
         }
     });
 }
+
 
 async function updateClientSystemInfo(natType, authenKey) {
     let osInfo = {

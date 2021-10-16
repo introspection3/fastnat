@@ -1,73 +1,91 @@
 ﻿* {
-    font-family:Verdana, Geneva, Tahoma, sans-serif, "宋体";
+    font-family: Verdana, Geneva, Tahoma, sans-serif, "宋体";
 }
 
 .layout-panel-north .panel-body {
-    background:#1a468d;
+    background: #1a468d;
 }
-#app-header .fa,.tabs-tool .fa {
+
+#app-header .fa,
+.tabs-tool .fa {
     text-decoration: none;
-	color:#6eb7eb;
+    color: #6eb7eb;
 }
-#app-header ul,#app-header li,#app-header a {
-    padding:0; 
-    margin:0;
-    list-style:none;
-    height:40px;
-}
-#app-header ul li {
-    float:left;
-}
+
+#app-header ul,
+#app-header li,
 #app-header a {
-    display:block;
-    text-decoration:none;
-    padding:10px 15px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    height: 40px;
 }
+
+#app-header ul li {
+    float: left;
+}
+
+#app-header a {
+    display: block;
+    text-decoration: none;
+    padding: 10px 15px;
+}
+
 #app-header a:hover {
-    color:#eee; 
-    background:#16232D;
+    color: #eee;
+    background: #16232D;
 }
-#app-header .app-logo,#app-header a {
-    color:#6eb7eb; 
+
+#app-header .app-logo,
+#app-header a {
+    color: #6eb7eb;
 }
+
 #app-header .app-logo {
-    margin:0;
-    font-weight:bold;
-    font-size:16px;
-    padding:8px 0 0 15px;
+    margin: 0;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 8px 0 0 15px;
 }
+
 .layout-panel-west .accordion-body a {
-    font-size:13px;
+    font-size: 13px;
     color: #333;
     display: block;
-    text-decoration:none;
-    padding:8px 20px;
+    text-decoration: none;
+    padding: 8px 20px;
 }
-    .layout-panel-west .accordion-body a:hover {
-            background:#eee;
-            color:#333;
-    }
-    .layout-panel-west .accordion-body a:active,.layout-panel-west .accordion-body .active {
-        background:#F2F2F2;
-        border-left:#3c8dbc solid 3px;
-        padding-left:17px;
-        color:#333;
-    }
+
+.layout-panel-west .accordion-body a:hover {
+    background: #eee;
+    color: #333;
+}
+
+.layout-panel-west .accordion-body a:active,
+.layout-panel-west .accordion-body .active {
+    background: #F2F2F2;
+    border-left: #3c8dbc solid 3px;
+    padding-left: 17px;
+    color: #333;
+}
 
 #toast {
-    background:none;
-    border:0;
-    font-size:14px;
-    font-weight:bold;
+    background: none;
+    border: 0;
+    font-size: 14px;
+    font-weight: bold;
 }
+
 #form-assignment-button div {
-    display:inline-block;
+    display: inline-block;
     padding: 0 10px;
     height: 50px;
 }
-    #form-assignment-button div a {
-        padding: 0 10px;
-    }
+
+#form-assignment-button div a {
+    padding: 0 10px;
+}
+
 .ajax-loadding {
     z-index: 9999;
     position: absolute;
@@ -83,20 +101,46 @@
 }
 
 .roles-tree-Buttons>li>ul>li>ul>li>ul>li {
-        display:inline-block;
-        height: 30px;
-        width: 120px;
+    display: inline-block;
+    height: 30px;
+    width: 120px;
 }
 
-.textbox { height: 20px;}
-.c096 { color: #096;}
+.textbox {
+    height: 20px;
+}
 
-#icons a {width: 42px;height: 42px;line-height: 42px;color: #555;font-size: 22px;text-decoration: none;text-align: center;}
-#icons a:hover { color: #096;font-size: 32px;}
+.c096 {
+    color: #096;
+}
 
-.icon-ok { background: url('images/icon-ok.png') no-repeat;}
-.icon-filter { background: url('images/filter.png') no-repeat center;}
+#icons a {
+    width: 42px;
+    height: 42px;
+    line-height: 42px;
+    color: #555;
+    font-size: 22px;
+    text-decoration: none;
+    text-align: center;
+}
+
+#icons a:hover {
+    color: #096;
+    font-size: 32px;
+}
+
+.icon-ok {
+    background: url('images/icon-ok.png') no-repeat;
+}
+
+.icon-filter {
+    background: url('images/filter.png') no-repeat center;
+}
 
 #nav-accordion a .fa {
-    color:#999;
+    color: #999;
+}
+
+#nav-accordion a {
+    cursor: pointer;
 }

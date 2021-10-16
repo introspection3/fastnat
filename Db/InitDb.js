@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const logger = require('../Log/logger');
 const N2NServer = require('../N2N/N2NServer');
 const rootPath = require('../Common/GlobalData.js').rootPath;
+const md5 = require('md5');
 let communityListPath = require('path').join(rootPath, 'config', 'community.list');
 /**
  * 初始化数据库
@@ -37,18 +38,20 @@ async function initdbdata() {
 
     let user = await RegisterUser.create({
         username: firstUser,
-        password: firstUser,
+        password: md5(firstUser),
         telphone: '010-123456',
         email: 'fastnat@fastnat.com',
         clients: [{
                 authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a7',
                 clientName: '设备1',
-                virtualIp: '10.0.0.2'
+                virtualIp: '10.0.0.2',
+                status: 0
             },
             {
                 authenKey: '742af98b-e977-48a8-b1c8-1a2a091b93a2',
                 clientName: '设备2',
-                virtualIp: '10.0.0.3'
+                virtualIp: '10.0.0.3',
+                status: 0
             }
         ]
     }, {
@@ -65,10 +68,10 @@ async function initdbdata() {
 
     let tunnel1 = await Tunnel.create({
         type: 'tcp',
-        name: 'mysql',
+        name: 'http代理',
         localIp: '127.0.0.1',
-        localPort: 3306,
-        remotePort: 13306,
+        localPort: 9910,
+        remotePort: 19910,
         clientId: 2,
         uniqueName: 'uniqueName1',
         lowProtocol: 'tcp'
@@ -79,7 +82,7 @@ async function initdbdata() {
         name: 'p2ptest',
         localIp: '127.0.0.1',
         localPort: 3306,
-        remotePort: 33060,
+        remotePort: 13306,
         clientId: 1,
         uniqueName: 'uniqueName2',
         p2pPassword: 'fastnat',
@@ -110,7 +113,7 @@ async function initdbdata() {
         name: 'udp',
         localIp: '8.8.8.8',
         localPort: 53,
-        remotePort: 53,
+        remotePort: 153,
         clientId: 2,
         uniqueName: 'udptest',
         lowProtocol: 'udp'

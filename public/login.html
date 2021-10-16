@@ -25,25 +25,25 @@
                             <div class="form-block">
                                 <div class="mb-4">
                                     <h3><strong>FastNat</strong></h3>
-                                    <p class="mb-4">居家办公远程旅行的必备，免费不限速，值得拥有</p>
+                                    <p class="mb-4">居家办公远程旅行的必备良品，免费不限速，值得拥有</p>
                                 </div>
                                 <form action="#" method="post">
                                     <div class="form-group first">
                                         <label for="username">用户名</label>
-                                        <input type="text" class="form-control" id="username" />
+                                        <input type="text" minlength="2" maxlength="50" class="form-control" id="username" />
 
                                     </div>
-                                    <div class="form-group vcode">
-                                        <label for="vcode">验证码</label>
-                                        <input type="text" class="form-control" style="width: 70%;" id="vcode" />
-                                        <img src='/user/vcode' id="imgvcode" alt="点击刷新" />
-                                    </div>
+
                                     <div class="form-group last mb-4">
                                         <label for="password">密码</label>
                                         <input type="password" class="form-control" id="password" />
 
                                     </div>
-
+                                    <div class="form-group vcode">
+                                        <label for="vcode">验证码</label>
+                                        <input type="text" minlength="4" maxlength="4" class="form-control" style="width: 70%;" id="vcode" />
+                                        <img src='/user/vcode' id="imgvcode" alt="点击刷新" />
+                                    </div>
                                     <div class="d-flex mb-5 align-items-center">
                                         <label class="control control--checkbox mb-0">
                                             <span class="caption">记住</span>
@@ -53,7 +53,7 @@
                                         <span class="ml-auto"><a href="/register.html" class="forgot-pass">注册</a></span>
                                     </div>
 
-                                    <input type="submit" value="登录" class="btn btn-pill text-white btn-block btn-primary" />
+                                    <input id='btnLogin' type="button" value="登录" class="btn btn-pill text-white btn-block btn-primary" />
                                     <span class="d-block text-center my-4 text-muted"> 或者采用以下登录</span>
 
                                     <div class="social-login text-center">

@@ -11,7 +11,12 @@ const Client = sequelize.define('client', {
         allowNull: false,
         comment: 'authen Key'
     },
-
+    status: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        comment: 'client status',
+        defaultValue: 0,
+    },
     clientName: {
         type: DataTypes.STRING(50),
         allowNull: false,

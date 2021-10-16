@@ -35,6 +35,18 @@ async function isValidToken(auth) {
     return existClient;
 }
 
+async function updateClientStatus(clientId, status) {
+    let count = await Client.update({
+        status: status,
+        updatedAt: new Date()
+    }, {
+        where: {
+            id: clientId
+        }
+    });
+    return count;
+}
+
 async function getClientByTunnelId(targetTunnelId, targetP2PPassword) {
     let tunnel = await Tunnel.findOne({
         where: {
@@ -66,6 +78,7 @@ io.on('connection', async(socket) => {
     let currentConnectSocketIoClientId = socket.handshake.auth.clientId;
     socket.on('disconnect', function() {
         let clientId = socket.handshake.auth.clientId;
+        updateClientStatus(clientId, 0);
         logger.debug(`clientId=${clientId} disconnect,socket.id=${socket.id}`);
         io.emit('client.disconnect', { clientId: clientId, socketIOSocketId: socket.id });
     });
@@ -83,8 +96,11 @@ io.on('connection', async(socket) => {
         logger.error('client is already  online,clientId=' + currentConnectSocketIoClientId);
         return;
     }
+
     //------------------------------------------
 
+    updateClientStatus(currentConnectSocketIoClientId, 1);
+    //------------------------
     socket.on('p2p.request.open', async(data, fn) => {
 
         let targetClientId = data.targetClientId;
