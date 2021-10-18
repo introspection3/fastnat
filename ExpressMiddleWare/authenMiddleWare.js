@@ -4,7 +4,6 @@ const errInfo = "no authenKey";
 
 function allRequest(req, res, next) {
     let url = req.path;
-    console.log(url);
     let isHtml = url.endsWith('.html');
     if (url === '/' || isHtml) {
         if (req.session.user || excluedPathList.indexOf(req.path) > -1) {

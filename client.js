@@ -288,6 +288,11 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         isWorkingFine = false;
     });
 
+    socketIOSocket.on(commandType.DELETE_CLIENT, async(clientId) => {
+        logger.trace('delete.client' + clientId);
+        PlatfromUtil.processExit();
+    });
+
     socketIOSocket.on(commandType.STOP_TUNNEL, async(data, fn) => {
 
     });
