@@ -44,11 +44,12 @@ class TcpClient {
     }
 
     stopCurrentNotify() {
-            this.client.stopNotify = true;
-        }
-        /*启动Tcp隧道客户端程序,只会调用一次
-         * 连接到服务端
-         */
+        this.client.stopNotify = true;
+    }
+
+    /*启动Tcp隧道客户端程序,只会调用一次
+     * 连接到服务端
+     */
     start() {
 
         let instance = this;

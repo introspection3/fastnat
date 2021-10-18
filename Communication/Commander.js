@@ -175,13 +175,15 @@ eventEmitter.on(commandType.DELETE_TUNNEL, async function(clientId, data) {
 });
 
 async function notify2Client(theCommandType, clientId, data) {
-    logger.trace(theCommandTypeL + clientId);
+    clientId = Number.parseInt(clientId);
+    logger.trace(theCommandType + " " + clientId + "  " + data);
     let allSockets = await defaultNS.fetchSockets();
     let targetSocket = allSockets.find((value, index, array) => {
         return value.handshake.auth.clientId === clientId;
     });
     let result = false;
     if (targetSocket != null) {
+        logger.trace(theCommandType + " " + clientId + "  " + data);
         result = targetSocket.emit(theCommandType, data);
     }
 }

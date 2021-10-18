@@ -46,7 +46,7 @@ class TcpTunnelServer {
         this.tcpServer.eventEmitter.on('socketLost', (socket) => {
             if (socket.proxyServer != null) {
                 socket.proxyServer.close();
-                logger.debug('auto  close proxy server as tunnel client socketLost\'error:' + err);
+                logger.debug('auto  close proxy server as tunnel client socketLost');
             }
             if (socket.authenKeyAndTunnelId != null) {
                 ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
@@ -135,7 +135,6 @@ class TcpTunnelServer {
         let tunnel = await this._getTunnel(data.authenKey, data.tunnelId);
         if (!tunnel) {
             logger.debug('error authen key:' + data.authenKey);
-            this.notifyCloseClient(socket, 'error authen key');
             setTimeout(() => {
                 socket.end();
                 socket.destroy();

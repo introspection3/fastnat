@@ -74,7 +74,7 @@ let currentClientNatType = null;
 const currentClientTunnelsMap = new Map();
 const SocketIOCreateUtpServerMap = new Map();
 const SocketIOCreateUtpClientMap = new Map();
-
+const ALL_TUNNEL_MAP = new Map();
 
 /**
  * 
@@ -293,19 +293,22 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         PlatfromUtil.processExit();
     });
 
-    socketIOSocket.on(commandType.STOP_TUNNEL, async(data, fn) => {
+    socketIOSocket.on(commandType.STOP_TUNNEL, async(data) => {
 
     });
 
-    socketIOSocket.on(commandType.DELETE_TUNNEL, async(data, fn) => {
+    socketIOSocket.on(commandType.DELETE_TUNNEL, async(id) => {
+        id = Number.parseInt(id);
+        logger.trace(commandType.DELETE_TUNNEL + id);
+        ALL_TUNNEL_MAP.get(id).stop();
+        ALL_TUNNEL_MAP.delete(id);
+    });
+
+    socketIOSocket.on(commandType.START_TUNNEL, async(data) => {
 
     });
 
-    socketIOSocket.on(commandType.START_TUNNEL, async(data, fn) => {
-
-    });
-
-    socketIOSocket.on(commandType.ADD_TUNNEL, async(data, fn) => {
+    socketIOSocket.on(commandType.ADD_TUNNEL, async(data) => {
 
     });
 
@@ -381,6 +384,7 @@ async function main() {
                 port: defaultBridgeConfig.port
             });
             await httpTunnelClient.start();
+            ALL_TUNNEL_MAP.set(tunnelItem.id, httpTunnelClient);
             continue;
         }
 
@@ -404,6 +408,7 @@ async function main() {
                 logger.error('process will quit for : ' + data.info);
                 PlatfromUtil.processExit();
             });
+            ALL_TUNNEL_MAP.set(tunnelItem.id, tcpTunnelClient);
             continue;
         }
 
@@ -413,12 +418,14 @@ async function main() {
                 port: defaultBridgeConfig.port
             });
             await sock5TunnelClient.start();
+            ALL_TUNNEL_MAP.set(tunnelItem.id, sock5TunnelClient);
             continue;
         }
 
         if (tunnelItem.type === 'udp') {
             let udpTunnelClient = new UdpTunnelClient(socketIOSocket, tunnelItem);
             udpTunnelClient.start();
+            ALL_TUNNEL_MAP.set(tunnelItem.id, udpTunnelClient);
             continue;
         }
 
