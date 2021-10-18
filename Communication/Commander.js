@@ -4,7 +4,7 @@ const defaultConfig = require('../Common/DefaultConfig');
 const serverConfig = require('../Common/ServerConfig');
 const defaultWebServerConfig = defaultConfig.webserver;
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
-const { checkType, isNumber, isEmpty, isString, isBoolean } = require('../Utils/TypeCheckUtil');
+const { checkTy pe, isNumber, isEmpty, isString, isBoolean } = require('../Utils/TypeCheckUtil');
 checkType(isNumber, defaultWebServerConfig.socketioPort, 'defaultWebServerConfig.socketioPort');
 const io = new SocketIO.Server(defaultWebServerConfig.socketioPort);
 if (serverConfig.cluster.enabled) {
@@ -34,7 +34,12 @@ async function isValidToken(auth) {
     let existClient = client != null;
     return existClient;
 }
-
+/**
+ * 设置客户端在线状态
+ * @param {Number} clientId 
+ * @param {Number} status 
+ * @returns 
+ */
 async function updateClientStatus(clientId, status) {
     let count = await Client.update({
         status: status,
@@ -47,18 +52,20 @@ async function updateClientStatus(clientId, status) {
     return count;
 }
 
-async function getClientByTunnelId(targetTunnelId, targetP2PPassword) {
-    let tunnel = await Tunnel.findOne({
-        where: {
-            id: targetTunnelId,
-            p2pPassword: targetP2PPassword,
-            isAvailable: true
-        },
-        include: Client
-    });
-    return tunnel;
-}
 
+// async function getClientByTunnelId(targetTunnelId, targetP2PPassword) {
+//     let tunnel = await Tunnel.findOne({
+//         where: {
+//             id: targetTunnelId,
+//             p2pPassword: targetP2PPassword,
+//             isAvailable: true
+//         },
+//         include: Client
+//     });
+//     return tunnel;
+// }
+
+//--------------------------授权验证-------------------------
 io.use(async(socket, next) => {
     let isValid = await isValidToken(socket.handshake.auth);
     if (isValid) {
@@ -67,21 +74,24 @@ io.use(async(socket, next) => {
     logger.error('error token:' + socket.handshake.auth.token);
     socket.emit('errorToken', { token: socket.handshake.auth.token });
     socket.disconnect(true);
-    return next(new Error('socketio authen error'));
+    return next(new Error('socket.io authen error'));
 });
 
 //Namespace<ListenEvents, EmitEvents, ServerSideEvents>
+
 let defaultNS = io.of('/');
 
 io.on('connection', async(socket) => {
 
     let currentConnectSocketIoClientId = socket.handshake.auth.clientId;
+
     socket.on('disconnect', function() {
         let clientId = socket.handshake.auth.clientId;
         updateClientStatus(clientId, 0);
         logger.debug(`clientId=${clientId} disconnect,socket.id=${socket.id}`);
         io.emit('client.disconnect', { clientId: clientId, socketIOSocketId: socket.id });
     });
+
     logger.debug('socket.io new connection,socket.id=' + socket.id);
 
     //-----------判断是否登录到系统了----------
@@ -98,9 +108,8 @@ io.on('connection', async(socket) => {
     }
 
     //------------------------------------------
-
     updateClientStatus(currentConnectSocketIoClientId, 1);
-    //------------------------
+    //------------------------------------------
     socket.on('p2p.request.open', async(data, fn) => {
 
         let targetClientId = data.targetClientId;
@@ -123,7 +132,7 @@ io.on('connection', async(socket) => {
     });
 
     socket.on('client.createUpdTunnelServer', async(udpTunnelItemOption, fn) => {
-        //--------------
+
         let tunnelId = udpTunnelItemOption.id;
         let authenKey = socket.handshake.auth.token;
 
