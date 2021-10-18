@@ -1,6 +1,7 @@
 const express = require(`express`);
 const router = express.Router();
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
+const commandType = require('../Communication/CommandType').commandType;
 
 router.get('/getP2PInfo', async function(req, res, next) {
     let authenKey = req.params.authenKey;
@@ -118,12 +119,16 @@ router.post('/delete', async(req, res, next) => {
     }
 
 
-    await Tunnel.destroy({
+    count = await Tunnel.destroy({
         where: {
             id: tunnelId,
             clientId: req.body.clientId
         }
     });
+
+    if (count > 0) {
+        eventEmitter.emit(commandType.DELETE_TUNNEL, id);
+    }
 
     let result = {
         success: true,

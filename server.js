@@ -24,9 +24,7 @@ const P2PTracker = require('./P2P/P2PTracker');
 const N2NServer = require('./N2N/N2NServer');
 const rootPath = require('./Common/GlobalData.js').rootPath;
 const communityListPath = require('path').join(rootPath, 'config', 'community.list');
-
-
-
+const eventEmitter = require('./Communication/CommunicationEventEmiter').eventEmitter;
 //------------------netbuilding---s-------
 const netbuilding = serverConfig.netbuilding;
 const netbuildingHost = netbuilding.host;
@@ -36,6 +34,7 @@ const netbuildingPort = netbuilding.port;
 if (clusterEnabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     if (cluster.isPrimary || cluster.isMaster) {
+
         P2PTracker.start();
         N2NServer.startSuperNode(communityListPath, netbuildingPort);
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
@@ -58,7 +57,6 @@ if (clusterEnabled) {
             logger.debug('starting a new worker');
             cluster.fork();
         });
-
         ClusterData.register2Cluster();
         return;
     }

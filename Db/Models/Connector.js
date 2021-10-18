@@ -60,14 +60,12 @@ const Connector = sequelize.define('connector', {
         }
     }
 }, {
-    indexes: [
-        {
+    indexes: [{
             name: 'unique_connetctor_name_for_client',
             unique: true,
-            fields: ['name','clientId']
+            fields: ['name', 'clientId']
         }
-       
+
     ]
 });
 module.exports = Connector;
-

@@ -4,7 +4,7 @@ const defaultConfig = require('../Common/DefaultConfig');
 const serverConfig = require('../Common/ServerConfig');
 const defaultWebServerConfig = defaultConfig.webserver;
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
-const { checkTy pe, isNumber, isEmpty, isString, isBoolean } = require('../Utils/TypeCheckUtil');
+const { checkType, isNumber, isEmpty, isString, isBoolean } = require('../Utils/TypeCheckUtil');
 checkType(isNumber, defaultWebServerConfig.socketioPort, 'defaultWebServerConfig.socketioPort');
 const io = new SocketIO.Server(defaultWebServerConfig.socketioPort);
 if (serverConfig.cluster.enabled) {
@@ -14,6 +14,8 @@ if (serverConfig.cluster.enabled) {
 const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
 const ClusterData = require('../Common/ClusterData');
 const DefaultConfig = require('../Common/DefaultConfig');
+const eventEmitter = require('./CommunicationEventEmiter').eventEmitter;
+const commandType = require('./CommandType').commandType;
 
 /**
  * is valid token
@@ -53,18 +55,6 @@ async function updateClientStatus(clientId, status) {
 }
 
 
-// async function getClientByTunnelId(targetTunnelId, targetP2PPassword) {
-//     let tunnel = await Tunnel.findOne({
-//         where: {
-//             id: targetTunnelId,
-//             p2pPassword: targetP2PPassword,
-//             isAvailable: true
-//         },
-//         include: Client
-//     });
-//     return tunnel;
-// }
-
 //--------------------------授权验证-------------------------
 io.use(async(socket, next) => {
     let isValid = await isValidToken(socket.handshake.auth);
@@ -76,8 +66,6 @@ io.use(async(socket, next) => {
     socket.disconnect(true);
     return next(new Error('socket.io authen error'));
 });
-
-//Namespace<ListenEvents, EmitEvents, ServerSideEvents>
 
 let defaultNS = io.of('/');
 
@@ -175,8 +163,27 @@ io.on('connection', async(socket) => {
 
 
 if (serverConfig.cluster.enabled) {
-
     // defaultNS = defaultNS.adapter;
+}
+
+eventEmitter.on(commandType.DELETE_CLIENT, async function(clientId) {
+    notify2Client(commandType.DELETE_CLIENT, clientId, clientId);
+});
+
+eventEmitter.on(commandType.DELETE_TUNNEL, async function(clientId, data) {
+    notify2Client(commandType.DELETE_TUNNEL, clientId, data);
+});
+
+async function notify2Client(theCommandType, clientId, data) {
+    logger.trace(theCommandTypeL + clientId);
+    let allSockets = await defaultNS.fetchSockets();
+    let targetSocket = allSockets.find((value, index, array) => {
+        return value.handshake.auth.clientId === clientId;
+    });
+    let result = false;
+    if (targetSocket != null) {
+        result = targetSocket.emit(theCommandType, data);
+    }
 }
 
 module.exports = {

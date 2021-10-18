@@ -23,7 +23,7 @@ class HttpTunnelClient {
         this.authenKey = authenKey;
         this.tunnel = tunnel;
         this.tcpTunnelServerAddress = tcpTunnelServerAddress;
-       // this.localAddress = { host: tunnel.localIp, port: tunnel.localPort };
+        // this.localAddress = { host: tunnel.localIp, port: tunnel.localPort };
         this.started = false;
 
         let targetUrl = `${tunnel.type}://${tunnel.localIp}:${tunnel.localPort}`;
@@ -34,7 +34,7 @@ class HttpTunnelClient {
         let parsedUrl = url.parse(targetUrl);
         const proxy = httpProxy.createProxy({});
 
-        proxy.on('error', function (err, req, res) {
+        proxy.on('error', function(err, req, res) {
             console.error(err);
             res.writeHead(500, {
                 'Content-Type': 'text/plain'
@@ -52,9 +52,8 @@ class HttpTunnelClient {
         let httpModule = http;
         let serverOptions = {};
 
-        this.httpProxyServer = httpModule.createServer(serverOptions, function (req, res) {
+        this.httpProxyServer = httpModule.createServer(serverOptions, function(req, res) {
             logReq(req)
-
             proxy.web(req, res, {
                 target: targetUrl,
                 agent: finalAgent,
@@ -79,7 +78,7 @@ class HttpTunnelClient {
                 console.log(body);
             });
         }
-        this.httpProxyServer.on('upgrade', function (req, socket, head) {
+        this.httpProxyServer.on('upgrade', function(req, socket, head) {
             proxy.ws(req, socket, head);
         });
     }
@@ -89,7 +88,7 @@ class HttpTunnelClient {
             logger.trace(' httpProxyServer has started already');
             return;
         }
-        this.httpProxyServer.listen({ port: 0 }, async () => {
+        this.httpProxyServer.listen({ port: 0 }, async() => {
             let port = this.httpProxyServer.address().port;
             logger.trace(`httpProxyServer started at:${port}`);
             this.tcpTunnelClient = new TcpTunnelClient(this.authenKey, this.tcpTunnelServerAddress, { port: port, host: '0.0.0.0' });
@@ -97,10 +96,11 @@ class HttpTunnelClient {
         });
     }
 
-    stop(){
-        if( this.tcpTunnelClient ){
+    stop() {
+        if (this.tcpTunnelClient) {
             this.tcpTunnelClient.stop();
         }
+        this.httpProxyServer.close();
     }
 
 }

@@ -330,7 +330,7 @@
                     $.messager.alert('提示', '请选择需要删除映射');
                     return;
                 }
-                $.messager.confirm("操作提示", "您确定要删除此删除吗？", function(data) {
+                $.messager.confirm("操作提示", "您确定要删除此映射吗？", function(data) {
                     if (data) {
                         let id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
                         $.post('/tunnel/delete', {

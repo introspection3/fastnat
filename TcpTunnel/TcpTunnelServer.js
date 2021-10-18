@@ -19,6 +19,7 @@ class TcpTunnelServer {
      */
     constructor(tcpServerConfig) {
         this.tcpServer = new TcpServer(tcpServerConfig);
+        //同一个socket必然同一个tunnelProxyServers
         this.tunnelProxyServers = new Map();
     }
 
@@ -39,17 +40,19 @@ class TcpTunnelServer {
         });
 
         this.tcpServer.eventEmitter.on('socketError', (socket, err) => {
+
+        });
+
+        this.tcpServer.eventEmitter.on('socketLost', (socket) => {
             if (socket.proxyServer != null) {
                 socket.proxyServer.close();
-                logger.debug('auto confirm close proxy server by socket\'error:' + err);
+                logger.debug('auto  close proxy server as tunnel client socketLost\'error:' + err);
             }
-        });
-        this.tcpServer.eventEmitter.on('socketLost', (socket) => {
             if (socket.authenKeyAndTunnelId != null) {
                 ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
             }
         });
-        // this.authenMap = new Map();
+
     }
 
     /**
@@ -129,78 +132,8 @@ class TcpTunnelServer {
 
     async stopTunnel(data, socket) {
 
-        let clientInfo = await Client.findOne({
-            where: {
-                authenKey: data.authenKey,
-                isAvailable: true
-            }
-        });
-
-        if (clientInfo == null) {
-            //  this.#notifyCloseClient(socket, 'error authen key');
-            logger.debug('error authen key:' + data.authKey);
-            setTimeout(() => {
-                socket.end();
-                socket.destroy();
-            }, 1000);
-            return;
-        }
-
-        let tunnel = await Tunnel.findOne({
-            where: {
-                id: data.tunnelId,
-                clientId: clientInfo.id,
-                isAvailable: true
-            }
-        })
-
-
-        if (tunnel == null || tunnel.length == 0) {
-            logger.debug('error tunnel id:' + data.tunnelId);
-            setTimeout(() => {
-                socket.end();
-                socket.destroy();
-            }, 1000);
-            return;
-        }
-
-        logger.trace('client told server stop proxy server:' + tunnel.remotePort);
-
-        let server = this.tunnelProxyServers.get(data.tunnelId);
-
-        if (server != null) {
-
-            this.tunnelProxyServers.delete(data.tunnelId);
-            server.close();
-            logger.trace('proxy server closed:' + tunnel.remotePort);
-
-        }
-    }
-
-    /**
-     * 通知客户端退出
-     * @param {net.Socket}} socket 
-     * @param {string} info 
-     */
-    notifyCloseClient(socket, info) {
-            this.tcpServer.sendCodecData2OneClient({ command: 'quitClient', info: info }, socket);
-        }
-        /**
-         * 处理来之客户端的授权信息
-         * @param {TcpTunnelProtocal} data 
-         * @param {net.Socket} socket 
-         */
-    async authen(data, socket) {
-
-        let clientInfo = await Client.findOne({
-            where: {
-                authenKey: data.authenKey,
-                isAvailable: true
-            }
-        });
-
-        if (clientInfo == null) {
-            //  this.#notifyCloseClient(socket, 'error authen key');
+        let tunnel = await this._getTunnel(data.authenKey, data.tunnelId);
+        if (!tunnel) {
             logger.debug('error authen key:' + data.authenKey);
             this.notifyCloseClient(socket, 'error authen key');
             setTimeout(() => {
@@ -210,17 +143,61 @@ class TcpTunnelServer {
             return;
         }
 
+        logger.trace('client told server stop proxy server:' + tunnel.remotePort);
+        await this.stopTunnelProxyServer(data.tunnelId);
+    }
+
+    async stopTunnelProxyServer(tunnelId) {
+        let server = this.tunnelProxyServers.get(tunnelId);
+        if (server != null) {
+            this.tunnelProxyServers.delete(tunnelId);
+            server.close();
+            logger.trace('stopTunnelProxyServer:tunnelId=' + tunnelId);
+        }
+    }
+
+    /**
+     * 通知客户端退出
+     * @param {net.Socket}} socket 
+     * @param {string} info 
+     */
+    notifyCloseClient(socket, info) {
+        this.tcpServer.sendCodecData2OneClient({ command: 'quitClient', info: info }, socket);
+    }
+
+    async _getTunnel(authenKey, tunnelId) {
+        let data = {
+            authenKey: authenKey,
+            tunnelId: tunnelId
+        };
+
         let tunnel = await Tunnel.findOne({
             where: {
-                id: data.tunnelId,
-                clientId: clientInfo.id,
-                isAvailable: true
-            }
-        })
+                isAvailable: true,
+                id: tunnelId
+            },
+            include: [{
+                model: Client,
+                required: true,
+                where: {
+                    authenKey: data.authenKey,
+                    isAvailable: true
+                }
+            }]
+        });
+        return tunnel;
+    }
 
-
-        if (tunnel == null || tunnel.length == 0) {
-            logger.debug('error tunnel id:' + data.tunnelId);
+    /**
+     * 处理来之客户端的授权信息
+     * @param {TcpTunnelProtocal} data 
+     * @param {net.Socket} socket 
+     */
+    async authen(data, socket) {
+        let tunnel = await this._getTunnel(data.authenKey, data.tunnelId);
+        if (!tunnel) {
+            logger.debug('error authen key:' + data.authenKey);
+            this.notifyCloseClient(socket, 'error authen key');
             setTimeout(() => {
                 socket.end();
                 socket.destroy();
@@ -229,7 +206,6 @@ class TcpTunnelServer {
         }
 
         let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
-
         let exist = await ClusterData.existAsync(authenKeyAndTunnelId);
         if (exist) {
             let msg = `this authenKey&tunnelId (${authenKeyAndTunnelId}) is already online`;

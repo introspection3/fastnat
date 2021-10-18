@@ -3,6 +3,7 @@ const router = express.Router();
 const { RegisterUser, Client, Tunnel, Connector } = require('../Db/Models');
 const logger = require('../Log/logger');
 const { v4: uuidv4 } = require('uuid');
+const eventEmitter = require('../Communication/CommunicationEventEmiter').eventEmitter;
 
 router.use(function(req, res, next) {
     next();
@@ -31,13 +32,26 @@ async function getVirtualIpAsync(clientId) {
 }
 
 router.post('/delete', async(req, res, next) => {
-    let id = req.body.id;
+    let id = Number.parseInt(req.body.id);
+    await Connector.destroy({
+        where: {
+            clientId: id
+        }
+    })
+    await Tunnel.destroy({
+        where: {
+            clientId: id
+        }
+    })
     let count = await Client.destroy({
         where: {
             id: id,
             registerUserId: req.session.user.id
         }
     });
+    if (count > 0) {
+        eventEmitter.emit('delete.client', id);
+    }
     res.send({
         success: true,
         data: id,
