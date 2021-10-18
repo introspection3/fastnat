@@ -6,10 +6,12 @@
     <title>我的设备</title>
     <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/default/easyui.css" />
     <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/icon.css" />
-    <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/default/app.css" />
+
     <script type="text/javascript" src="/libs/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="/libs/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/libs/easyui/locale/easyui-lang-zh_CN.js"></script>
     <script type="text/javascript" src='http://cdn.staticfile.org/moment.js/2.24.0/moment.js'></script>
+    <script type="text/javascript" src="/libs/easyui/validate.js"></script>
     <style>
         .easyui-datagrid .datagrid-thead {
             padding: 6px 4px;
@@ -21,6 +23,24 @@
         body {
             display: block;
             margin: 0px;
+        }
+        
+        .fitem {
+            margin: 5px 5px;
+        }
+        
+        .tunnelType {
+            display: inline-block;
+            margin-left: 1%;
+        }
+        
+        .tunnelType div {
+            display: inline;
+            margin-left: 10px;
+        }
+        
+        .fitem {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -45,7 +65,7 @@
         </thead>
     </table>
 
-    <table id='tableDevicesTunnel' class="easyui-datagrid" title="设备的映射列表" style="width:100%;" data-options="idField:'id', fitColumns:true,checkbox:true,striped: true,rownumbers:true,singleSelect:true,url:'/client/getTunnelsByClientId',method:'get',toolbar:toolbarTunnel">
+    <table id='tableDevicesTunnel' class="easyui-datagrid" title="设备的映射列表" style="width:100%;" data-options="onSelect:onSelectTunnel,idField:'id', fitColumns:true,checkbox:true,striped: true,rownumbers:true,singleSelect:true,url:'/client/getTunnelsByClientId',method:'get',toolbar:toolbarTunnel">
         <thead>
             <tr>
                 <th field="ck" checkbox="true"></th>
@@ -63,21 +83,101 @@
             </tr>
         </thead>
     </table>
+
+
+    <div class="easyui-dialog" id="dialogTunnel" style="width:480px;height:400px;display:none;" data-options="title:'添加映射',buttons:'#dialogTunnelButtons',modal:true">
+        <form id="fm" method="post">
+            <div class="fitem">
+                <input name="name" class="easyui-textbox" data-options="prompt:'给此映射取一个名',validType:'minLength[2]'" required="true" label="映射名称:" style="width:100%">
+            </div>
+            <div class="fitem">
+
+                <input name="uniqueName" class="easyui-textbox" required="true" data-options="prompt:'以字母开头,字母和数字组成',validType:'username'" label="网路唯一名:" style="width:100%" />
+            </div>
+            <div class="fitem">
+                <span>映射类型:</span>
+                <div class="tunnelType">
+                    <div style="display: inline;">
+                        <label for="tcp">tcp</label>
+                        <input type="radio" name="type" checked='checked' id='tcp' value="tcp" />
+                    </div>
+                    <div style="display: inline;">
+                        <label for="udp">udp</label>
+                        <input type="radio" name="type" id='udp' value="udp" />
+                    </div>
+                    <div style="display: inline;">
+                        <label for="socks5">socks5</label>
+                        <input type="radio" name="type" id='socks5' value="socks5" />
+                    </div>
+                    <div style="display: inline;">
+                        <label for="http">http</label>
+                        <input type="radio" name="type" id='http' value="http" />
+                    </div>
+                    <div style="display: inline;">
+                        <label for="p2p">p2p</label>
+                        <input type="radio" name="type" id='p2p' value="p2p" />
+                    </div>
+                </div>
+            </div>
+            <div class="fitem">
+                <input name="p2pPassword" class="easyui-textbox" data-options="prompt: '设置用于P2P连接所用的密码',validType: 'minLength[6]'" required="true" label="P2P密码:" style="width:100%" />
+            </div>
+
+            <div class="fitem">
+                <input id='localIp' name="localIp" class="easyui-textbox" value="127.0.0.1" data-options="prompt: '本地映射IP',validType: 'ip'" required="true" label="本地IP:" style="width:100%" />
+            </div>
+            <div class="fitem">
+                <input name="localPort" class="easyui-numberspinner" placeholder="本地待映射端口" required="true" data-options="min:5000,max:65535,prompt: '待映射端口'" style="width:60%;" label="本地端口:" />
+            </div>
+            <div class="fitem">
+                <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '网外访问端口'" style="width:60%;" label="对外端口:" />
+                <span>(可通过此端口进行公网访问)</span>
+                <div id='rb'></div>
+            </div>
+            <input type="hidden" id='clientId' name="clientId" />
+            <input type="hidden" id='id' name="id" />
+        </form>
+    </div>
+    <div id="dialogTunnelButtons">
+        <a href="#" class="easyui-linkbutton" onclick="saveTunnel()" data-options="iconCls: 'icon-ok'">确定</a>
+        <a href="#" class="easyui-linkbutton" onclick="closeDialog( 'dialogTunnel')" data-options="iconCls: 'icon-cancel'">取消</a>
+    </div>
     <script type="text/javascript">
         $(function() {
             $("#toolbarDeviceERedo").linkbutton("disable");
             $("#toolbarDeviceEdit").linkbutton("disable");
             $("#toolbarDeviceDelete").linkbutton("disable");
-        })
+            $("#toolbarTunnelAdd").linkbutton("disable");
+            $("#toolbarTunnelEdit").linkbutton("disable");
+            $("#toolbarTunnelDelete").linkbutton("disable");
+
+            closeDialog('dialogTunnel');
+        });
+
+        let _clientId = -1;
+        let _tunneId = -1;
+        let tunnelUrl = '/tunnel/add';
+
+        function closeDialog(id) {
+            $('#' + id).dialog('close');
+        }
 
         function onSelectDevice(rowIndex, rowData) {
             $("#toolbarDeviceEdit").linkbutton("enable");
             $("#toolbarDeviceDelete").linkbutton("enable");
+            _clientId = rowData.id;
+            $("#toolbarTunnelAdd").linkbutton("enable");
+
+        }
+
+        function onSelectTunnel(rowIndex, rowData) {
+            $("#toolbarTunnelEdit").linkbutton("enable");
+            $("#toolbarTunnelDelete").linkbutton("enable");
+            _tunneId = rowData.id;
         }
 
         function fixWidth(percent) {
             return percent;
-            return document.body.clientWidth * percent / 100;
         }
 
         function tooLongText(value, row, index) {
@@ -139,7 +239,7 @@
                 }
                 $("#toolbarDeviceERedo").linkbutton("enable");
                 $('#tableDevices').datagrid('beginEdit', index);
-                this.disabled();
+
             }
         }, {
             text: '取消编辑',
@@ -205,30 +305,61 @@
             id: 'toolbarTunnelAdd',
             iconCls: 'icon-add',
             handler: function() {
-                alert('add')
+                $('#dialogTunnel').dialog('open').dialog('setTitle', '添加映射');
+                $('#fm').form('clear');
+                $('#localIp').textbox('setValue', '127.0.0.1');
+                $("input[type='radio' ][name='type' ][value='tcp' ]").prop('checked', 'true');
             }
         }, {
             text: '编辑',
             id: 'toolbarTunnelEdit',
             iconCls: 'icon-edit',
             handler: function() {
-                $('#tableDevicesTunnel').datagrid('beginEdit', 1);
+                $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
+                let row = $('#tableDevicesTunnel').datagrid('getSelected');
+                tunnelUrl = '/tunnel/update'
+                $('#fm').form('load', row);
             }
         }, {
             text: '删除',
             id: 'toolbarTunnelDelete',
             iconCls: 'icon-cut',
             handler: function() {
-                alert('cut')
-            }
-        }, '-', {
-            text: '保存',
-            id: 'toolbarTunnelSave',
-            iconCls: 'icon-save',
-            handler: function() {
-                $('#tableDevicesTunnel').datagrid("endEdit", 1);
+                let index = getGridRowIndex('tableDevicesTunnel');
+                if (index == -1) {
+                    $.messager.alert('提示', '请选择需要删除映射');
+                    return;
+                }
+                $.messager.confirm("操作提示", "您确定要删除此删除吗？", function(data) {
+                    if (data) {
+                        let id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
+                        $.post('/tunnel/delete', {
+                            id: id,
+                            clientId: _clientId
+                        }, function(result) {
+                            $('#tableDevicesTunnel').datagrid('reload');
+                        });
+                    }
+                });
             }
         }];
+
+
+        function saveTunnel() {
+            $('#fm').form('submit', {
+                url: tunnelUrl,
+                onSubmit: function() {
+                    let v = $(this).form('validate');
+                    $('#clientId').val(_clientId);
+                    $('#id').val(_tunneId);
+                    return v;
+                },
+                success: function(result) {
+                    $('#dialogTunnel').dialog('close');
+                    $('#tableDevicesTunnel').datagrid('reload');
+                }
+            });
+        }
     </script>
 </body>
 

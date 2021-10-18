@@ -10,6 +10,8 @@ class UdpTunnelServer {
      * @param {Socket} socketIOSocket 
      */
     constructor(udpTunnelItemOption, socketIOSocket) {
+
+        this.serverName = 'udpServer:' + udpTunnelItemOption.id;
         this.udpServer = this._createUdpServer(udpTunnelItemOption.remotePort, udpTunnelItemOption.id);
         this.socketIOSocket = socketIOSocket;
         this.tunnelId = udpTunnelItemOption.id;
@@ -17,7 +19,7 @@ class UdpTunnelServer {
         this.stopEventName = 'server.send.udpserverClosed:' + this.tunnelId;
         this._started = false;
 
-        //---------
+        //----------------------------------------------------
         socketIOSocket.once('disconnect', () => {
             let clientId = socketIOSocket.handshake.auth.clientId;
             this.stop();
@@ -32,12 +34,12 @@ class UdpTunnelServer {
         this._started = true;
         this.socketIOSocket.on(this.eventName, (msg, rinfo) => {
             this.udpServer.send(msg, rinfo.port, rinfo.address);
-        })
+        });
     }
 
     _createUdpServer(port, tunnelId) {
 
-        let serverName = 'udpServer:' + tunnelId;
+        let serverName = this.serverName;
         //创建 udp server
         let udpServer = dgram.createSocket('udp4');
 

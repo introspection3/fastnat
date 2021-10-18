@@ -18,10 +18,12 @@ const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
 const clusterEnabled = serverConfig.cluster.enabled;
 checkType(isBoolean, clusterEnabled, 'serverConfig.cluster.enabled');
+const instanceCount = serverConfig.cluster.count;
+checkType(isNumber, instanceCount, 'serverConfig.cluster.count');
 const P2PTracker = require('./P2P/P2PTracker');
 const N2NServer = require('./N2N/N2NServer');
 const rootPath = require('./Common/GlobalData.js').rootPath;
-let communityListPath = require('path').join(rootPath, 'config', 'community.list');
+const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 
 
 
@@ -36,7 +38,6 @@ if (clusterEnabled) {
     if (cluster.isPrimary || cluster.isMaster) {
         P2PTracker.start();
         N2NServer.startSuperNode(communityListPath, netbuildingPort);
-        let instanceCount = serverConfig.cluster.count <= 0 ? cpuCount : serverConfig.cluster.count;
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
         setupPrimary({
@@ -90,7 +91,7 @@ app.use(
     })
 );
 app.set('x-powered-by', false);
-const bodyParser = require('body-parser');
+//const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
 const { requireAuthenKey: requireRole, allRequest } = require('./ExpressMiddleWare/authenMiddleWare');
 app.use(allRequest);
@@ -132,3 +133,18 @@ process.on("uncaughtException", function(err) {
     logger.error(err.stack);
     logger.error(err);
 });
+
+let _SIGINT_Started = false;
+process.on('SIGINT', function() {
+    if (_SIGINT_Started === false) {
+        _SIGINT_Started = true;
+        logger.warn('process exit by SIGINT');
+        serverExit();
+    } else {
+        logger.trace('process is closing,please waiting...');
+    }
+});
+
+function serverExit(params) {
+    process.exit(0);
+}
