@@ -143,10 +143,13 @@ class TcpTunnelServer {
         }
 
         logger.trace('client told server stop proxy server:' + tunnel.remotePort);
-        await this.stopTunnelProxyServer(data.tunnelId);
+        await this.stopTunnelProxyServer(tunnel);
     }
 
-    async stopTunnelProxyServer(tunnelId) {
+    async stopTunnelProxyServer(data) {
+        let tunnelId = data.tunnelId;
+        let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
+        await ClusterData.deleteAsync(authenKeyAndTunnelId);
         let server = this.tunnelProxyServers.get(tunnelId);
         if (server != null) {
             this.tunnelProxyServers.delete(tunnelId);

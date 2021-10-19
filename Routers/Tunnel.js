@@ -3,6 +3,9 @@ const router = express.Router();
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const commandType = require('../Communication/CommandType').commandType;
 const eventEmitter = require('../Communication/CommunicationEventEmiter').eventEmitter;
+const redlock = require('../Utils/RedisUtil').redlock;
+const NetUtil = require('../Utils/NetUtil');
+const logger = require('../Log/logger');
 
 router.get('/getP2PInfo', async function(req, res, next) {
     let authenKey = req.params.authenKey;
@@ -38,6 +41,9 @@ router.get('/getP2PInfo', async function(req, res, next) {
 
 router.post('/update', async(req, res, next) => {
 
+    let clientId = req.body.clientId;
+    let tunnelId = req.body.id;
+
     let count = await Client.count({
         where: {
             id: req.body.clientId,
@@ -57,7 +63,7 @@ router.post('/update', async(req, res, next) => {
         let result = {
             success: false,
             data: req.body,
-            info: 'client user wrong'
+            info: 'client\' user wrong'
         }
         res.send(result);
         return;
@@ -73,19 +79,119 @@ router.post('/update', async(req, res, next) => {
     } else {
         data.lowProtocol = 'tcp';
     }
-    await Tunnel.update(data, {
+
+    let oldData = await Tunnel.findOne({
         where: {
-            id: data.id,
-            isAvailable: 1
+            id: data.id
         }
     });
 
-    let result = {
-        success: true,
-        data: req.body,
-        info: 'success'
-    }
-    res.send(result);
+    //------------------
+    let resource = `locks:${data.lowProtocol}:${data.remotePort}`;
+    // the maximum amount of time you want the resource locked in milliseconds,
+    // keeping in mind that you can extend the lock up until
+    // the point when it expires
+    var ttl = 1000;
+
+    redlock.lock(resource, ttl, async function(err, lock) {
+        // we failed to lock the resource
+        if (err) {
+            let result = {
+                success: false,
+                data: t,
+                info: '有其地方正在操作此远程端口，请换一个端口!'
+            }
+            res.send(result);
+            return;
+        }
+        if (oldData.remotePort != data.remotePort) {
+            let isPortUsed = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
+            logger.trace('isPortUsed=' + isPortUsed);
+            if (!isPortUsed) {
+                let result = {
+                    success: false,
+                    data: data,
+                    info: '端口已被占用,请换一个远程端口!'
+                }
+                res.send(result);
+                return;
+            }
+        }
+        let existTunnel = await Tunnel.findOne({
+            where: {
+                remotePort: data.remotePort,
+                lowProtocol: data.lowProtocol
+            }
+        });
+
+        if (existTunnel && existTunnel.id != tunnelId) {
+            let result = {
+                success: false,
+                data: data,
+                info: '远程端口已被使用,请换另外的端口'
+            }
+            res.send(result);
+            return;
+        }
+        existTunnel = await Tunnel.findOne({
+            where: {
+                localIp: data.localIp,
+                localPort: data.localPort,
+                clientId: data.clientId,
+                lowProtocol: data.lowProtocol
+            }
+        });
+
+        if (existTunnel && existTunnel.id != tunnelId) {
+            let result = {
+                success: false,
+                data: data,
+                info: '您已添加了一个同样的本地映射'
+            }
+            res.send(result);
+            return;
+        }
+
+        try {
+            await Tunnel.update(data, {
+                where: {
+                    id: data.id,
+                    isAvailable: 1
+                }
+            });
+
+            let newData = await Tunnel.findOne({
+                where: {
+                    id: data.id
+                }
+            });
+
+            if (!(oldData.remotePort == newData.remotePort && oldData.localPort == newData.localPort && oldData.localIp == newData.localIp)) {
+                eventEmitter.emit(commandType.DELETE_TUNNEL, clientId, tunnelId);
+                setTimeout(() => {
+                    eventEmitter.emit(commandType.ADD_TUNNEL, clientId, newData);
+                }, 1000);
+            }
+            let result = {
+                success: true,
+                data: req.body,
+                info: 'success'
+            }
+            res.send(result);
+        } catch (error) {
+            logger.error(error);
+        }
+
+        // unlock your resource when you are done
+        lock.unlock(function(err) {
+            // we weren't able to reach redis; your lock will eventually
+            // expire, but you probably want to log this error
+            if (err)
+                logger.error(err);
+        });
+    });
+
+
 });
 
 
@@ -180,14 +286,95 @@ router.post('/add', async(req, res, next) => {
     } else {
         data.lowProtocol = 'tcp';
     }
-    let client = await Tunnel.create(data);
 
-    let result = {
-        success: true,
-        data: client,
-        info: 'success'
-    }
-    res.send(result);
+    // the string identifier for the resource you want to lock
+
+    let resource = `locks:${data.lowProtocol}:${data.remotePort}`;
+    // the maximum amount of time you want the resource locked in milliseconds,
+    // keeping in mind that you can extend the lock up until
+    // the point when it expires
+    var ttl = 1000;
+
+    redlock.lock(resource, ttl, async function(err, lock) {
+        // we failed to lock the resource
+        if (err) {
+            let result = {
+                success: false,
+                data: t,
+                info: '有其地方正在操作此远程端口，请换一个端口!'
+            }
+            res.send(result);
+            return;
+        }
+        // we have the lock
+        let isPortUsed = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
+        console.log('isPortUsed', isPortUsed)
+        if (!isPortUsed) {
+            let result = {
+                success: false,
+                data: data,
+                info: '端口已被占用,请换一个远程端口!'
+            }
+            res.send(result);
+            return;
+        }
+        try {
+            let count = Tunnel.count({
+                where: {
+                    remotePort: data.remotePort,
+                    lowProtocol: data.lowProtocol
+                }
+            });
+            if (count > 0) {
+                let result = {
+                    success: false,
+                    data: data,
+                    info: '远程端口号已被使用,请换其他端口号'
+                }
+                res.send(result);
+                return;
+            }
+            count = await Tunnel.count({
+                where: {
+                    localIp: data.localIp,
+                    localPort: data.localPort,
+                    clientId: data.clientId,
+                    lowProtocol: data.lowProtocol
+                }
+            });
+            if (count > 0) {
+                let result = {
+                    success: false,
+                    data: data,
+                    info: '您已添加了一个同样的本地映射'
+                }
+                res.send(result);
+                return;
+            }
+            let t = await Tunnel.create(data);
+            if (t) {
+                eventEmitter.emit(commandType.ADD_TUNNEL, req.body.clientId, t);
+            }
+            let result = {
+                success: true,
+                data: t,
+                info: 'success'
+            }
+            res.send(result);
+        } catch (error) {
+            logger.error(error);
+        }
+
+        // unlock your resource when you are done
+        lock.unlock(function(err) {
+            // we weren't able to reach redis; your lock will eventually
+            // expire, but you probably want to log this error
+            if (err)
+                logger.error(err);
+        });
+    });
+
+
 });
 
 

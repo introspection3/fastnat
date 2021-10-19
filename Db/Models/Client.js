@@ -1,8 +1,12 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db');
+let primaryDataType = DataTypes.BIGINT;
+if (sequelize.getDialect() === 'sqlite') {
+    primaryDataType = DataTypes.INTEGER;
+}
 const Client = sequelize.define('client', {
 
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id: { type: primaryDataType, primaryKey: true, autoIncrement: true },
 
     // 在这里定义模型属性
     authenKey: {

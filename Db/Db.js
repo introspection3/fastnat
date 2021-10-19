@@ -30,12 +30,12 @@ if (dbConfig.dbType === 'sqlite') {
     const sequelize = new Sequelize({
         dialect: 'sqlite',
         storage: sqliteFilePath,
-        logging: sql=>{
-            if( dbConfig.logging){
+        logging: sql => {
+            if (dbConfig.logging) {
                 console.log(sql);
             }
-         },
-       // timezone: '+08:00'
+        },
+        // timezone: '+08:00'
     });
 
     module.exports = sequelize;
@@ -43,15 +43,16 @@ if (dbConfig.dbType === 'sqlite') {
     const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
         host: dbConfig.host,
         dialect: dbConfig.dbType,
-        logging: sql=>{
-           if( dbConfig.logging){
-               console.log(sql);
-           }
+        dialectOptions: {
+            supportBigNumbers: true
+        },
+        logging: sql => {
+            if (dbConfig.logging) {
+                console.log(sql);
+            }
         },
         timezone: '+08:00'
     });
 
     module.exports = sequelize;
 }
-
-

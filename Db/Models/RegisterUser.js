@@ -1,9 +1,12 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db');
-
+let primaryDataType = DataTypes.BIGINT;
+if (sequelize.getDialect() === 'sqlite') {
+    primaryDataType = DataTypes.INTEGER;
+}
 const RegisterUser = sequelize.define('registerUser', {
 
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id: { type: primaryDataType, primaryKey: true, autoIncrement: true },
 
     username: {
         type: DataTypes.STRING(50),

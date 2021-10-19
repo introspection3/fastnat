@@ -7,6 +7,7 @@ const redisPort = redisConfig.port;
 const redisPassword = redisConfig.password;
 const redisUserName = redisConfig.username || '';
 const Redis = require("ioredis");
+const Redlock = require('redlock');
 const redisClient = new Redis({
     port: redisPort, // Redis port
     host: redisHost, // Redis host
@@ -20,11 +21,34 @@ const redisClient = new Redis({
     maxRetriesPerRequest: 40
 });
 
+
+let redlock = new Redlock(
+    // you should have one client for each independent redis node
+    // or cluster
+    [redisClient], {
+        // the expected clock drift; for more details
+        // see http://redis.io/topics/distlock
+        driftFactor: 0.01, // multiplied by lock ttl to determine drift time
+
+        // the max number of times Redlock will attempt
+        // to lock a resource before erroring
+        retryCount: 10,
+
+        // the time in ms between attempts
+        retryDelay: 200, // time in ms
+
+        // the max time in ms randomly added to retries
+        // to improve performance under high contention
+        // see https://www.awsarchitectureblog.com/2015/03/backoff.html
+        retryJitter: 200 // time in ms
+    }
+);
 let _isConnected = false;
 
 // init();
 module.exports = {
     redisClient,
+    redlock,
     connectAsync: async() => {
         if (_isConnected === false) {
             await redisClient.connect();

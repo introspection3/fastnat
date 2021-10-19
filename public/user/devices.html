@@ -39,6 +39,23 @@
             margin-left: 10px;
         }
         
+        .tunnelType input {
+            position: relative;
+            top: 2px;
+            cursor: pointer;
+            margin: 0px 0px;
+        }
+        
+        .tunnelType label {
+            cursor: pointer;
+        }
+        
+        div.tunnelTypeOption {
+            display: inline-block;
+            margin-left: 20px;
+            cursor: pointer;
+        }
+        
         .fitem {
             margin-top: 10px;
         }
@@ -97,42 +114,42 @@
             <div class="fitem">
                 <span>映射类型:</span>
                 <div class="tunnelType">
-                    <div style="display: inline;">
+                    <div class="tunnelTypeOption">
                         <label for="tcp">tcp</label>
                         <input type="radio" name="type" checked='checked' id='tcp' value="tcp" />
                     </div>
-                    <div style="display: inline;">
+                    <div class="tunnelTypeOption">
                         <label for="udp">udp</label>
                         <input type="radio" name="type" id='udp' value="udp" />
                     </div>
-                    <div style="display: inline;">
+                    <div class="tunnelTypeOption">
                         <label for="socks5">socks5</label>
                         <input type="radio" name="type" id='socks5' value="socks5" />
                     </div>
-                    <div style="display: inline;">
+                    <div class="tunnelTypeOption">
                         <label for="http">http</label>
                         <input type="radio" name="type" id='http' value="http" />
                     </div>
-                    <div style="display: inline;">
+                    <div class="tunnelTypeOption">
                         <label for="p2p">p2p</label>
                         <input type="radio" name="type" id='p2p' value="p2p" />
                     </div>
                 </div>
             </div>
             <div class="fitem">
-                <input name="p2pPassword" class="easyui-textbox" data-options="prompt: '设置用于P2P连接所用的密码',validType: 'minLength[6]'" required="true" label="P2P密码:" style="width:100%" />
+                <input name="p2pPassword" class="easyui-textbox" value="7777777" data-options="prompt: '设置用于P2P连接所用的密码',validType: 'minLength[6]'" required="true" label="P2P密码:" style="width:100%" />
             </div>
 
             <div class="fitem">
                 <input id='localIp' name="localIp" class="easyui-textbox" value="127.0.0.1" data-options="prompt: '本地映射IP',validType: 'ip'" required="true" label="本地IP:" style="width:100%" />
             </div>
             <div class="fitem">
-                <input name="localPort" class="easyui-numberspinner" placeholder="本地待映射端口" required="true" data-options="min:5000,max:65535,prompt: '待映射端口'" style="width:60%;" label="本地端口:" />
+                <input name="localPort" class="easyui-numberspinner" placeholder="本地待映射端口" required="true" data-options="min:1024,max:65535,prompt: '待映射端口'" style="width:60%;" label="本地端口:" />
+                <span>(1024-65535)</span>
             </div>
             <div class="fitem">
-                <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '网外访问端口'" style="width:60%;" label="对外端口:" />
-                <span>(可通过此端口进行公网访问)</span>
-                <div id='rb'></div>
+                <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '外网访问端口'" style="width:60%;" label="对外端口:" />
+                <span>(5000-65535)</span>
             </div>
             <input type="hidden" id='clientId' name="clientId" />
             <input type="hidden" id='id' name="id" />
@@ -167,6 +184,7 @@
             $("#toolbarDeviceDelete").linkbutton("enable");
             _clientId = rowData.id;
             $("#toolbarTunnelAdd").linkbutton("enable");
+            tunnelUrl = '/tunnel/add'
 
         }
 
@@ -355,7 +373,12 @@
                     return v;
                 },
                 success: function(result) {
+                    result = JSON.parse(result);
                     $('#dialogTunnel').dialog('close');
+                    if (result.success == false) {
+                        $.messager.alert('提示', result.info);
+                        return;
+                    }
                     $('#tableDevicesTunnel').datagrid('reload');
                 }
             });

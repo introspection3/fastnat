@@ -1,9 +1,12 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db');
-
+let primaryDataType = DataTypes.BIGINT;
+if (sequelize.getDialect() === 'sqlite') {
+    primaryDataType = DataTypes.INTEGER;
+}
 const Connector = sequelize.define('connector', {
 
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id: { type: primaryDataType, primaryKey: true, autoIncrement: true },
 
     name: {
         type: DataTypes.STRING(50),
@@ -12,7 +15,7 @@ const Connector = sequelize.define('connector', {
     },
 
     p2pTunnelId: {
-        type: DataTypes.INTEGER,
+        type: primaryDataType,
         allowNull: false,
         comment: 'p2p tunnel id',
         references: {
@@ -53,7 +56,7 @@ const Connector = sequelize.define('connector', {
         comment: 'is available'
     },
     clientId: {
-        type: Sequelize.INTEGER,
+        type: primaryDataType,
         references: {
             model: 'clients', //  refers to table name
             key: 'id', //  refers to column name in fathers table

@@ -1,13 +1,13 @@
 const getPort = require('get-port');
 
 
-/**is Tcp Port Available
+/**is Tcp Port Available Aysnc
  * 
  * @param {Number} port 
  * @returns {Boolean} is port available
  */
 async function isTcpPortAvailableAysnc(port) {
-    let result = await getPort({ port: port });
+    let result = await isTcpPortAvailable({ port: port });
     return result === port;
 }
 
@@ -20,7 +20,7 @@ function isTcpPortAvailable(testPort) {
     return getPort({ port: testPort }).then((value) => {
         return Promise.resolve(testPort == value);
     }, (reaon) => {
-        return Promise.reject(reaon);
+        return Promise.resolve(false);
     });
 }
 

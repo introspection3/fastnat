@@ -1,8 +1,12 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db');
+let primaryDataType = DataTypes.BIGINT;
+if (sequelize.getDialect() === 'sqlite') {
+    primaryDataType = DataTypes.INTEGER;
+}
 const Tunnel = sequelize.define('tunnel', {
 
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id: { type: primaryDataType, primaryKey: true, autoIncrement: true },
 
     type: {
         type: DataTypes.STRING(50),
@@ -75,7 +79,7 @@ const Tunnel = sequelize.define('tunnel', {
         comment: 'is available'
     },
     clientId: {
-        type: Sequelize.INTEGER,
+        type: primaryDataType,
         references: {
             model: 'clients', //  refers to table name
             key: 'id', //  refers to column name in fathers table
