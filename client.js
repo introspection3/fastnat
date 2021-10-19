@@ -300,16 +300,23 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
     socketIOSocket.on(commandType.DELETE_TUNNEL, async(id) => {
         id = Number.parseInt(id);
         logger.trace(commandType.DELETE_TUNNEL + id);
-        ALL_TUNNEL_MAP.get(id).stop();
-        ALL_TUNNEL_MAP.delete(id);
+        let tun = ALL_TUNNEL_MAP.get(id);
+        if (tun) {
+            tun.stop();
+            ALL_TUNNEL_MAP.delete(id);
+        } else {
+            logger.warn('id=' + id + ",type=" + typeof id);
+        }
+
     });
 
     socketIOSocket.on(commandType.START_TUNNEL, async(data) => {
-
+        logger.trace(commandType.START_TUNNEL + data.id);
+        //await createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, data, socketIOSocket);
     });
 
     socketIOSocket.on(commandType.ADD_TUNNEL, async(data) => {
-
+        await createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, data, socketIOSocket);
     });
 
 }
@@ -377,58 +384,7 @@ async function main() {
 
     const ownClientId = clientResult.data.id;
     for (const tunnelItem of currentClientTunnels) {
-
-        if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
-            let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
-                host: defaultConfig.host,
-                port: defaultBridgeConfig.port
-            });
-            await httpTunnelClient.start();
-            ALL_TUNNEL_MAP.set(tunnelItem.id, httpTunnelClient);
-            continue;
-        }
-
-        if (tunnelItem.type === 'tcp' || tunnelItem.type === 'p2p') {
-            let tcpTunnelClient = new TcpTunnelClient(
-                authenKey, {
-                    host: defaultConfig.host,
-                    port: defaultBridgeConfig.port
-                }, {
-                    host: tunnelItem.localIp,
-                    port: tunnelItem.localPort
-                }
-            );
-            await tcpTunnelClient.startTunnel(tunnelItem.id);
-            tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
-                isWorkingFine = false;
-                logger.error('Tcp tunnel server has stoped:' + err);
-            });
-            tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
-                isWorkingFine = false;
-                logger.error('process will quit for : ' + data.info);
-                PlatfromUtil.processExit();
-            });
-            ALL_TUNNEL_MAP.set(tunnelItem.id, tcpTunnelClient);
-            continue;
-        }
-
-        if (tunnelItem.type === 'socks5') {
-            let sock5TunnelClient = new Sock5TunnelClient(authenKey, tunnelItem, {
-                host: defaultConfig.host,
-                port: defaultBridgeConfig.port
-            });
-            await sock5TunnelClient.start();
-            ALL_TUNNEL_MAP.set(tunnelItem.id, sock5TunnelClient);
-            continue;
-        }
-
-        if (tunnelItem.type === 'udp') {
-            let udpTunnelClient = new UdpTunnelClient(socketIOSocket, tunnelItem);
-            udpTunnelClient.start();
-            ALL_TUNNEL_MAP.set(tunnelItem.id, udpTunnelClient);
-            continue;
-        }
-
+        createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, tunnelItem, socketIOSocket);
     }
     let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
@@ -441,10 +397,71 @@ async function main() {
             logger.error(result.info);
         }
     }
-
-
     startEdgeProcessAsync(authenKey)
     timerCheckServerStatus();
+}
+
+/**
+ * create tunnel
+ * @param {String} authenKey 
+ * @param {Number} defaultConfigHost 
+ * @param {Number} defaultBridgeConfigPort 
+ * @param {Tunnel} tunnelItem 
+ * @param {*} socketIOSocket 
+ * @returns 
+ */
+async function createTunnel(authenKey, defaultConfigHost, defaultBridgeConfigPort, tunnelItem, socketIOSocket) {
+    logger.trace(`create tunnel,tunnel.id=${tunnelItem.id},remotePort=${tunnelItem.remotePort},type=${tunnelItem.type}`)
+    if (tunnelItem.type === 'http' || tunnelItem.type === 'https') {
+        let httpTunnelClient = new HttpTunnelClient(authenKey, tunnelItem, {
+            host: defaultConfigHost,
+            port: defaultBridgeConfigPort
+        });
+        await httpTunnelClient.start();
+        ALL_TUNNEL_MAP.set(tunnelItem.id, httpTunnelClient);
+        return;
+    }
+
+    if (tunnelItem.type === 'tcp' || tunnelItem.type === 'p2p') {
+        let tcpTunnelClient = new TcpTunnelClient(
+            authenKey, {
+                host: defaultConfigHost,
+                port: defaultBridgeConfigPort
+            }, {
+                host: tunnelItem.localIp,
+                port: tunnelItem.localPort
+            }
+        );
+        await tcpTunnelClient.startTunnel(tunnelItem.id);
+        tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
+            isWorkingFine = false;
+            logger.error('Tcp tunnel server has stoped:' + err);
+        });
+        tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
+            isWorkingFine = false;
+            logger.error('process will quit for : ' + data.info);
+            PlatfromUtil.processExit();
+        });
+        ALL_TUNNEL_MAP.set(tunnelItem.id, tcpTunnelClient);
+        return;
+    }
+
+    if (tunnelItem.type === 'socks5') {
+        let sock5TunnelClient = new Sock5TunnelClient(authenKey, tunnelItem, {
+            host: defaultConfigHost,
+            port: defaultBridgeConfigPort
+        });
+        await sock5TunnelClient.start();
+        ALL_TUNNEL_MAP.set(tunnelItem.id, sock5TunnelClient);
+        return;
+    }
+
+    if (tunnelItem.type === 'udp') {
+        let udpTunnelClient = new UdpTunnelClient(socketIOSocket, tunnelItem);
+        udpTunnelClient.start();
+        ALL_TUNNEL_MAP.set(tunnelItem.id, udpTunnelClient);
+        return;
+    }
 }
 
 let _timerCheckServerStatusStarted = false;
