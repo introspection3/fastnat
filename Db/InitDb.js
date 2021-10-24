@@ -7,7 +7,8 @@ const logger = require('../Log/logger');
 const N2NServer = require('../N2N/N2NServer');
 const rootPath = require('../Common/GlobalData.js').rootPath;
 const md5 = require('md5');
-let communityListPath = require('path').join(rootPath, 'config', 'community.list');
+const communityListPath = require('path').join(rootPath, 'config', 'community.list');
+const userType = require('./Enums').userType;
 /**
  * 初始化数据库
  * @returns 
@@ -38,6 +39,7 @@ async function initdbdata() {
 
     let user = await RegisterUser.create({
         username: firstUser,
+        userType: userType.normal,
         password: md5(firstUser),
         telphone: '010-123456',
         email: 'fastnat@fastnat.com',
@@ -63,9 +65,7 @@ async function initdbdata() {
     await N2NServer.createUser(communityListPath, 1, '742af98b-e977-48a8-b1c8-1a2a091b93a7');
     await N2NServer.createUser(communityListPath, 2, '742af98b-e977-48a8-b1c8-1a2a091b93a2');
     let clientData = user.clients[0];
-    console.log(JSON.stringify(clientData));
     let clientId = clientData.id;
-
     let tunnel1 = await Tunnel.create({
         type: 'tcp',
         name: 'http代理',
