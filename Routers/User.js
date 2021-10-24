@@ -146,7 +146,7 @@ router.get('/isOnline', async function(req, res, next) {
 
     let result = {
         success: req.session.user != null,
-        data: null,
+        data: req.session.user,
         info: md5('fastnat')
     }
 

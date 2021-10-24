@@ -17,7 +17,12 @@ const RegisterUser = sequelize.define('registerUser', {
             len: [2, 50]
         }
     },
-
+    userType: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: 'normal',
+        comment: 'user type',
+    },
     password: {
         type: DataTypes.STRING(150),
         allowNull: false,

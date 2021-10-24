@@ -4,5 +4,6 @@ module.exports = [
     '/user/vcode',
     '/user/register',
     '/favicon.ico',
-    '/login.html'
+    '/login.html',
+    '/register.html'
 ];

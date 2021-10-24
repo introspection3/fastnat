@@ -181,8 +181,7 @@ async function notify2Client(theCommandType, clientId, data) {
     clientId = Number.parseInt(clientId);
     let allSockets = await defaultNS.fetchSockets();
     let targetSocket = allSockets.find((value, index, array) => {
-        return value.handshake.auth.clientId === clien //////++++
-        tId;
+        return value.handshake.auth.clientId === clientId;
     });
     let result = false;
     if (targetSocket != null) {

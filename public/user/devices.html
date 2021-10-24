@@ -6,60 +6,13 @@
     <title>我的设备</title>
     <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/default/easyui.css" />
     <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/icon.css" />
-
     <script type="text/javascript" src="/libs/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="/libs/easyui/jquery.easyui.min.js"></script>
     <script type="text/javascript" src="/libs/easyui/locale/easyui-lang-zh_CN.js"></script>
     <script type="text/javascript" src='http://cdn.staticfile.org/moment.js/2.24.0/moment.js'></script>
     <script type="text/javascript" src="/libs/easyui/validate.js"></script>
-    <style>
-        .easyui-datagrid .datagrid-thead {
-            padding: 6px 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        body {
-            display: block;
-            margin: 0px;
-        }
-        
-        .fitem {
-            margin: 5px 5px;
-        }
-        
-        .tunnelType {
-            display: inline-block;
-            margin-left: 1%;
-        }
-        
-        .tunnelType div {
-            display: inline;
-            margin-left: 10px;
-        }
-        
-        .tunnelType input {
-            position: relative;
-            top: 2px;
-            cursor: pointer;
-            margin: 0px 0px;
-        }
-        
-        .tunnelType label {
-            cursor: pointer;
-        }
-        
-        div.tunnelTypeOption {
-            display: inline-block;
-            margin-left: 20px;
-            cursor: pointer;
-        }
-        
-        .fitem {
-            margin-top: 10px;
-        }
-    </style>
+    <script type="text/javascript" src="/user/devices.js"></script>
+    <link rel="stylesheet" type="text/css" href="/user/devices.css" />
 </head>
 
 <body>
@@ -67,8 +20,8 @@
         <thead>
             <tr>
                 <th field="ck" checkbox="true"></th>
-                <th data-options="field:'status', width:fixWidth(5)">状态</th>
-                <th data-options="field:'id', width:fixWidth(5)">ID</th>
+                <th data-options="field:'status', width:fixWidth(3)">状态</th>
+                <th data-options="field:'id', width:fixWidth(3)">ID</th>
                 <th data-options="field:'clientName',width:fixWidth(5),'editor':'text'">设备名称</th>
                 <th data-options="field:'authenKey', width:fixWidth(20)">设备Key</th>
                 <th data-options="field:'os',width:fixWidth(15),formatter:tooLongText">设备信息</th>
@@ -76,8 +29,9 @@
                 <th data-options="field:'publicIp',width:fixWidth(8),">出口IP</th>
                 <th data-options="field:'mac',width:fixWidth(9),">MAC地址</th>
                 <th data-options="field:'natType',width:fixWidth(7)">NAT类型</th>
-                <th data-options="field:'createdAt',width:fixWidth(10), formatter:formatDateTime">创建时间</th>
-                <th data-options="field:'updatedAt',width:fixWidth(10), formatter:formatDateTime">更新时间</th>
+                <th data-options="field:'createdAt',width:fixWidth(6), formatter:formatDateTime">创建时间</th>
+                <th data-options="field:'updatedAt',width:fixWidth(8), formatter:formatDateTime">更新时间</th>
+                <th data-options="field:'operator',width:fixWidth(6), formatter:operateFunction">操作</th>
             </tr>
         </thead>
     </table>
@@ -100,7 +54,6 @@
             </tr>
         </thead>
     </table>
-
 
     <div class="easyui-dialog" id="dialogTunnel" style="width:480px;height:400px;display:none;" data-options="title:'添加映射',buttons:'#dialogTunnelButtons',modal:true">
         <form id="fm" method="post">
@@ -137,7 +90,7 @@
                 </div>
             </div>
             <div class="fitem">
-                <input name="p2pPassword" class="easyui-textbox" value="7777777" data-options="prompt: '设置用于P2P连接所用的密码',validType: 'minLength[6]'" required="true" label="P2P密码:" style="width:100%" />
+                <input id="p2pPassword" name="p2pPassword" class="easyui-textbox" value="7777777" data-options="prompt: '设置用于P2P连接所用的密码',validType: 'minLength[6]'" required="true" label="P2P密码:" style="width:100%" />
             </div>
 
             <div class="fitem">
@@ -159,231 +112,7 @@
         <a href="#" class="easyui-linkbutton" onclick="saveTunnel()" data-options="iconCls: 'icon-ok'">确定</a>
         <a href="#" class="easyui-linkbutton" onclick="closeDialog( 'dialogTunnel')" data-options="iconCls: 'icon-cancel'">取消</a>
     </div>
-    <script type="text/javascript">
-        $(function() {
-            $("#toolbarDeviceERedo").linkbutton("disable");
-            $("#toolbarDeviceEdit").linkbutton("disable");
-            $("#toolbarDeviceDelete").linkbutton("disable");
-            $("#toolbarTunnelAdd").linkbutton("disable");
-            $("#toolbarTunnelEdit").linkbutton("disable");
-            $("#toolbarTunnelDelete").linkbutton("disable");
 
-            closeDialog('dialogTunnel');
-        });
-
-        let _clientId = -1;
-        let _tunneId = -1;
-        let tunnelUrl = '/tunnel/add';
-
-        function closeDialog(id) {
-            $('#' + id).dialog('close');
-        }
-
-        function onSelectDevice(rowIndex, rowData) {
-            $("#toolbarDeviceEdit").linkbutton("enable");
-            $("#toolbarDeviceDelete").linkbutton("enable");
-            _clientId = rowData.id;
-            $("#toolbarTunnelAdd").linkbutton("enable");
-            tunnelUrl = '/tunnel/add'
-
-        }
-
-        function onSelectTunnel(rowIndex, rowData) {
-            $("#toolbarTunnelEdit").linkbutton("enable");
-            $("#toolbarTunnelDelete").linkbutton("enable");
-            _tunneId = rowData.id;
-        }
-
-        function fixWidth(percent) {
-            return percent;
-        }
-
-        function tooLongText(value, row, index) {
-            return '<span title=' + value + '>' + value + '</span>'
-        }
-
-        function getDetail(index, selectdata) {
-            if (selectdata) {
-                $('#tableDevicesTunnel').datagrid('reload', {
-                    id: selectdata.id
-                });
-            }
-        }
-
-        function getGridRowIndex(id) {
-            let rows = $('#' + id).datagrid("getSelections");
-            if (rows.length == 0) {
-                return -1;
-            }
-            let index = $('#' + id).datagrid("getRowIndex", rows[0]);
-            return index;
-        }
-
-        function formatDateTime(val, row) {
-            var now = new Date(val);
-            return new moment(now).format('YYYY-MM-DD HH:mm:ss');
-        }
-        let toolbarDeviceEditRow = null;
-        let toolbarDevice = [{
-            text: '添加',
-            id: 'toolbarDeviceAdd',
-            iconCls: 'icon-add',
-            handler: function() {
-                $.messager.defaults = {
-                    ok: "确定",
-                    cancel: "取消"
-                };
-                $.messager.prompt('新建客户端', '请输入客户端名:', function(r) {
-                    if (r) {
-                        $.post('/client/add', {
-                            clientName: r
-                        }, function(result) {
-                            if (result.success) {
-                                $('#tableDevices').datagrid("reload");
-                            }
-                        });
-                    }
-                });
-            }
-        }, {
-            text: '编辑',
-            id: 'toolbarDeviceEdit',
-            iconCls: 'icon-edit',
-            handler: function() {
-                let index = getGridRowIndex('tableDevices');
-                if (index == -1) {
-                    $.messager.alert('提示', '请选择需要编辑的设备');
-                    return;
-                }
-                $("#toolbarDeviceERedo").linkbutton("enable");
-                $('#tableDevices').datagrid('beginEdit', index);
-
-            }
-        }, {
-            text: '取消编辑',
-            id: 'toolbarDeviceERedo',
-            iconCls: 'icon-redo',
-            handler: function() {
-                $('#tableDevices').datagrid("rejectChanges");
-                $("#toolbarDeviceERedo").linkbutton("disable");
-            }
-        }, {
-            text: '删除',
-            iconCls: 'icon-clear',
-            id: 'toolbarDeviceDelete',
-            handler: function() {
-                let index = getGridRowIndex('tableDevices');
-                if (index == -1) {
-                    $.messager.alert('提示', '请选择需要删除的设备');
-                    return;
-                }
-                $.messager.defaults = {
-                    ok: "确定",
-                    cancel: "取消"
-                };
-
-                $.messager.confirm("操作提示", "您确定要删除此设备吗？", function(data) {
-                    if (data) {
-                        let id = $('#tableDevices').datagrid("getSelections")[0].id;
-                        $.post('/client/delete', {
-                            id: id
-                        }, function(result) {
-                            $('#tableDevices').datagrid('reload');
-                        });
-                    }
-                });
-            }
-        }, '-', {
-            text: '保存',
-            iconCls: 'icon-save',
-            id: 'toolbarDeviceSave',
-            handler: function() {
-                let index = getGridRowIndex('tableDevices');
-                if (index == -1) {
-                    $.messager.alert('提示', '请选择需要保存的设备');
-                    return;
-                }
-                $('#tableDevices').datagrid('endEdit', index);
-                let row = $('#tableDevices').datagrid("getSelections")[0];
-                if (row.clientName.trim() === '') {
-                    $.messager.alert('提示', '客户名称不能为空');
-                    return;
-                }
-                $.post('/client/update', {
-                    id: row.id,
-                    clientName: row.clientName
-                }, function(result) {
-                    $('#tableDevices').datagrid('reload');
-                });
-            }
-        }];
-
-        let toolbarTunnel = [{
-            text: '添加',
-            id: 'toolbarTunnelAdd',
-            iconCls: 'icon-add',
-            handler: function() {
-                $('#dialogTunnel').dialog('open').dialog('setTitle', '添加映射');
-                $('#fm').form('clear');
-                $('#localIp').textbox('setValue', '127.0.0.1');
-                $("input[type='radio' ][name='type' ][value='tcp' ]").prop('checked', 'true');
-            }
-        }, {
-            text: '编辑',
-            id: 'toolbarTunnelEdit',
-            iconCls: 'icon-edit',
-            handler: function() {
-                $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
-                let row = $('#tableDevicesTunnel').datagrid('getSelected');
-                tunnelUrl = '/tunnel/update'
-                $('#fm').form('load', row);
-            }
-        }, {
-            text: '删除',
-            id: 'toolbarTunnelDelete',
-            iconCls: 'icon-cut',
-            handler: function() {
-                let index = getGridRowIndex('tableDevicesTunnel');
-                if (index == -1) {
-                    $.messager.alert('提示', '请选择需要删除映射');
-                    return;
-                }
-                $.messager.confirm("操作提示", "您确定要删除此映射吗？", function(data) {
-                    if (data) {
-                        let id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
-                        $.post('/tunnel/delete', {
-                            id: id,
-                            clientId: _clientId
-                        }, function(result) {
-                            $('#tableDevicesTunnel').datagrid('reload');
-                        });
-                    }
-                });
-            }
-        }];
-
-
-        function saveTunnel() {
-            $('#fm').form('submit', {
-                url: tunnelUrl,
-                onSubmit: function() {
-                    let v = $(this).form('validate');
-                    $('#clientId').val(_clientId);
-                    $('#id').val(_tunneId);
-                    return v;
-                },
-                success: function(result) {
-                    result = JSON.parse(result);
-                    $('#dialogTunnel').dialog('close');
-                    if (result.success == false) {
-                        $.messager.alert('提示', result.info);
-                        return;
-                    }
-                    $('#tableDevicesTunnel').datagrid('reload');
-                }
-            });
-        }
-    </script>
 </body>
 
 </html>

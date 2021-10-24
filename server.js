@@ -103,7 +103,7 @@ app.use('/user', require('./Routers/User'));
 app.use('/client', require('./Routers/Client'));
 app.use('/tunnel', require('./Routers/Tunnel'));
 app.use('/n2n', require('./Routers/N2N'));
-
+app.use('/connector', require('./Routers/Connector'));
 app.get('/checkServerStatus', function(req, res) {
     res.send({ success: true });
 });

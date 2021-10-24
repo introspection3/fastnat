@@ -3,7 +3,7 @@
         "dbType": "mysql",
         "host": "0.0.0.0",
         "port": 3306,
-        "logging": false,
+        "logging": true,
         "database": "database",
         "username": "root",
         "password": "root"
@@ -46,5 +46,32 @@
         "host2": "192.168.1.4",
         "port": 10090,
         "communityKey": "fastnatkey"
+    },
+    "user": {
+        "normal": {
+            "client": {
+                "count": 2
+            },
+            "tunnel": {
+                "count": 3
+            }
+        },
+        "vip": {
+            "client": {
+                "count": 3
+            },
+            "tunnel": {
+                "count": 5
+            }
+        },
+        "admin": {
+            "client": {
+                "count": 100
+            },
+            "tunnel": {
+                "count": 100
+            }
+        }
+
     }
 }

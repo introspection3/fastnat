@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>设备P2P连接</title>
+    <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/default/easyui.css" />
+    <link rel="stylesheet" type="text/css" href="/libs/easyui/themes/icon.css" />
+    <script type="text/javascript" src="/libs/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="/libs/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/libs/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src='http://cdn.staticfile.org/moment.js/2.24.0/moment.js'></script>
+    <script type="text/javascript" src="/libs/easyui/validate.js"></script>
+    <script type="text/javascript" src="/user/connectors.js"></script>
+    <link rel="stylesheet" type="text/css" href="/user/devices.css" />
+</head>
+
+<body>
+
+    <table id='tableDevicesConnector' class="easyui-datagrid" style="width:100%;" data-options="onSelect:onSelectConnector,idField:'id', fitColumns:true,checkbox:true,striped: true,rownumbers:true,singleSelect:true,url:'/connector/getByClientId?id='+_clientId,method:'get',toolbar:toolbarConnector">
+        <thead>
+            <tr>
+                <th field="ck" checkbox="true"></th>
+                <th data-options="field:'id', width:fixWidth(5)">ID</th>
+                <th data-options="field:'name',width:fixWidth(5)">名称</th>
+                <th data-options="field:'p2pTunnelId', width:fixWidth(10)">p2p映射Id</th>
+                <th data-options="field:'p2pPassword',width:fixWidth(5)">p2p密码</th>
+                <th data-options="field:'localPort',width:fixWidth(5),'editor':'numberbox'">本地端口</th>
+                <th data-options="field:'createdAt',width:fixWidth(10), formatter:formatDateTime">创建时间</th>
+                <th data-options="field:'updatedAt',width:fixWidth(10), formatter:formatDateTime">更新时间</th>
+            </tr>
+        </thead>
+    </table>
+
+    <div class="easyui-dialog" id="dialogConnector" style="width:380px;height:300px;display:none;" data-options="title:'添加P2P映射连接',buttons:'#dialogButtons',modal:true">
+        <form id="fm" method="post">
+            <div class="fitem">
+                <input name="name" class="easyui-textbox" data-options="prompt:'给此连接取一个名',validType:'minLength[2]'" required="true" label="连接名称:" style="width:100%">
+            </div>
+            <div class="fitem">
+                <input name="p2pTunnelId" class="easyui-textbox" required="true" data-options="prompt:'映射Id',validType:'username'" label="映射Id" style="width:100%" />
+            </div>
+
+            <div class="fitem">
+                <input id="p2pPassword" name="p2pPassword" class="easyui-textbox" value="7777777" data-options="prompt: 'P2P连接所用的密码',validType: 'minLength[6]'" required="true" label="P2P密码:" style="width:100%" />
+            </div>
+
+            <div class="fitem">
+                <input name="localPort" class="easyui-numberspinner" placeholder="本地访问端口" required="true" data-options="min:1024,max:65535,prompt: '本地访问端口'" style="width:60%;" label="本地访问端口:" />
+                <span>(1024-65535)</span>
+            </div>
+            <input type="hidden" id='clientId' name="clientId" />
+            <input type="hidden" id='id' name="id" />
+        </form>
+    </div>
+    <div id="dialogButtons">
+        <a href="#" class="easyui-linkbutton" onclick="saveConnector()" data-options="iconCls: 'icon-ok'">确定</a>
+        <a href="#" class="easyui-linkbutton" onclick="closeDialog('dialogConnector')" data-options="iconCls: 'icon-cancel'">取消</a>
+    </div>
+
+</body>
+
+</html>

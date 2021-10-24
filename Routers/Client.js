@@ -4,6 +4,9 @@ const { RegisterUser, Client, Tunnel, Connector } = require('../Db/Models');
 const logger = require('../Log/logger');
 const { v4: uuidv4 } = require('uuid');
 const eventEmitter = require('../Communication/CommunicationEventEmiter').eventEmitter;
+const ServerConfig = require('../Common/ServerConfig');
+const userConfig = ServerConfig.user;
+const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 
 router.use(function(req, res, next) {
     next();
@@ -62,7 +65,28 @@ router.post('/delete', async(req, res, next) => {
 router.post('/update', async(req, res, next) => {
     let clientName = req.body.clientName;
     let id = req.body.id;
-    let count = await Client.update({
+    let count = await Client.count({
+        where: {
+            registerUserId: req.session.user.id,
+            clientName: clientName,
+            id: {
+                [Op.ne]: id
+            }
+        }
+    });
+    console.log('count', count);
+    if (count > 0) {
+        let result = {
+            success: false,
+            data: null,
+            info: '此设备名已被您使用，请重换一个设备名'
+        }
+        res.send(result);
+        return;
+    }
+
+
+    count = await Client.update({
         clientName: clientName
     }, {
         where: {
@@ -70,9 +94,46 @@ router.post('/update', async(req, res, next) => {
             registerUserId: req.session.user.id
         }
     });
+
+    let result = {
+        success: true,
+        data: null,
+        info: 'success'
+    }
+    res.send(result);
 });
 
 router.post('/add', async(req, res, next) => {
+    let count = await Client.count({
+        where: {
+            registerUserId: req.session.user.id
+        }
+    });
+
+    if (count >= userConfig[req.session.user.userType].client.count) {
+        let result = {
+            success: false,
+            data: null,
+            info: '您的设备数已达最大值，您可以通过捐助获取VIP权限'
+        }
+        res.send(result);
+        return;
+    }
+    count = await Client.count({
+        where: {
+            registerUserId: req.session.user.id,
+            clientName: req.body.clientName
+        }
+    });
+    if (count > 0) {
+        let result = {
+            success: false,
+            data: null,
+            info: '此设备名已被您使用，请重换一个设备名'
+        }
+        res.send(result);
+        return;
+    }
     let client = await Client.create({
         authenKey: uuidv4(),
         clientName: req.body.clientName,

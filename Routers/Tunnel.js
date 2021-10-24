@@ -6,6 +6,9 @@ const eventEmitter = require('../Communication/CommunicationEventEmiter').eventE
 const redlock = require('../Utils/RedisUtil').redlock;
 const NetUtil = require('../Utils/NetUtil');
 const logger = require('../Log/logger');
+const ServerConfig = require('../Common/ServerConfig');
+const userConfig = ServerConfig.user;
+const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 
 router.get('/getP2PInfo', async function(req, res, next) {
     let authenKey = req.params.authenKey;
@@ -64,6 +67,25 @@ router.post('/update', async(req, res, next) => {
             success: false,
             data: req.body,
             info: 'client\' user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+    count = await Tunnel.count({
+        where: {
+            uniqueName: req.body.uniqueName,
+            id: {
+                [Op.ne]: req.body.id
+            }
+        }
+    });
+
+    if (count > 0) {
+        let result = {
+            success: false,
+            data: null,
+            info: '网路唯一名已被使用，请使用其他名称'
         }
         res.send(result);
         return;
@@ -250,14 +272,12 @@ router.post('/add', async(req, res, next) => {
 
     let count = await Client.count({
         where: {
-            id: req.body.clientId,
-            isAvailable: true
+            id: req.body.clientId
         },
         include: [{
                 model: RegisterUser,
                 required: true,
                 where: {
-                    isAvailable: 1,
                     id: req.session.user.id
                 }
             }
@@ -270,6 +290,38 @@ router.post('/add', async(req, res, next) => {
             success: false,
             data: req.body,
             info: 'client user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+    count = await Tunnel.count({
+        where: {
+            uniqueName: req.body.uniqueName
+        }
+    });
+
+    if (count > 0) {
+        let result = {
+            success: false,
+            data: null,
+            info: '网路唯一名已被使用，请使用其他名称'
+        }
+        res.send(result);
+        return;
+    }
+
+    count = await Tunnel.count({
+        where: {
+            clientId: req.body.clientId
+        }
+    });
+
+    if (count >= userConfig[req.session.user.userType].tunnel.count) {
+        let result = {
+            success: false,
+            data: null,
+            info: '此设备的映射数已达最大值，您可以通过捐助获取VIP权限'
         }
         res.send(result);
         return;
@@ -308,7 +360,7 @@ router.post('/add', async(req, res, next) => {
         }
         // we have the lock
         let isPortUsed = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
-        console.log('isPortUsed', isPortUsed)
+        logger.trace('isPortUsed+' + isPortUsed)
         if (!isPortUsed) {
             let result = {
                 success: false,
@@ -319,7 +371,8 @@ router.post('/add', async(req, res, next) => {
             return;
         }
         try {
-            let count = Tunnel.count({
+
+            let count = await Tunnel.count({
                 where: {
                     remotePort: data.remotePort,
                     lowProtocol: data.lowProtocol

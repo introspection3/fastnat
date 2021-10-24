@@ -12,6 +12,7 @@ const fs = require('fs').promises;
 const AesUtil = require('../Utils/AesUtil');
 const communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
 const logger = require('../Log/logger');
+const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 
 router.get('/:authenKey', async function(req, res, next) {
     let client = await Client.findOne({

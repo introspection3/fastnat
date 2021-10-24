@@ -20,7 +20,7 @@
             <h1 class="app-logo">FastNat系统管理</h1>
         </div>
         <ul style="float:right;">
-            <li><a href="javascript:opentab('user/profile','个人中心');" title="个人信息"><i class="fa fa-user"></i> <label data-init="user['UserName']">&nbsp;</label>, <label>欢迎回来！</label></a></li>
+            <li><a href="javascript:opentab('user/profile','个人中心');" title="个人信息"><i class="fa fa-user"></i> <label id='lblUserName'>&nbsp;</label>, <label>欢迎回来！</label></a></li>
             <li><a href="/user/quit" title="安全退出"><i class="fa fa-sign-out"></i> 退出登录</a></li>
             <li><a href="javascript:void(0);" id="fullscreen" title="全屏" onclick="$(document).toggleFullScreen();" style="display:none;"><i class="fa fa-expand"></i></a></li>
         </ul>
@@ -28,11 +28,9 @@
     <div data-options="region:'west'" title="功能导航" style="width:150px;">
         <div id="nav" class="easyui-panel" style="height: 100%; border: 0">
             <div id="nav-accordion" class="easyui-accordion" data-options="fit:true,border:true">
-                <div title="系统设置" data-options="iconCls:'icon-reload'" style="overflow:auto; ">
-                    <a title='我的设备'><i class='fa'></i>我的设备</a>
-                    <a title='我的设备4'><i class='fa'></i>我的设备</a>
-                    <a href='#mydevices' title='我的设备3'><i class='fa'></i>我的设备</a>
-                    <a href='#mydevices' title='我的设备2'><i class='fa'></i>我的设备2</a>
+                <div title="我的FastNat" data-options="iconCls:'icon-reload'" style="overflow:auto; ">
+                    <a title='设备管理' page='/user/devices.html'><i class='fa'></i>设备管理</a>
+                    <a title='P2P管理' page='/user/connectors.html'><i class='fa'></i>P2P管理</a>
                 </div>
             </div>
         </div>
@@ -48,7 +46,7 @@
         </div>
     </div>
     <div data-options="region:'south'" style="height:30px; padding:5px 10px;">
-
+        <span style="text-align: center;display: block;margin: 0 auto;">fastnat版权所有</span>
     </div>
     <div class="ajax-loadding"><i class="fa fa-spinner fa-pulse"></i> 正在处理，请稍候......</div>
     <div id="dlg-main"></div>
@@ -60,10 +58,9 @@
         <div name="refresh" data-options="iconCls:'icon-reload'">刷新</div>
     </div>
     <script type="text/javascript" src="libs/jquery.fullscreen-min.js"></script>
-    <script type="text/javascript" src="api/init.json"></script>
     <script type="text/javascript" src="app.js"></script>
     <script type="text/javascript" src="libs/easyui/locale/easyui-lang-zh_CN.js"></script>
-    <script type="text/javascript" src="libs/easyui/ux.js"></script>
+
 </body>
 
 </html>

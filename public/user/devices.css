@@ -1,0 +1,46 @@
+.easyui-datagrid .datagrid-thead {
+    padding: 6px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body {
+    display: block;
+    margin: 0px;
+}
+
+.fitem {
+    margin: 5px 5px;
+}
+
+.tunnelType {
+    display: inline-block;
+    margin-left: 1%;
+}
+
+.tunnelType div {
+    display: inline;
+    margin-left: 10px;
+}
+
+.tunnelType input {
+    position: relative;
+    top: 2px;
+    cursor: pointer;
+    margin: 0px 0px;
+}
+
+.tunnelType label {
+    cursor: pointer;
+}
+
+div.tunnelTypeOption {
+    display: inline-block;
+    margin-left: 20px;
+    cursor: pointer;
+}
+
+.fitem {
+    margin-top: 10px;
+}

@@ -6,8 +6,8 @@
  }
 
  //定义全局变量
- let app = WebPlus || {};
-
+ let app = {};
+ let user = {};
  //全局格式化
  let globalFormatters = {
      //用户
@@ -260,31 +260,19 @@
      return cmenu;
  }
 
- //显示图片选择dialog
- function chooseImage() {
-     let textbox = $(this);
-
-     BrowseServer(textbox);
- }
-
- //上传或选择文件
- function BrowseServer(inputId, resourceType) {
-     resourceType = resourceType || 'Images';
-     loadResources({
-         id: 'js-ckfinder',
-         src: '/libs/ckfinder/ckfinder.js'
-     })
-
-     CKFinder.popup({
-         basePath: '/libs/ckfinder/',
-         resourceType: resourceType,
-         selectActionFunction: function(fileUrl, data) {
-             if (inputId.constructor == String)
-                 $(inputId).val(fileUrl);
-             else
-                 inputId.textbox('setValue', fileUrl);
-         }
-     });
+ function addTab(title, href) {
+     let mainTabs = $('#mainTabs');
+     if (mainTabs.tabs('exists', title)) {
+         mainTabs.tabs('select', title);
+     } else {
+         let content = ` <iframe scrolling="yes" src="${href}" frameborder="0" height="99%" width="100%"  frameborder="0" ></iframe> `;
+         mainTabs.tabs('add', {
+             title: title,
+             content: content,
+             plugin: 'clients',
+             closable: true
+         });
+     }
  }
 
  //页面加载完成执行
@@ -292,6 +280,9 @@
      $.get('/user/isOnline', function(result) {
          if (result.success === false) {
              location.href = '/login.html';
+         } else {
+             user = result.data;
+             $('#lblUserName').html(user.username);
          }
      });
      let mainTabs = $('#mainTabs');
@@ -309,10 +300,10 @@
          $('#nav-accordion a').removeClass('active');
          $(event.target).addClass('active');
          let title = $(event.target).attr('title');
+         let href = $(event.target).attr('page');
          if (mainTabs.tabs('exists', title)) {
              mainTabs.tabs('select', title);
          } else {
-             let href = '/user/devices.html';
              let content = ` <iframe scrolling="yes" src="${href}" frameborder="0" height="99%" width="100%"  frameborder="0" ></iframe> `;
              mainTabs.tabs('add', {
                  title: title,
