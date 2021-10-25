@@ -42,13 +42,47 @@ router.get('/getByClientId', async function(req, res, next) {
 
 router.post('/delete', async(req, res, next) => {
     let id = Number.parseInt(req.body.id);
-    let count = await Connector.destroy({
+    let clientId = Number.parseInt(req.body.clientId);
+
+    let count = await Client.count({
+        where: {
+            id: clientId
+        },
+        include: [{
+                model: RegisterUser,
+                required: true,
+                where: {
+                    id: req.session.user.id
+                }
+            },
+            {
+                model: Connector,
+                required: true,
+                where: {
+                    id: id
+                }
+            }
+
+        ]
+    });
+
+    if (count === 0) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: 'client &id & user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+    count = await Connector.destroy({
         where: {
             id: id
         }
     })
     if (count > 0) {
-        eventEmitter.emit(commandType.DELETE_CONNECTOR, id);
+        eventEmitter.emit(commandType.DELETE_CONNECTOR, clientId, id);
     }
     res.send({
         success: true,
@@ -59,9 +93,44 @@ router.post('/delete', async(req, res, next) => {
 
 router.post('/update', async(req, res, next) => {
     let id = Number.parseInt(req.body.id);
-    let count = await Connector.count({
+    let clientId = Number.parseInt(req.body.clientId);
+
+    let count = await Client.count({
         where: {
-            clientId: req.body.clientId * 1,
+            id: clientId
+        },
+        include: [{
+                model: RegisterUser,
+                required: true,
+                where: {
+                    id: req.session.user.id
+                }
+            },
+            {
+                model: Connector,
+                required: true,
+                where: {
+                    id: id
+                }
+            }
+
+        ]
+    });
+
+    if (count === 0) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: 'client &id & user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+
+    count = await Connector.count({
+        where: {
+            clientId: clientId,
             name: req.body.name,
             id: {
                 [Op.ne]: id
@@ -136,8 +205,32 @@ router.post('/update', async(req, res, next) => {
 });
 
 router.post('/add', async(req, res, next) => {
+    let clientId = Number.parseInt(req.body.clientId);
+    let count = await Client.count({
+        where: {
+            id: clientId
+        },
+        include: [{
+            model: RegisterUser,
+            required: true,
+            where: {
+                id: req.session.user.id
+            }
+        }]
+    });
 
-    let count = await Connector.count({
+    if (count === 0) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: 'client &id & user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+
+    count = await Connector.count({
         where: {
             clientId: req.body.clientId,
             name: req.body.name

@@ -82,7 +82,7 @@ let toolbarConnector = [{
     handler: function() {
         $('#dialogConnector').dialog('open').dialog('setTitle', '编辑映射');
         let row = $('#tableDevicesConnector').datagrid('getSelected');
-        _connectorUrl = '/tunnel/update'
+        _connectorUrl = '/connector/update'
         $('#fm').form('load', row);
     }
 }, {
@@ -98,7 +98,7 @@ let toolbarConnector = [{
         $.messager.confirm("操作提示", "您确定要删除此映射吗？", function(data) {
             if (data) {
                 let id = $('#tableDevicesConnector').datagrid("getSelections")[0].id;
-                $.post('/tunnel/delete', {
+                $.post('/connector/delete', {
                     id: id,
                     clientId: _clientId
                 }, function(result) {

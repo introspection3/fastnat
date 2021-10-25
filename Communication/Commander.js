@@ -198,7 +198,7 @@ io.on('connection', async(socket) => {
         logger.debug('udpTunnelServer stopped');
         fn({
             success: true,
-            info: 'start sucess',
+            info: 'stop sucess',
             data: udpTunnelItemOption
         });
     });
@@ -223,8 +223,11 @@ eventEmitter.on(commandType.ADD_TUNNEL, async function(clientId, data) {
 eventEmitter.on(commandType.DELETE_CONNECTOR, async function(clientId, data) {
     notify2Client(commandType.DELETE_CONNECTOR, clientId, data);
 });
+eventEmitter.on(commandType.ADD_CONNECTOR, async function(clientId, data) {
+    notify2Client(commandType.ADD_CONNECTOR, clientId, data);
+});
 async function notify2Client(theCommandType, clientId, data) {
-
+    console.log(theCommandType)
     clientId = Number.parseInt(clientId);
     let allSockets = await defaultNS.fetchSockets();
     let targetSocket = allSockets.find((value, index, array) => {

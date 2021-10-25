@@ -18,7 +18,7 @@
          this.ResSet.forEach(function(item) {
              item.UtpClient.close();
              item.TcpSocket.end();
-             item.TcpSocket.destory();
+             item.TcpSocket.destroy();
          })
          this.ResSet.clear();
      }

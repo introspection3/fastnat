@@ -223,7 +223,7 @@ router.post('/delete', async(req, res, next) => {
     let clientId = req.body.clientId;
     let count = await Client.count({
         where: {
-            id: req.body.clientId,
+            id: req.body.clientId * 1,
             isAvailable: true
         },
         include: [{
@@ -272,7 +272,7 @@ router.post('/add', async(req, res, next) => {
 
     let count = await Client.count({
         where: {
-            id: req.body.clientId
+            id: req.body.clientId * 1
         },
         include: [{
                 model: RegisterUser,
@@ -313,7 +313,7 @@ router.post('/add', async(req, res, next) => {
 
     count = await Tunnel.count({
         where: {
-            clientId: req.body.clientId
+            clientId: req.body.clientId * 1
         }
     });
 
@@ -406,7 +406,7 @@ router.post('/add', async(req, res, next) => {
             }
             let t = await Tunnel.create(data);
             if (t) {
-                eventEmitter.emit(commandType.ADD_TUNNEL, req.body.clientId, t);
+                eventEmitter.emit(commandType.ADD_TUNNEL, req.body.clientId * 1, t);
             }
             let result = {
                 success: true,

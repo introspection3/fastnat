@@ -37,6 +37,22 @@ async function getVirtualIpAsync(clientId) {
 
 router.post('/delete', async(req, res, next) => {
     let id = Number.parseInt(req.body.id);
+    let count = await Client.count({
+        where: {
+            registerUserId: req.session.user.id,
+            id: id
+        }
+    });
+    if (count === 0) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: 'client user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
     await Connector.destroy({
         where: {
             clientId: id
@@ -47,7 +63,7 @@ router.post('/delete', async(req, res, next) => {
             clientId: id
         }
     })
-    let count = await Client.destroy({
+    count = await Client.destroy({
         where: {
             id: id,
             registerUserId: req.session.user.id
@@ -65,8 +81,25 @@ router.post('/delete', async(req, res, next) => {
 
 router.post('/update', async(req, res, next) => {
     let clientName = req.body.clientName;
-    let id = req.body.id;
+    let id = Number.parseInt(req.body.id);
+
     let count = await Client.count({
+        where: {
+            registerUserId: req.session.user.id,
+            id: id
+        }
+    });
+    if (count === 0) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: 'client user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+    count = await Client.count({
         where: {
             registerUserId: req.session.user.id,
             clientName: clientName,

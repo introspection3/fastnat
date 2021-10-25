@@ -37,7 +37,7 @@ function fixWidth(percent) {
 
 
 function operateFunction(value, row, index) {
-    let title = `[${row.clientName}]连接的P2P映射`;
+    let title = `[${row.clientName}]P2P连接`;
     let tabTitle = encodeURI(title);
     return `<a href="#" onclick="openConnector(${row.id},'${tabTitle}')">P2P连接</a>`;
 }

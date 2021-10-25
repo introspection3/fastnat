@@ -346,17 +346,17 @@
      mainTabMenus.menu({
          onClick: function(item) {
              let curTabTitle = $(this).data("curTabTitle");
+
              switch (item.name) {
                  case 'refresh':
-                     let tab = $('#mainTabs').tabs('getSelected');
-                     //获得当前选中的tab 的href
-                     let url = $(tab.panel('options')).attr('href');
-                     tab.panel('refresh', url);
+                     let tab = mainTabs.tabs('getSelected');
+                     let ii = tab.find('iframe')[0];
+                     $(ii).attr('src', $(ii).attr('src'));
                      break;
                  case 'close':
                      mainTabs.tabs('close', curTabTitle);
                      break;
-                 case 'Other':
+                 case 'other':
                      $('.tabs-inner span').each(function(i, n) {
                          let t = $(n).text();
                          if (i > 0 && curTabTitle !== t) {
@@ -369,7 +369,7 @@
                      break;
                  default:
                      $('.tabs-inner span').each(function(i, n) {
-                         if (i > 2) {
+                         if (i > 0) {
                              let t = $(n).text();
                              mainTabs.tabs('close', t);
                          }

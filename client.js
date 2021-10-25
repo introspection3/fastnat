@@ -317,7 +317,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         } else {
             logger.warn('id=' + id + ",type=" + typeof id);
         }
-        currentClientTunnelsMap.delete(data.id);
+        currentClientTunnelsMap.delete(id);
     });
 
     socketIOSocket.on(commandType.START_TUNNEL, async(data) => {
@@ -330,16 +330,17 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         currentClientTunnelsMap.set(data.id, data);
     });
 
-    socketIOSocket.on(commandType.DELETE_CONNECTOR, async(data) => {
-        let cc = ALL_CONNECTOR_MAP.get(data.id);
+    socketIOSocket.on(commandType.DELETE_CONNECTOR, async(id) => {
+        let cc = ALL_CONNECTOR_MAP.get(id);
         if (cc) {
             cc.stop();
-            ALL_CONNECTOR_MAP.delete(data.id);
+            ALL_CONNECTOR_MAP.delete(id);
         }
     });
     //   await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId);
 
     socketIOSocket.on(commandType.ADD_CONNECTOR, async(data) => {
+        logger.trace(commandType.ADD_CONNECTOR + JSON.stringify(data));
         await createConnector(data, authenKey, socketIOSocket, ownClientId);
     });
 
@@ -414,7 +415,7 @@ async function main() {
     for (const connectorItem of connectors) {
         await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId);
     }
-    startEdgeProcessAsync(authenKey)
+    startEdgeProcessAsync(authenKey);
     timerCheckServerStatus();
 }
 
@@ -576,8 +577,6 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
             SocketIOCreateUtpClientMap.set(targetClientId, []);
         }
 
-
-
         SocketIOCreateUtpClientMap.get(targetClientId).push(res);
 
         let freeUdpPort = await NetUtil.freeUdpPortAsync();
@@ -712,12 +711,16 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
     server.listen(connectorItem.localPort, () => {
         logger.debug("p2p local tcp  server started at port=" + connectorItem.localPort);
     });
-    p2pConnectorResouce.TcpServer = server;
-    //!!!!!!!!!!!!!!!!!!!!!!!!!
-    setTimeout(() => {
-        console.log('close server test');
+    server.on('error', (e) => {
+        if (e.code === 'EADDRINUSE') {
+            logger.error('p2p local tcp  server address in use,connectorItem.localPort=' + connectorItem.localPort);
+        } else {
+            logger.error(e);
+        }
         server.close();
-    }, 20 * 1000);
+    });
+
+    p2pConnectorResouce.TcpServer = server;
 }
 
 

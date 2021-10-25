@@ -19,8 +19,6 @@ class TcpTunnelServer {
      */
     constructor(tcpServerConfig) {
         this.tcpServer = new TcpServer(tcpServerConfig);
-        //同一个socket必然同一个tunnelProxyServers
-        this.tunnelProxyServers = new Map();
     }
 
 
@@ -130,7 +128,7 @@ class TcpTunnelServer {
         });
 
         proxyServer.listen(config, () => {
-            logger.trace("Tcp  server started success:" + JSON.stringify(proxyServer.address()));
+            logger.trace("tcp  proxyServer started success:" + JSON.stringify(proxyServer.address()));
         });
 
         return proxyServer;
@@ -149,16 +147,15 @@ class TcpTunnelServer {
         }
 
         logger.trace('client told server stop proxy server:' + tunnel.remotePort);
-        await this.stopTunnelProxyServer(tunnel);
+        await this.stopTunnelProxyServer(data, socket);
     }
 
-    async stopTunnelProxyServer(data) {
+    async stopTunnelProxyServer(data, socket) {
         let tunnelId = data.tunnelId;
         let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
         await ClusterData.deleteAsync(authenKeyAndTunnelId);
-        let server = this.tunnelProxyServers.get(tunnelId);
+        let server = socket.proxyServer;
         if (server != null) {
-            this.tunnelProxyServers.delete(tunnelId);
             server.close();
             logger.trace('stopTunnelProxyServer:tunnelId=' + tunnelId);
         }
@@ -226,7 +223,6 @@ class TcpTunnelServer {
         socket.authenKeyAndTunnelId = authenKeyAndTunnelId;
         logger.trace('start creating tcp proxy server:' + tunnel.remotePort);
         let server = this.createProxyServer(socket, { host: '0.0.0.0', port: tunnel.remotePort });
-        this.tunnelProxyServers.set(data.tunnelId, server);
         socket.proxyServer = server;
     }
 
