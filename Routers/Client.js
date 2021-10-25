@@ -7,6 +7,7 @@ const eventEmitter = require('../Communication/CommunicationEventEmiter').eventE
 const ServerConfig = require('../Common/ServerConfig');
 const userConfig = ServerConfig.user;
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+const commandType = require('../Communication/CommandType').commandType;
 
 router.use(function(req, res, next) {
     next();
@@ -53,7 +54,7 @@ router.post('/delete', async(req, res, next) => {
         }
     });
     if (count > 0) {
-        eventEmitter.emit('delete.client', id);
+        eventEmitter.emit(commandType.DELETE_CLIENT, id);
     }
     res.send({
         success: true,
@@ -74,7 +75,6 @@ router.post('/update', async(req, res, next) => {
             }
         }
     });
-    console.log('count', count);
     if (count > 0) {
         let result = {
             success: false,

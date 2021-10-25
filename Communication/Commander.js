@@ -17,6 +17,7 @@ const DefaultConfig = require('../Common/DefaultConfig');
 const eventEmitter = require('./CommunicationEventEmiter').eventEmitter;
 const commandType = require('./CommandType').commandType;
 
+const UpdTunnelServerMap = new Map();
 /**
  * is valid token
  * @param {auth} auth 
@@ -98,7 +99,7 @@ io.on('connection', async(socket) => {
     //------------------------------------------
     updateClientStatus(currentConnectSocketIoClientId, 1);
     //------------------------------------------
-    socket.on('p2p.request.open', async(data, fn) => {
+    socket.on(commandType.P2P_REQUEST_OPEN, async(data, fn) => {
 
         let targetClientId = data.targetClientId;
         let result = false;
@@ -109,7 +110,7 @@ io.on('connection', async(socket) => {
         });
         if (targetSocket != null) {
             result = true;
-            targetSocket.emit('p2p.request.open', data, (ret) => {
+            targetSocket.emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
                 fn(ret);
             });
         } else {
@@ -151,7 +152,50 @@ io.on('connection', async(socket) => {
         //----------------内部自动维护其生命周期-------------------------------
         let udpTunnelServer = new UpdTunnelServer(udpTunnelItemOption, socket);
         udpTunnelServer.start();
+        UpdTunnelServerMap.set(udpTunnelItemOption.id, udpTunnelServer);
         logger.debug('udpTunnelServer started');
+        fn({
+            success: true,
+            info: 'start sucess',
+            data: udpTunnelItemOption
+        });
+
+    });
+
+
+    socket.on('client.stopUpdTunnelServer', async(udpTunnelItemOption, fn) => {
+
+        let tunnelId = udpTunnelItemOption.id;
+        let authenKey = socket.handshake.auth.token;
+
+        let client = await Client.findOne({
+            where: {
+                isAvailable: true,
+                authenKey: authenKey
+            },
+            include: [{
+                model: Tunnel,
+                required: true,
+                where: {
+                    isAvailable: 1,
+                    id: tunnelId
+                }
+            }]
+        });
+
+        if (client == null) {
+            fn({
+                success: false,
+                info: 'error client authenKey',
+                data: null
+            });
+            return;
+        }
+        let udpServer = UpdTunnelServerMap.get(udpTunnelItemOption.id);
+        if (udpServer) {
+            udpServer.stop();
+        }
+        logger.debug('udpTunnelServer stopped');
         fn({
             success: true,
             info: 'start sucess',
@@ -175,6 +219,9 @@ eventEmitter.on(commandType.DELETE_TUNNEL, async function(clientId, data) {
 });
 eventEmitter.on(commandType.ADD_TUNNEL, async function(clientId, data) {
     notify2Client(commandType.ADD_TUNNEL, clientId, data);
+});
+eventEmitter.on(commandType.DELETE_CONNECTOR, async function(clientId, data) {
+    notify2Client(commandType.DELETE_CONNECTOR, clientId, data);
 });
 async function notify2Client(theCommandType, clientId, data) {
 

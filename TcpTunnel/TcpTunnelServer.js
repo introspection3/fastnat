@@ -64,6 +64,7 @@ class TcpTunnelServer {
     createProxyServer(fromSocket, config) {
 
         let proxyServer = net.createServer(async(proxySocket) => {
+
             let info = `remote{${proxySocket.remoteAddress}:${proxySocket.remotePort}}->local:{${proxySocket.localAddress}:${proxySocket.localPort}}`;
             let commingInfo = `proxyServer new tcp  client ` + info;
             logger.trace(commingInfo);
@@ -96,8 +97,14 @@ class TcpTunnelServer {
 
             });
 
-            proxySocket.on('end', () => {
+            proxySocket.on('close', (hadError) => {
+                logger.debug(`proxyServer socket close hadError=` + hadError);
+                proxySocket.end();
+                proxySocket.destroy();
+                middleServer.close();
+            });
 
+            proxySocket.on('end', () => {
                 logger.debug(`proxyServer socket end--` + info);
                 proxySocket.end();
                 proxySocket.destroy();
@@ -120,9 +127,8 @@ class TcpTunnelServer {
 
         proxyServer.on('error', (err) => {
             logger.error(`proxyServer error ${proxyServer.address()} ` + err);
-
         });
-        logger.log('config' + JSON.stringify(config))
+
         proxyServer.listen(config, () => {
             logger.trace("Tcp  server started success:" + JSON.stringify(proxyServer.address()));
         });

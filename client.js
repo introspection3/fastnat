@@ -47,6 +47,7 @@ const p2pmtu = defaultConfig.p2p.mtu;
 checkType(isNumber, p2pmtu, 'p2pmtu');
 //---------------p2p config -----e-----
 
+const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
 
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
@@ -72,9 +73,18 @@ if (defaultConfig.monitor.enabled) {
 let isWorkingFine = true;
 let currentClientNatType = null;
 const currentClientTunnelsMap = new Map();
+
+/**UTP服务端所创建的UTP Node Server资源 */
 const SocketIOCreateUtpServerMap = new Map();
+
+/**本地P2P连接创建时所创建的资源 */
 const SocketIOCreateUtpClientMap = new Map();
+
+/**所有创建的Tunnel通讯实例 */
 const ALL_TUNNEL_MAP = new Map();
+
+/**所有创建的Connector通讯实例 */
+const ALL_CONNECTOR_MAP = new Map();
 
 /**
  * 
@@ -83,7 +93,7 @@ const ALL_TUNNEL_MAP = new Map();
  */
 async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
 
-    socketIOSocket.on('p2p.request.open', async(data, fn) => {
+    socketIOSocket.on(commandType.P2P_REQUEST_OPEN, async(data, fn) => {
         if (currentClientTunnelsMap.has(data.targetTunnelId)) {
             let tunnel = currentClientTunnelsMap.get(data.targetTunnelId);
             if (data.targetTunnelId != tunnel.id || data.targetP2PPassword != tunnel.p2pPassword) {
@@ -307,7 +317,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
         } else {
             logger.warn('id=' + id + ",type=" + typeof id);
         }
-
+        currentClientTunnelsMap.delete(data.id);
     });
 
     socketIOSocket.on(commandType.START_TUNNEL, async(data) => {
@@ -317,6 +327,20 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
 
     socketIOSocket.on(commandType.ADD_TUNNEL, async(data) => {
         await createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, data, socketIOSocket);
+        currentClientTunnelsMap.set(data.id, data);
+    });
+
+    socketIOSocket.on(commandType.DELETE_CONNECTOR, async(data) => {
+        let cc = ALL_CONNECTOR_MAP.get(data.id);
+        if (cc) {
+            cc.stop();
+            ALL_CONNECTOR_MAP.delete(data.id);
+        }
+    });
+    //   await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId);
+
+    socketIOSocket.on(commandType.ADD_CONNECTOR, async(data) => {
+        await createConnector(data, authenKey, socketIOSocket, ownClientId);
     });
 
 }
@@ -388,19 +412,22 @@ async function main() {
     }
     let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
-        let result = await getClientP2PInfoByTunnelId(authenKey, connectorItem.p2pTunnelId);
-        if (result.success) {
-            let targetClientId = result.data.clientId;
-            let remotePort = result.data.remotePort;
-            startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey);
-        } else {
-            logger.error(result.info);
-        }
+        await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId);
     }
     startEdgeProcessAsync(authenKey)
     timerCheckServerStatus();
 }
 
+async function createConnector(connectorItem, authenKey, socketIOSocket, ownClientId) {
+    let result = await getClientP2PInfoByTunnelId(authenKey, connectorItem.p2pTunnelId);
+    if (result.success) {
+        let targetClientId = result.data.clientId;
+        let remotePort = result.data.remotePort;
+        await startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey);
+    } else {
+        logger.error(result.info);
+    }
+}
 /**
  * create tunnel
  * @param {String} authenKey 
@@ -505,23 +532,61 @@ async function startEdgeProcessAsync(authenKey) {
  * @param {string} authenKey current authenKey
  */
 async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey) {
-
+    let p2pConnectorResouce = new P2PConnectorResouce(connectorItem.id);
+    ALL_CONNECTOR_MAP.set(p2pConnectorResouce.ConnectorId, p2pConnectorResouce);
     let server = net.createServer(async(tcpSocket) => {
-        let socketAddressInfo = `remoteAddress=${tcpSocket.remoteAddress}:${tcpSocket.remotePort},localAddress=${tcpSocket.localAddress}:${tcpSocket.localPort}`;
-        //-----------utpclient----------
+        let socketAddressInfo = `p2p tcp socket from remoteAddress=${tcpSocket.remoteAddress}:${tcpSocket.remotePort},localAddress=${tcpSocket.localAddress}:${tcpSocket.localPort}`;
         let utpclient = new Node({ mtu: p2pmtu });
+        let res = { UtpClient: utpclient, TcpSocket: tcpSocket };
+        p2pConnectorResouce.ResSet.add(res);
+        tcpSocket.on('close', (hadError) => {
+            logger.debug('connector tcpSocket on socket close,hadError=' + hadError);
+            utpclient.close();
+            tcpSocket.end();
+            tcpSocket.destroy();
+            p2pConnectorResouce.deleteRes(res);
+        });
+
+        tcpSocket.on('end', () => {
+            logger.debug(`connector tcpSocket on socket end,` + socketAddressInfo);
+            utpclient.close();
+            tcpSocket.destroy();
+            p2pConnectorResouce.deleteRes(res);
+        });
+
+        tcpSocket.on('error', (err) => {
+            logger.debug('connector tcpSocket on socket error ' + err);
+            utpclient.close();
+            tcpSocket.end();
+            tcpSocket.destroy();
+            p2pConnectorResouce.deleteRes(res);
+        });
+
+        tcpSocket.on('timeout', () => {
+            logger.debug('connector tcpSocket on socket timeout');
+            utpclient.close();
+            tcpSocket.end();
+            tcpSocket.destroy();
+            p2pConnectorResouce.deleteRes(res);
+        });
+
+
+
         if (SocketIOCreateUtpClientMap.has(targetClientId) === false) {
             SocketIOCreateUtpClientMap.set(targetClientId, []);
         }
-        logger.warn('targetClientId', targetClientId);
-        SocketIOCreateUtpClientMap.get(targetClientId).push({ UtpClient: utpclient, TcpSocket: tcpSocket });
+
+
+
+        SocketIOCreateUtpClientMap.get(targetClientId).push(res);
 
         let freeUdpPort = await NetUtil.freeUdpPortAsync();
         await UpnpUtil.addMap(freeUdpPort, freeUdpPort);
+
         utpclient.bind(freeUdpPort, async() => {
 
             let udpSocket = utpclient.getUdpSocket();
-            logger.debug('p2p connector utpclient bindPort=' + udpSocket.address().port);
+            logger.trace('p2p connector utpclient bindPort=' + udpSocket.address().port);
 
             //--------向tracker汇报--------------------------
 
@@ -549,7 +614,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                     }
                     logger.info(`p2p client remote address info:` + JSON.stringify(message));
                     //通知对应的客户端进行同时打洞操作
-                    socketIOSocket.emit('p2p.request.open', {
+                    socketIOSocket.emit(commandType.P2P_REQUEST_OPEN, {
                         targetTunnelId: connectorItem.p2pTunnelId,
                         targetP2PPassword: connectorItem.p2pPassword,
                         connectorclientId: ownClientId,
@@ -559,14 +624,11 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         socketIOSocketId: socketIOSocket.id
                     }, (backData) => {
                         logger.trace('backData:' + JSON.stringify(backData));
-                        if (backData.success == false) {
+                        if (backData.success == false) { //因对方不支持而不能创建P2P
                             logger.warn(`can't connect to p2p client for:` + backData.info);
                             utpclient.close();
                             logger.warn('start failover to tcp tunnel');
-                            // tcpSocket.end();//------failover
-                            //----fallover connect to tcp server---s-
                             let tcpClient = failoverTcp(remotePort, tcpSocket);
-                            //----fallover connect to tcp server---e
                             return;
                         }
                         //---------tryConnect2Public------
@@ -578,17 +640,15 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
 
                             if (!success) {
                                 utpclient.close();
-                                // tcpSocket.end(); //注意观察
-                                //----fallover connect to tcp server---s-
                                 let tcpClient = failoverTcp(remotePort, tcpSocket);
-                                //----fallover connect to tcp server---e
                                 return;
                             }
 
                             utpclient.on('timeout', () => {
-                                console.log('p2p connector: connect timeout');
+                                logger.trace('p2p connector: connect timeout');
                                 utpclient.close();
                                 tcpSocket.end();
+                                tcpSocket.destroy();
                             });
 
                             utpclient.connect(server.port, server.address, (utpSocket) => {
@@ -604,27 +664,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                                 });
                                 //------------------这个时候的tcpsocket才能正式使用---------------
                                 tcpSocket.pipe(utpSocket); //--
-                                tcpSocket.on('end', () => {
-                                    logger.debug(`connector tcp  server on socket end,` + socketAddressInfo);
-                                    utpclient.close();
-                                    tcpSocket.end();
-                                    tcpSocket.destroy();
-                                });
 
-                                tcpSocket.on('error', (err) => {
-                                    logger.debug('connector tcp  server on socket error ' + err);
-                                    utpclient.close();
-                                    tcpSocket.end();
-                                    tcpSocket.destroy();
-                                });
-
-                                tcpSocket.on('timeout', () => {
-                                    logger.debug('connector tcp  server on socket timeout');
-                                    utpclient.close();
-                                    tcpSocket.end();
-                                    tcpSocket.destroy();
-                                });
-                                //-------------------------------------------------e----------------
                             });
                         });
                         //------------------
@@ -637,10 +677,10 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
             if (isStun) {
                 stun.request(`${p2pHost}:${trackerPort}`, { socket: udpSocket }, (err, res) => {
                     if (err) {
-                        console.error(err);
+                        logger.error(`stun.request error,` + err);
                     } else {
                         const { address, port } = res.getXorAddress();
-                        console.log('your ip', address, port);
+                        logger.trace(`local public address is ${address}:${port}`);
                     }
                 });
             } else {
@@ -666,11 +706,18 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
         });
 
     });
-
+    server.on('close', () => {
+        logger.debug("p2p local tcp  server closed, port=" + connectorItem.localPort);
+    });
     server.listen(connectorItem.localPort, () => {
         logger.debug("p2p local tcp  server started at port=" + connectorItem.localPort);
     });
-
+    p2pConnectorResouce.TcpServer = server;
+    //!!!!!!!!!!!!!!!!!!!!!!!!!
+    setTimeout(() => {
+        console.log('close server test');
+        server.close();
+    }, 20 * 1000);
 }
 
 
@@ -735,6 +782,17 @@ function failoverTcp(remotePort, tcpSocket) {
         tcpSocket.end();
         tcpSocket.destroy();
         logger.trace('Tcp Client error: ' + err + " ," + addressStr);
+    });
+
+    tcpSocket.on('close', (hadError) => {
+        tcpClient.end();
+        tcpClient.destroy();
+    });
+
+    tcpSocket.on('error', (err) => {
+        logger.warn('failoverTcp.tcpSocket.error' + err);
+        tcpClient.end();
+        tcpClient.destroy();
     });
 }
 

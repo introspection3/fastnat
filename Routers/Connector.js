@@ -13,6 +13,8 @@ const AesUtil = require('../Utils/AesUtil');
 const communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
 const logger = require('../Log/logger');
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+const { commandType } = require('../Communication/CommandType');
+const eventEmitter = require('../Communication/CommunicationEventEmiter').eventEmitter;
 
 router.get('/getByClientId', async function(req, res, next) {
     if (!req.query.id) {
@@ -40,12 +42,14 @@ router.get('/getByClientId', async function(req, res, next) {
 
 router.post('/delete', async(req, res, next) => {
     let id = Number.parseInt(req.body.id);
-    await Connector.destroy({
+    let count = await Connector.destroy({
         where: {
             id: id
         }
     })
-
+    if (count > 0) {
+        eventEmitter.emit(commandType.DELETE_CONNECTOR, id);
+    }
     res.send({
         success: true,
         data: id,
@@ -94,8 +98,12 @@ router.post('/update', async(req, res, next) => {
         res.send(result);
         return;
     }
-
-    let data = {
+    let oldData = await Connector.findOne({
+        where: {
+            id: id
+        }
+    });
+    let newData = {
         name: req.body.name,
         p2pTunnelId: req.body.p2pTunnelId * 1,
         p2pPassword: req.body.p2pPassword,
@@ -104,16 +112,23 @@ router.post('/update', async(req, res, next) => {
         createdAt: new Date(),
         updatedAt: new Date(),
     };
-    data.id = id;
-    await Connector.update(data, {
+    newData.id = id;
+    await Connector.update(newData, {
         where: {
             id: id
         }
     });
 
+    if (!(oldData.localPort == newData.localPort && oldData.p2pTunnelId == newData.p2pTunnelId && oldData.p2pPassword == newData.p2pPassword)) {
+        eventEmitter.emit(commandType.DELETE_CONNECTOR, clientId, id);
+        setTimeout(() => {
+            eventEmitter.emit(commandType.ADD_CONNECTOR, clientId, newData);
+        }, 1000);
+    }
+
     let result = {
         success: true,
-        data: data,
+        data: newData,
         info: 'success'
     }
     res.send(result);
@@ -153,7 +168,21 @@ router.post('/add', async(req, res, next) => {
         res.send(result);
         return;
     }
-
+    count = await Tunnel.count({
+        where: {
+            id: req.body.p2pTunnelId * 1,
+            p2pPassword: req.body.p2pPassword
+        }
+    });
+    if (count === 0) {
+        let result = {
+            success: false,
+            data: null,
+            info: '连接此映射时发现您给的映射Id或者p2p密码有误'
+        }
+        res.send(result);
+        return;
+    }
     let cc = await Connector.create({
         name: req.body.name,
         p2pTunnelId: req.body.p2pTunnelId * 1,
@@ -164,7 +193,7 @@ router.post('/add', async(req, res, next) => {
         isAvailable: 1,
         clientId: req.body.clientId * 1
     });
-
+    eventEmitter.emit(commandType.ADD_CONNECTOR, cc.clientId, cc);
     res.send({
         success: true,
         data: cc,

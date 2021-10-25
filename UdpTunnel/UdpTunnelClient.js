@@ -39,9 +39,12 @@ class UdpTunnelClient {
     }
 
     stop() {
-        this.socketIOSocket.off(this.eventName);
         this.destoryAllUdpClient();
         clearInterval(this._checkUdpClientTimer);
+        this.socketIOSocket.emit('client.stopUpdTunnelServer', this.udpTunnelItemOption, (backData) => {
+            logger.trace('client recevie client.stopUpdTunnelServer,tunnel.id=' + this.udpTunnelItemOption.id);
+        });
+        this.socketIOSocket.off(this.eventName);
     }
 
     destoryAllUdpClient() {
