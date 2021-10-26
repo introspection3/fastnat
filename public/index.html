@@ -16,7 +16,7 @@
 
 <body class="easyui-layout">
     <div id="app-header" data-options="region:'north'" style="height:40px; color:#fefefe; border:0; overflow:hidden;">
-        <div style="float:left; width:150px;">
+        <div style="float:left; width:180px;">
             <h1 class="app-logo">FastNat系统管理</h1>
         </div>
         <ul style="float:right;">
@@ -25,20 +25,18 @@
             <li><a href="javascript:void(0);" id="fullscreen" title="全屏" onclick="$(document).toggleFullScreen();" style="display:none;"><i class="fa fa-expand"></i></a></li>
         </ul>
     </div>
-    <div data-options="region:'west'" title="功能导航" style="width:150px;">
+    <div data-options="region:'west'" title="功能导航" style="width:180px;">
         <div id="nav" class="easyui-panel" style="height: 100%; border: 0">
             <div id="nav-accordion" class="easyui-accordion" data-options="fit:true,border:true">
-                <div title="我的FastNat" data-options="iconCls:'icon-reload'" style="overflow:auto; ">
+                <div title="我的FastNat" data-options="iconCls:'icon-man'" style="overflow:auto; ">
                     <a title='设备管理' page='/user/devices.html'><i class='fa'></i>设备管理</a>
-                    <a title='P2P管理' page='/user/connectors.html'><i class='fa'></i>P2P管理</a>
                 </div>
             </div>
         </div>
     </div>
     <div data-options="region:'center'">
         <div id="mainTabs" class="easyui-tabs" data-options="fit:true,border:false,tools:'#tab-tools'" style="margin-left:2px;border-left: 1px solid #ccc;">
-            <div title="首页" data-options="closable:false,href:'html/portal/layout.html'" style="padding:10px; overflow-x:hidden;"></div>
-
+            <div title="首页" data-options="closable:false,href:'/home.html'" style="padding:2px; overflow-x:hidden;"></div>
         </div>
         <div id="tab-tools">
             <a href="#" class="easyui-linkbutton" plain="true" iconCls="icon-add"></a>

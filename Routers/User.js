@@ -9,43 +9,44 @@ const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db/Db');
 const { v4: uuidv4 } = require('uuid');
 const md5 = require('md5');
+const NetUtil = require('../Utils/NetUtil');
 
 router.post('/register', async function(req, res, next) {
-    let info = JSON.parse(req.body.request).record;
+    let info = req.body;
     let result = {
         success: false,
         data: null,
         info: ''
     };
 
-    let existUser = await RegisterUser.count({
+    let count = await RegisterUser.count({
         where: {
             username: info.username
         }
     });
-    if (existUser >= 1) {
+    if (count >= 1) {
         result.success = false;
         result.info = '用户名已存在';
         res.send(result);
         return;
     }
-    existUser = await RegisterUser.count({
+    count = await RegisterUser.count({
         where: {
             telphone: info.telphone
         }
     });
-    if (existUser >= 1) {
+    if (count >= 1) {
         result.success = false;
         result.info = '此的电话已被使用';
         res.send(result);
         return;
     }
-    existUser = await RegisterUser.count({
+    count = await RegisterUser.count({
         where: {
-            telphone: info.email
+            email: info.email
         }
     });
-    if (existUser >= 1) {
+    if (count >= 1) {
         result.success = false;
         result.info = '此邮箱已被使用';
         res.send(result);
@@ -59,18 +60,43 @@ router.post('/register', async function(req, res, next) {
             telphone: info.telphone,
             email: info.email
         }, { t: transaction });
+
         let client1 = await Client.create({
             authenKey: uuidv4(),
             registerUserId: user.id,
-            clientName: '设备1'
+            clientName: '设备1',
+            virtualIp: uuidv4()
         }, { t: transaction });
+
+        let virtualIp = NetUtil.getVirtualIp(client1.id);
+        await Client.update({
+            virtualIp: virtualIp
+        }, {
+            where: {
+                id: client1.id
+            }
+        }, { t: transaction });
+
         let client2 = await Client.create({
             authenKey: uuidv4(),
             registerUserId: user.id,
-            clientName: '设备2'
+            clientName: '设备2',
+            virtualIp: uuidv4()
         }, { t: transaction });
+
+        virtualIp = NetUtil.getVirtualIp(client2.id);
+        await Client.update({
+            virtualIp: virtualIp
+        }, {
+            where: {
+                id: client2.id
+            }
+        }, { t: transaction });
+
         await transaction.commit();
         result.success = true;
+        req.session.user = user;
+        req.session.role = 'user';
     } catch (error) {
         await transaction.rollback();
         result.success = false;

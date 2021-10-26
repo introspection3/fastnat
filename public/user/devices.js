@@ -2,6 +2,7 @@ $(function() {
     $("#toolbarDeviceERedo").linkbutton("disable");
     $("#toolbarDeviceEdit").linkbutton("disable");
     $("#toolbarDeviceDelete").linkbutton("disable");
+    $("#toolbarDeviceSave").linkbutton("disable");
     $("#toolbarTunnelAdd").linkbutton("disable");
     $("#toolbarTunnelEdit").linkbutton("disable");
     $("#toolbarTunnelDelete").linkbutton("disable");
@@ -108,6 +109,7 @@ let toolbarDevice = [{
             return;
         }
         $("#toolbarDeviceERedo").linkbutton("enable");
+        $("#toolbarDeviceSave").linkbutton("enable");
         $('#tableDevices').datagrid('beginEdit', index);
 
     }
@@ -118,6 +120,7 @@ let toolbarDevice = [{
     handler: function() {
         $('#tableDevices').datagrid("rejectChanges");
         $("#toolbarDeviceERedo").linkbutton("disable");
+        $("#toolbarDeviceSave").linkbutton("disable");
     }
 }, {
     text: '删除',

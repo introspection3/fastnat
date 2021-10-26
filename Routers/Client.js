@@ -8,32 +8,12 @@ const ServerConfig = require('../Common/ServerConfig');
 const userConfig = ServerConfig.user;
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const commandType = require('../Communication/CommandType').commandType;
-
+const NetUtil = require('../Utils/NetUtil');
 router.use(function(req, res, next) {
     next();
 });
 
-function int2iP(num) {
-    var str;
-    var tt = new Array();
-    tt[0] = (num >>> 24) >>> 0;
-    tt[1] = ((num << 8) >>> 24) >>> 0;
-    tt[2] = (num << 16) >>> 24;
-    tt[3] = (num << 24) >>> 24;
-    str = String(tt[0]) + "." + String(tt[1]) + "." + String(tt[2]) + "." + String(tt[3]);
-    return str;
-}
-async function getVirtualIpAsync(clientId) {
-    let num = Number.parseInt(clientId);
-    if (num > 184549374) {
-        logger.fatal('IP已经被占用完毕,需要重新来过!!!!');
-        return '10.255.255.254';
-    } else {
-        num = 167772161 + num;
-        let result = int2iP(num);
-        return result;
-    }
-}
+
 
 router.post('/delete', async(req, res, next) => {
     let id = Number.parseInt(req.body.id);
@@ -173,7 +153,7 @@ router.post('/add', async(req, res, next) => {
         virtualIp: uuidv4(),
         registerUserId: req.session.user.id
     });
-    let virtualIp = await getVirtualIpAsync(client.id);
+    let virtualIp = NetUtil.getVirtualIp(client.id);
     await Client.update({
         virtualIp: virtualIp
     }, {

@@ -5,5 +5,7 @@ module.exports = [
     '/user/register',
     '/favicon.ico',
     '/login.html',
-    '/register.html'
+    '/register.html',
+    '/home.html',
+    '/reg.html'
 ];
