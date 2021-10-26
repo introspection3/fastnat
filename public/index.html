@@ -12,6 +12,11 @@
     <link rel="stylesheet" type="text/css" href="libs/easyui/themes/default/app.css" />
     <script type="text/javascript" src="libs/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="libs/easyui/jquery.easyui.min.js"></script>
+    <style>
+        ul>li {
+            margin: 2px;
+        }
+    </style>
 </head>
 
 <body class="easyui-layout">
@@ -20,7 +25,7 @@
             <h1 class="app-logo">FastNat系统管理</h1>
         </div>
         <ul style="float:right;">
-            <li><a href="javascript:opentab('user/profile','个人中心');" title="个人信息"><i class="fa fa-user"></i> <label id='lblUserName'>&nbsp;</label>, <label>欢迎回来！</label></a></li>
+            <li><a href="javascript:false&&opentab('user/profile','个人中心');" title="个人信息"><i class="fa fa-user"></i> <label id='lblUserName'>&nbsp;</label>, <label>欢迎回来！</label></a></li>
             <li><a href="/user/quit" title="安全退出"><i class="fa fa-sign-out"></i> 退出登录</a></li>
             <li><a href="javascript:void(0);" id="fullscreen" title="全屏" onclick="$(document).toggleFullScreen();" style="display:none;"><i class="fa fa-expand"></i></a></li>
         </ul>
@@ -29,7 +34,7 @@
         <div id="nav" class="easyui-panel" style="height: 100%; border: 0">
             <div id="nav-accordion" class="easyui-accordion" data-options="fit:true,border:true">
                 <div title="我的FastNat" data-options="iconCls:'icon-man'" style="overflow:auto; ">
-                    <a title='设备管理' page='/user/devices.html'><i class='fa'></i>设备管理</a>
+                    <a id='aDevice' title='设备管理' page='/user/devices.html'><i class='fa'></i>设备管理</a>
                 </div>
             </div>
         </div>

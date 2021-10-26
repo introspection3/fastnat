@@ -1,10 +1,5 @@
 {
-    "authenKey": "742af98b-e977-48a8-b1c8-1a2a091b93a7",
+    "authenKey": "",
     "stunHost": "stun.sipgate.net",
-    "upnpEnabled": false,
-    "//": "管理地址,可用浏览器打开,如http://127.0.0.1:1314",
-    "admin": {
-        "host": "127.0.0.1",
-        "port": "1314"
-    }
+    "upnpEnabled": false
 }

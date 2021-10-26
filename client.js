@@ -26,6 +26,8 @@ const commandType = require('./Communication/CommandType').commandType;
 const rootPath = require('./Common/GlobalData.js').rootPath;
 const SysTray = require('./SysTray/SysTray');
 const getPluginPath = require('./Utils/PluginUtil').getPluginPath;
+const prompt = require('prompt');
+
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -379,7 +381,14 @@ async function main() {
         authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
         clientConfig.authenKey = authenKey;
     }
-
+    if (authenKey === '') {
+        console.log('请输入您的设备KEY');
+        prompt.start();
+        // ask user for the input
+        const promptGetAsync = require('util').promisify(prompt.get);
+        let result = await promptGetAsync(['authenKey']);
+        authenKey = result.authenKey;
+    }
     setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
 
     if (options.restart) {
@@ -399,6 +408,7 @@ async function main() {
     checkNatType(clientConfig);
     if (!clientResult.success) {
         logger.error(clientResult.info);
+        PlatfromUtil.processExit();
         return;
     }
 

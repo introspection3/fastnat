@@ -1,6 +1,7 @@
 const dgram = require('dgram');
 const logger = require('../Log/logger');
 const Socket = require('socket.io-client').Socket;
+const commandType = require('../Communication/CommandType').commandType;
 
 class UdpTunnelClient {
 
@@ -18,7 +19,6 @@ class UdpTunnelClient {
         this.backEventName = 'client.back.udp:' + this.udpTunnelItemOption.id;
         this.socketIOSocket.on(this.eventName, (data) => {
             let msg = data.msg;
-
             let rInfo = data.rInfo;
             let udpClient = this._getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
             //转发udp包
@@ -26,11 +26,11 @@ class UdpTunnelClient {
         });
 
         this.udpClientMap = new Map();
-        this._checkUdpClientTimer = this._checkUdpClient(udpClientTtl);
+        this._checkUdpClientTimer = this._checkUdpClientInterval(udpClientTtl);
     }
 
     start() {
-        this.socketIOSocket.emit('client.createUpdTunnelServer', this.udpTunnelItemOption, (backData) => {
+        this.socketIOSocket.emit(commandType.CLIENT_CREATE_UDP_TUNNEL_SERVER, this.udpTunnelItemOption, (backData) => {
             if (backData.success === false) {
                 logger.error(backData.info);
                 this.stop();
@@ -41,7 +41,7 @@ class UdpTunnelClient {
     stop() {
         this.destoryAllUdpClient();
         clearInterval(this._checkUdpClientTimer);
-        this.socketIOSocket.emit('client.stopUpdTunnelServer', this.udpTunnelItemOption, (backData) => {
+        this.socketIOSocket.emit(commandType.CLIENT_STOP_UDP_TUNNEL_SERVER, this.udpTunnelItemOption, (backData) => {
             logger.trace('client recevie client.stopUpdTunnelServer,tunnel.id=' + this.udpTunnelItemOption.id);
         });
         this.socketIOSocket.off(this.eventName);
@@ -54,7 +54,7 @@ class UdpTunnelClient {
         this.udpClientMap.clear();
     }
 
-    _checkUdpClient(udpClientTtl) {
+    _checkUdpClientInterval(udpClientTtl) {
         let timer = setInterval(() => {
             for (let [key, udpClient] of this.udpClientMap) {
                 let time = parseInt(new Date() - udpClient.lastMessageTime);

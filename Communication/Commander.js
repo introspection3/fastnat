@@ -120,7 +120,7 @@ io.on('connection', async(socket) => {
 
     });
 
-    socket.on('client.createUpdTunnelServer', async(udpTunnelItemOption, fn) => {
+    socket.on(commandType.CLIENT_CREATE_UDP_TUNNEL_SERVER, async(udpTunnelItemOption, fn) => {
 
         let tunnelId = udpTunnelItemOption.id;
         let authenKey = socket.handshake.auth.token;
