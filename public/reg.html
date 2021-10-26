@@ -1,0 +1,86 @@
+﻿<!doctype html>
+<html lang="zh-cn">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link defer href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/fonts/icomoon/style.css" />
+    <link rel="stylesheet" href="css/owl.carousel.min.css" />
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <!-- Style -->
+    <link rel="stylesheet" href="css/style.css" />
+    <title>FastNat用户注册</title>
+</head>
+
+<body>
+    <div class="content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 contents">
+                    <div class="row justify-content-center">
+                        <div class="col-md-12">
+                            <div class="form-block">
+                                <div class="mb-4">
+                                    <h3><strong>FastNat</strong></h3>
+                                    <p class="mb-4">居家办公远程旅行的必备良品，免费不限速，值得拥有</p>
+                                </div>
+                                <form action="#" method="post">
+                                    <div class="form-group first">
+                                        <label for="username">用户名(*)</label>
+                                        <input type="text" minlength="2" maxlength="50" class="form-control" id="username" />
+                                    </div>
+
+                                    <div class="form-group last mb-4">
+                                        <label for="password">密码(*)</label>
+                                        <input type="password" class="form-control" id="password" />
+
+                                    </div>
+                                    <div class="form-group mb-4">
+                                        <label for="email">邮箱(*)</label>
+                                        <input type="email" minlength="4" maxlength="20" class="form-control" id="email" />
+                                    </div>
+                                    <div class="form-group mb-4">
+                                        <label for="telphone">电话(*)</label>
+                                        <input type="text" class="form-control" id="telphone" />
+                                    </div>
+                                    <div class="form-group vcode">
+                                        <label for="vcode">验证码</label>
+                                        <input type="text" minlength="4" maxlength="4" class="form-control" style="width: 70%;" id="vcode" />
+                                        <img src='/user/vcode' id="imgvcode" alt="点击刷新" />
+                                    </div>
+                                    <div class="d-flex mb-5 align-items-center">
+                                        <label class="control control--checkbox mb-0">
+                                            <span class="caption">用户协议</span>
+                                            <input type="checkbox" checked="checked"/>
+                                            <div class="control__indicator"></div>
+                                         </label>
+                                        <span class="ml-auto"><a href="/login.html" class="forgot-pass">登录</a></span>
+                                    </div>
+
+                                    <input id='btnReg' type="button" value="注册" class="btn btn-pill text-white btn-block btn-primary" />
+                                    <div class="social-login text-center">
+                                        <span class="d-block text-center my-4 text-muted"> 请仔细阅读用户协议</span>
+
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/libs/jquery-2.1.4.min.js"></script>
+    <script src="/libs/popper.min.js"></script>
+    <script src="/libs/bootstrap.min.js"></script>
+    <script src="/reg.js"></script>
+</body>
+
+</html>
