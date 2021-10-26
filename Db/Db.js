@@ -1,7 +1,8 @@
 const { Sequelize } = require("sequelize");
 const logger = require('../Log/logger');
-const config = require('../Common/ServerConfig');
-const dbConfig = config.db;
+const serverConfig = require('../Common/ServerConfig');
+const dbConfig = serverConfig.db;
+
 
 if (dbConfig.dbType === 'sqlite') {
     const sqlite = require('sqlite3');

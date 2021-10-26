@@ -9,6 +9,8 @@ const rootPath = require('../Common/GlobalData.js').rootPath;
 const md5 = require('md5');
 const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 const userType = require('./Enums').userType;
+const mysql = require('mysql2/promise');
+const dbConfig = serverConfig.db;
 /**
  * 初始化数据库
  * @returns 
@@ -40,7 +42,7 @@ async function initdbdata() {
     let user = await RegisterUser.create({
         username: firstUser,
         userType: userType.normal,
-        password: md5(firstUser),
+        password: md5(firstUser + ".."),
         telphone: '010-123456',
         email: 'fastnat@fastnat.com',
         clients: [{
@@ -143,6 +145,12 @@ async function initdbdata() {
 async function initDb(sequelize) {
     if (serverConfig.init.firstInit) {
         logger.debug('init.firstInit=true,init all at first....');
+        if (dbConfig.dbType === 'mysql') {
+            console.log(JSON.stringify(dbConfig))
+            const connection = await mysql.createConnection({ host: dbConfig.host, port: dbConfig.port, user: dbConfig.username, password: dbConfig.password });
+            await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\`;`);
+            connection.destroy();
+        }
         await sequelize.sync({ force: true });
     } else {
         await sequelize.sync({});
