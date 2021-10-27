@@ -46,12 +46,12 @@ class TcpTunnelServer {
                 socket.proxyServer.close();
                 logger.debug('auto  close proxy server as tunnel client socketLost');
             }
-            if (socket.authenKeyAndTunnelId != null) {
-                logger.trace('ClusterData.deleteAsync(socket.authenKeyAndTunnelId)' + socket.authenKeyAndTunnelId);
-                ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
-            } else {
-                logger.error('socket.authenKeyAndTunnelId==null');
-            }
+            // if (socket.authenKeyAndTunnelId != null) {
+            //     logger.trace('ClusterData.deleteAsync(socket.authenKeyAndTunnelId)' + socket.authenKeyAndTunnelId);
+            //     ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
+            // } else {
+            //     logger.error('socket.authenKeyAndTunnelId==null');
+            // }
         });
 
     }
@@ -155,8 +155,8 @@ class TcpTunnelServer {
 
     async stopTunnelProxyServer(data, socket) {
         let tunnelId = data.tunnelId;
-        let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
-        await ClusterData.deleteAsync(authenKeyAndTunnelId);
+        // let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
+        // await ClusterData.deleteAsync(authenKeyAndTunnelId);
         let server = socket.proxyServer;
         if (server != null) {
             server.close();
@@ -213,17 +213,17 @@ class TcpTunnelServer {
             return;
         }
 
-        let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
-        let exist = await ClusterData.existAsync(authenKeyAndTunnelId);
-        if (exist) {
-            let msg = `this authenKey&tunnelId (${authenKeyAndTunnelId}) is already online`;
-            logger.debug(msg);
-            this.notifyCloseClient(socket, msg);
-            return;
-        }
+        // let authenKeyAndTunnelId = data.authenKey + ":" + data.tunnelId;
+        // let exist = await ClusterData.existAsync(authenKeyAndTunnelId);
+        // if (exist) {
+        //     let msg = `this authenKey&tunnelId (${authenKeyAndTunnelId}) is already online`;
+        //     logger.debug(msg);
+        //     this.notifyCloseClient(socket, msg);
+        //     return;
+        // }
 
-        await ClusterData.setAsync(authenKeyAndTunnelId, { enterTime: new Date() });
-        socket.authenKeyAndTunnelId = authenKeyAndTunnelId;
+        // await ClusterData.setAsync(authenKeyAndTunnelId, { enterTime: new Date() });
+        // socket.authenKeyAndTunnelId = authenKeyAndTunnelId;
         logger.trace('start creating tcp proxy server:' + tunnel.remotePort);
         let server = this.createProxyServer(socket, { host: '0.0.0.0', port: tunnel.remotePort });
         socket.proxyServer = server;
