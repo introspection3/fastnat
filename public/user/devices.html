@@ -97,8 +97,8 @@
                 <input id='localIp' name="localIp" class="easyui-textbox" value="127.0.0.1" data-options="prompt: '本地映射IP',validType: 'ip'" required="true" label="本地IP:" style="width:100%" />
             </div>
             <div class="fitem">
-                <input name="localPort" class="easyui-numberspinner" placeholder="本地待映射端口" required="true" data-options="min:1024,max:65535,prompt: '待映射端口'" style="width:60%;" label="本地端口:" />
-                <span>(1024-65535)</span>
+                <input name="localPort" class="easyui-numberspinner" placeholder="本地待映射端口" required="true" data-options="min:1,max:65535,prompt: '待映射端口'" style="width:60%;" label="本地端口:" />
+                <span>(1-65535)</span>
             </div>
             <div class="fitem">
                 <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '外网访问端口'" style="width:60%;" label="对外端口:" />
@@ -109,8 +109,8 @@
         </form>
     </div>
     <div id="dialogTunnelButtons">
-        <a href="#" class="easyui-linkbutton" onclick="saveTunnel()" data-options="iconCls: 'icon-ok'">确定</a>
-        <a href="#" class="easyui-linkbutton" onclick="closeDialog( 'dialogTunnel')" data-options="iconCls: 'icon-cancel'">取消</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveTunnel()" data-options="iconCls: 'icon-ok'">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDialog( 'dialogTunnel')" data-options="iconCls: 'icon-cancel'">取消</a>
     </div>
 
 </body>

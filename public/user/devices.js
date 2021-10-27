@@ -230,9 +230,9 @@ function saveTunnel() {
         },
         success: function(result) {
             result = JSON.parse(result);
-            $('#dialogTunnel').dialog('close');
             if (result.success == false) {
                 $.messager.alert('提示', result.info);
+                $('#dialogTunnel').dialog('close');
                 return;
             }
             $('#tableDevicesTunnel').datagrid('reload');

@@ -146,16 +146,16 @@ function createHttpProxy() {
         }
         let targetUrl = `http://127.0.0.1:`;
         if (secondDomainName === 'www') {
-            logger.error('www is not your domain now');
-            return; //暂时不处理
-        } else {
-            let port = await getPortBySecondDomainName(secondDomainName);
-            if (port <= 0) {
-                res.end('domain error');
-                return;
-            }
-            targetUrl += port;
+            let address = req.socket.address();
+            logger.info(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
         }
+        let port = await getPortBySecondDomainName(secondDomainName);
+        if (port <= 0) {
+            res.end('domain error');
+            return;
+        }
+        targetUrl += port;
+
         //对于外界而言必然都是http
         let finalAgent = http.globalAgent;
         proxy.web(req, res, {
