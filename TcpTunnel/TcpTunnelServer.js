@@ -47,7 +47,10 @@ class TcpTunnelServer {
                 logger.debug('auto  close proxy server as tunnel client socketLost');
             }
             if (socket.authenKeyAndTunnelId != null) {
+                logger.trace('ClusterData.deleteAsync(socket.authenKeyAndTunnelId)' + socket.authenKeyAndTunnelId);
                 ClusterData.deleteAsync(socket.authenKeyAndTunnelId);
+            } else {
+                logger.error('socket.authenKeyAndTunnelId==null');
             }
         });
 

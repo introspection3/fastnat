@@ -30,6 +30,7 @@ async function getPortBySecondDomainName(secondDomainName) {
     });
     if (result == null) {
         logger.error(`${secondDomainName}'s tunnel is not exist'`);
+        return -1;
     }
     DomainMap.set(secondDomainName, { remotePort: result.remotePort, time: new Date() });
     return result.remotePort;
@@ -94,6 +95,10 @@ function createHttpProxy() {
                 return; //暂时不处理
             } else {
                 let port = await getPortBySecondDomainName(secondDomainName);
+                if (port <= 0) {
+                    res.end('domain error');
+                    return;
+                }
                 targetUrl += port;
             }
             //对于外界而言必然都是http
@@ -117,6 +122,11 @@ function createHttpProxy() {
 
     let server = http.createServer({}, async function(req, res) {
         //获取二级域名的名字,然后从数据里找到对应的端口
+        let existHost = req.headers.hasOwnProperty('host');
+        if (!existHost) {
+            logger.error('bad req,no host');
+            return;
+        }
         let hostname = req.headers['host'];
         if (net.isIPv4(hostname)) {
             res.end('you should config domain,do not use ip');
@@ -140,6 +150,10 @@ function createHttpProxy() {
             return; //暂时不处理
         } else {
             let port = await getPortBySecondDomainName(secondDomainName);
+            if (port <= 0) {
+                res.end('domain error');
+                return;
+            }
             targetUrl += port;
         }
         //对于外界而言必然都是http

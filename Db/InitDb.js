@@ -9,6 +9,8 @@ const rootPath = require('../Common/GlobalData.js').rootPath;
 const md5 = require('md5');
 const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 const userType = require('./Enums').userType;
+const mysql2 = require('mysql2');
+const createPool = mysql2.createPool;
 const mysql = require('mysql2/promise');
 const dbConfig = serverConfig.db;
 /**

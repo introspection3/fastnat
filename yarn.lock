@@ -393,10 +393,15 @@
   "resolved" "https://registry.npmjs.org/deep-is/-/deep-is-0.1.4.tgz"
   "version" "0.1.4"
 
-"denque@^1.1.0", "denque@^1.4.1":
+"denque@^1.1.0":
   "integrity" "sha1-B/Zw4pyaePj67LJWah4sEZKcXL8="
   "resolved" "https://registry.nlark.com/denque/download/denque-1.5.1.tgz?cache=0&sync_timestamp=1629309980907&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fdenque%2Fdownload%2Fdenque-1.5.1.tgz"
   "version" "1.5.1"
+
+"denque@^2.0.1":
+  "integrity" "sha512-tfiWc6BQLXNLpNiR5iGd0Ocu3P3VpxfzFiqubLgMfhfOw9WyvgJBd46CClNn9k3qfbjvT//0cf7AlYRX/OslMQ=="
+  "resolved" "https://registry.npmjs.org/denque/-/denque-2.0.1.tgz"
+  "version" "2.0.1"
 
 "depd@~1.1.2":
   "integrity" "sha1-m81S4UwJd2PnSbJ0xDRu0uVgtak="
@@ -745,7 +750,7 @@
     "follow-redirects" "^1.0.0"
     "requires-port" "^1.0.0"
 
-"iconv-lite@^0.6.2":
+"iconv-lite@^0.6.3":
   "integrity" "sha1-pS+AvzjaGVLrXGgXkHGYcaGnJQE="
   "resolved" "https://registry.nlark.com/iconv-lite/download/iconv-lite-0.6.3.tgz?cache=0&sync_timestamp=1622686400731&other_urls=https%3A%2F%2Fregistry.nlark.com%2Ficonv-lite%2Fdownload%2Ficonv-lite-0.6.3.tgz"
   "version" "0.6.3"
@@ -1106,14 +1111,14 @@
   "resolved" "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.8.tgz"
   "version" "0.0.8"
 
-"mysql2@^2.3.0":
-  "integrity" "sha1-YA9cwn45fft3tZ6sk2ZkNPiOgHk="
-  "resolved" "https://registry.nlark.com/mysql2/download/mysql2-2.3.0.tgz"
-  "version" "2.3.0"
+"mysql2@^2.3.2":
+  "integrity" "sha512-JUSA50rt/nSew8aq8xe3pRk5Q4y/M5QdSJn7Ey3ndOlPp2KXuialQ0sS35DNhPT5Z5PnOiIwSSQvKkl1WorqRA=="
+  "resolved" "https://registry.npmjs.org/mysql2/-/mysql2-2.3.2.tgz"
+  "version" "2.3.2"
   dependencies:
-    "denque" "^1.4.1"
+    "denque" "^2.0.1"
     "generate-function" "^2.3.1"
-    "iconv-lite" "^0.6.2"
+    "iconv-lite" "^0.6.3"
     "long" "^4.0.0"
     "lru-cache" "^6.0.0"
     "named-placeholders" "^1.1.2"

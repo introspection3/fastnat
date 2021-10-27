@@ -227,7 +227,7 @@ eventEmitter.on(commandType.ADD_CONNECTOR, async function(clientId, data) {
     notify2Client(commandType.ADD_CONNECTOR, clientId, data);
 });
 async function notify2Client(theCommandType, clientId, data) {
-    console.log(theCommandType)
+    logger.trace(theCommandType)
     clientId = Number.parseInt(clientId);
     let allSockets = await defaultNS.fetchSockets();
     let targetSocket = allSockets.find((value, index, array) => {

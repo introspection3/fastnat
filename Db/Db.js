@@ -30,6 +30,7 @@ if (dbConfig.dbType === 'sqlite') {
     db.close();
     const sequelize = new Sequelize({
         dialect: 'sqlite',
+        dialectModule: require('sqlite'),
         storage: sqliteFilePath,
         logging: sql => {
             if (dbConfig.logging) {
@@ -41,9 +42,14 @@ if (dbConfig.dbType === 'sqlite') {
 
     module.exports = sequelize;
 } else {
+    let dialect = dbConfig.dbType;
+    if (dialect === 'mysql') {
+        dialect = 'mysql2';
+    }
     const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
         host: dbConfig.host,
         dialect: dbConfig.dbType,
+        dialectModule: require(dialect),
         dialectOptions: {
             supportBigNumbers: true
         },

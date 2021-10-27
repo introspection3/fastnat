@@ -24,7 +24,7 @@
         "ioredis": "^4.27.10",
         "log4js": "^6.3.0",
         "md5": "^2.3.0",
-        "mysql2": "^2.3.0",
+        "mysql2": "^2.3.2",
         "nat-type-identifier": "^2.0.11",
         "node-worker-threads-pool": "^1.5.0",
         "prompt": "^1.2.0",
@@ -41,7 +41,7 @@
         "utp-punch": "^1.0.1",
         "vs-stun": "^0.0.7"
     },
-    "bin": "client.js",
+    "bin": "index.js",
     "//": "node14-linux-arm64",
     "pkg": {
         "scripts": "./**/*.js",

@@ -28,7 +28,7 @@ function startConnect2SocketIO(authenKey, clientId) {
     let p = new Promise((resolve, reject) => {
         let t = setTimeout(() => {
             reject('socket.io client  to server timeout,please check the server status')
-        }, 3000);
+        }, 300000);
 
         socketIOSocket.on('connect', function() {
             clearTimeout(t);

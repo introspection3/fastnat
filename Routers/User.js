@@ -3,14 +3,15 @@ const router = express.Router();
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const N2NServer = require('../N2N/N2NServer');
 const configPath = require('../Common/GlobalData.js').configPath;
-const communityListPath = require('path').join(configPath, 'community.list');
+const path = require('path');
+const communityListPath = path.join(configPath, 'community.list');
 const svgCaptcha = require('svg-captcha');
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db/Db');
 const { v4: uuidv4 } = require('uuid');
 const md5 = require('md5');
 const NetUtil = require('../Utils/NetUtil');
-
+const svgFontPath = path.join(configPath, 'fonts', 'Comismsh.ttf');
 router.post('/register', async function(req, res, next) {
     let info = req.body;
     let result = {
@@ -125,6 +126,7 @@ router.get('/vcode', async function(req, res, next) {
         color: true, // 验证码的字符是否有颜色，默认没有，如果设定了背景，则默认有
         background: '#eee',
     };
+    svgCaptcha.loadFont(svgFontPath);
     const captcha = svgCaptcha.create(codeConfig);
     req.session.captcha = captcha.text.toLowerCase();
     res.type('image/svg+xml');

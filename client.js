@@ -369,6 +369,7 @@ async function checkNatType(clientConfig) {
 }
 
 async function main() {
+
     trayIcon();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
@@ -913,6 +914,7 @@ function restartApplication() {
 process.on("exit", function(code) {
 
 });
+
 
 let _SIGINT_Started = false;
 process.on('SIGINT', function() {
