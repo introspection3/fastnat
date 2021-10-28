@@ -137,7 +137,7 @@ let toolbarDevice = [{
             cancel: "取消"
         };
 
-        $.messager.confirm("操作提示", "您确定要删除此设备吗？", function(data) {
+        $.messager.confirm("警告", "删除设备您所有的映射将删除,所以不建议您删除,你确定要继续吗?", function(data) {
             if (data) {
                 let id = $('#tableDevices').datagrid("getSelections")[0].id;
                 $.post('/client/delete', {
@@ -232,10 +232,10 @@ function saveTunnel() {
             result = JSON.parse(result);
             if (result.success == false) {
                 $.messager.alert('提示', result.info);
-                $('#dialogTunnel').dialog('close');
                 return;
             }
             $('#tableDevicesTunnel').datagrid('reload');
+            $('#dialogTunnel').dialog('close');
         }
     });
 }
