@@ -20,6 +20,7 @@ function start(communityName, communityPassword, virtualIp = '', serverAddress, 
         logger.warn('edge has already started,you can top it first');
         return;
     }
+
     let cmd = getPath();
     let args = [`-l${serverAddress}`];
     if (virtualIp != '') {
@@ -35,9 +36,9 @@ function start(communityName, communityPassword, virtualIp = '', serverAddress, 
     }
 
     args.push(`-c${communityName}`);
-
+    // let tapName = 'tap';
+    // args.push(`-d${tapName}`);
     if (os.platform() != 'win32') {
-
         shell.chmod('+x', cmd);
         args.push('-f'); //目前2.9windows不支持
     }
@@ -67,7 +68,7 @@ function start(communityName, communityPassword, virtualIp = '', serverAddress, 
         } else {
             result = iconvLite.decode(data, 'cp936');
         }
-        result.replaceAll('fastnatcommon', '');
+        result.replaceAll('fastnat', '');
         logger.error(result);
     });
 

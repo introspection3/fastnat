@@ -1,7 +1,7 @@
 {
     "db": {
         "dbType": "mysql",
-        "host": "0.0.0.0",
+        "host": "192.168.1.4",
         "port": 3306,
         "logging": false,
         "database": "database",
@@ -9,7 +9,7 @@
         "password": "root"
     },
     "init": {
-        "firstInit": true
+        "firstInit": false
     },
     "redis": {
         "host": "192.168.1.3",
@@ -27,18 +27,18 @@
             "enabled": true,
             "port": 443,
             "//": "pfx or pem",
-            "type": "pem",
+            "type": "pfx",
             "pemKeyName": "key.pem",
             "pemCertName": "cert.pem",
-            "pfxName": "name.pfx",
-            "pfxPassword": "password"
+            "pfxName": "fastnat.club.pfx",
+            "pfxPassword": "fastnat.."
         },
         "domain": "fastnat.club",
         "port": 80
     },
     "cluster": {
-        "enabled": false,
-        "count": 1
+        "enabled": true,
+        "count": 4
     },
     "netbuilding": {
         "version": "2.9.0",

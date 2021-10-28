@@ -15,6 +15,7 @@ const fs = require('fs');
 const configDir = path.join(rootPath, 'config');
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const DomainMap = new Map();
+const currentDomainName = serverHttpConfig.domain;
 
 async function getPortBySecondDomainName(secondDomainName) {
     if (DomainMap.has(secondDomainName)) {
@@ -70,9 +71,22 @@ function createHttpProxy() {
         }
 
         let server = https.createServer(serverOptions, async function(req, res) {
+
             //获取二级域名的名字,然后从数据里找到对应的端口
+            let existHost = req.headers.hasOwnProperty('host');
+            let address = req.socket.address();
+            if (!existHost) {
+                logger.error(`bad req,no host from ${JSON.stringify(address)}`);
+                return;
+            }
             let hostname = req.headers['host'];
-            console.log(hostname)
+
+            if (!hostname.endsWith(currentDomainName)) {
+                logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
+                res.end('Illegal domain name,please close it');
+                return;
+            }
+
             if (net.isIPv4(hostname)) {
                 res.end('you should config domain,do not use ip');
                 logger.warn(`bad hostname:${hostname}`)
@@ -91,16 +105,16 @@ function createHttpProxy() {
             }
             let targetUrl = `http://127.0.0.1:`;
             if (secondDomainName === 'www') {
-                logger.error('www is not your domain now');
-                return; //暂时不处理
-            } else {
-                let port = await getPortBySecondDomainName(secondDomainName);
-                if (port <= 0) {
-                    res.end('domain error');
-                    return;
-                }
-                targetUrl += port;
+                let address = req.socket.address();
+                logger.info(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
             }
+            let port = await getPortBySecondDomainName(secondDomainName);
+            if (port <= 0) {
+                res.end('domain error');
+                return;
+            }
+            targetUrl += port;
+
             //对于外界而言必然都是http
             let finalAgent = http.globalAgent;
             proxy.web(req, res, {
@@ -123,11 +137,18 @@ function createHttpProxy() {
     let server = http.createServer({}, async function(req, res) {
         //获取二级域名的名字,然后从数据里找到对应的端口
         let existHost = req.headers.hasOwnProperty('host');
+        let address = req.socket.address();
         if (!existHost) {
-            logger.error('bad req,no host');
+            logger.error(`bad req,no host from ${JSON.stringify(address)}`);
             return;
         }
+
         let hostname = req.headers['host'];
+        if (!hostname.endsWith(currentDomainName)) {
+            logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
+            res.end('Illegal domain name,please close it');
+            return;
+        }
         if (net.isIPv4(hostname)) {
             res.end('you should config domain,do not use ip');
             logger.warn(`bad hostname:${hostname}`)
@@ -146,7 +167,6 @@ function createHttpProxy() {
         }
         let targetUrl = `http://127.0.0.1:`;
         if (secondDomainName === 'www') {
-            let address = req.socket.address();
             logger.info(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
         }
         let port = await getPortBySecondDomainName(secondDomainName);
