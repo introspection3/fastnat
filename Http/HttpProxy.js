@@ -16,6 +16,8 @@ const configDir = path.join(rootPath, 'config');
 const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const DomainMap = new Map();
 const currentDomainName = serverHttpConfig.domain;
+const currentDomainPort = serverHttpConfig.port;
+const currentDomainSslPort = serverHttpConfig.ssl.port;
 
 async function getPortBySecondDomainName(secondDomainName) {
     if (DomainMap.has(secondDomainName)) {
@@ -35,6 +37,17 @@ async function getPortBySecondDomainName(secondDomainName) {
     }
     DomainMap.set(secondDomainName, { remotePort: result.remotePort, time: new Date() });
     return result.remotePort;
+}
+
+/**
+ * 
+ * @param {String} host 
+ */
+function isHostLegal(fineEnd, host, currentDomainName, currentPort) {
+    if (host.endsWith(fineEnd[0]) || host.endsWith(fineEnd[1])) {
+        return true;
+    }
+    return false;
 }
 
 function createHttpProxy() {
@@ -69,6 +82,7 @@ function createHttpProxy() {
                 passphrase: sslConfig.pfxPassword
             };
         }
+        let fineEndArray = [currentDomainName, currentDomainName + ':' + currentDomainSslPort];
 
         let server = https.createServer(serverOptions, async function(req, res) {
 
@@ -81,7 +95,7 @@ function createHttpProxy() {
             }
             let hostname = req.headers['host'];
 
-            if (!hostname.endsWith(currentDomainName)) {
+            if (!(hostname.endsWith(fineEndArray[0]) || hostname.endsWith(fineEndArray[1]))) {
                 logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
                 res.end('Illegal domain name,please close it');
                 return;
@@ -134,6 +148,8 @@ function createHttpProxy() {
 
     }
 
+    let fineEndArray = [currentDomainName, currentDomainName + ':' + currentDomainPort];
+
     let server = http.createServer({}, async function(req, res) {
         //获取二级域名的名字,然后从数据里找到对应的端口
         let existHost = req.headers.hasOwnProperty('host');
@@ -144,7 +160,7 @@ function createHttpProxy() {
         }
 
         let hostname = req.headers['host'];
-        if (!hostname.endsWith(currentDomainName)) {
+        if (!(hostname.endsWith(fineEndArray[0]) || hostname.endsWith(fineEndArray[1]))) {
             logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
             res.end('Illegal domain name,please close it');
             return;

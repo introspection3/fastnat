@@ -22,7 +22,7 @@ const instanceCount = serverConfig.cluster.count;
 checkType(isNumber, instanceCount, 'serverConfig.cluster.count');
 const P2PTracker = require('./P2P/P2PTracker');
 const N2NServer = require('./N2N/N2NServer');
-const rootPath = require('./Common/GlobalData.js').rootPath;
+const rootPath = require('./Common/GlobalData').rootPath;
 const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 const eventEmitter = require('./Communication/CommunicationEventEmiter').eventEmitter;
 //------------------netbuilding---s-------

@@ -25,7 +25,7 @@
     "http": {
         "ssl": {
             "enabled": true,
-            "port": 443,
+            "port": 4431,
             "//": "pfx or pem",
             "type": "pfx",
             "pemKeyName": "key.pem",

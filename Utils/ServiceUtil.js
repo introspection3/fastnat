@@ -5,7 +5,7 @@ const nssmPath = path.join(basePath, `nssm.exe`);
 const SpawnUtil = require('./SpawnUtil');
 const os = require('os');
 const logger = require('../Log/logger');
-const rootPath = require('../Common/GlobalData.js').rootPath;
+const rootPath = require('../Common/GlobalData').rootPath;
 async function installService(servicename) {
     await removeService(servicename);
     let dirPath = rootPath;

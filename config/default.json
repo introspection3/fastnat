@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "host": "www.fastnat.club",
+    "host": "82.156.189.47",
     "webserver": {
         "https": false,
         "port": 8081,

@@ -6,7 +6,7 @@ const events = require('events');
 const TcpServer = require('../Tcp/TcpServer');
 const { RpcClientProtocal, RpcServerProtocal } = require('./RpcProtocal');
 const path = require('path');
-const rootPath = require('../Common/GlobalData.js').rootPath;
+const rootPath = require('../Common/GlobalData').rootPath;
 /**
  * Tcp隧道服务端程序
  */
