@@ -4,7 +4,6 @@ const { RegisterUser, Client, Tunnel } = require('../Db/Models');
 const N2NServer = require('../N2N/N2NServer');
 const configPath = require('../Common/GlobalData.js').configPath;
 const path = require('path');
-const communityListPath = path.join(configPath, 'community.list');
 const svgCaptcha = require('svg-captcha');
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const sequelize = require('../Db/Db');

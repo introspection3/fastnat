@@ -168,7 +168,7 @@ router.post('/update', async(req, res, next) => {
             let result = {
                 success: false,
                 data: data,
-                info: '您已添加了一个同样的本地映射'
+                info: '您已添加了一个同样的本地映射,id=' + existTunnel.id
             }
             res.send(result);
             return;
@@ -177,8 +177,7 @@ router.post('/update', async(req, res, next) => {
         try {
             await Tunnel.update(data, {
                 where: {
-                    id: data.id,
-                    isAvailable: 1
+                    id: data.id
                 }
             });
 
@@ -390,7 +389,7 @@ router.post('/add', async(req, res, next) => {
             count = await Tunnel.count({
                 where: {
                     localIp: data.localIp,
-                    localPort: data.localPort,
+                    localPort: data.localPort * 1,
                     clientId: data.clientId,
                     lowProtocol: data.lowProtocol
                 }

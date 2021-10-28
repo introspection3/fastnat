@@ -10,7 +10,8 @@ const netbuildingCommunityKey = netbuilding.communityKey;
 const netbuildingVersion = netbuilding.version;
 const fs = require('fs').promises;
 const AesUtil = require('../Utils/AesUtil');
-const communityListPath = require('path').join(process.cwd(), 'config', 'community.list');
+const rootPath = require('./Common/GlobalData.js').rootPath;
+const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 const logger = require('../Log/logger');
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 
