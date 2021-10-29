@@ -118,7 +118,7 @@ class TcpClient {
         let client = net.createConnection(this.serverAddress, () => {
             //logger.trace('Tcp client has created for '+this.toString());
         });
-
+        client.setKeepAlive(true, 10 * 1000);
         client.on('connect', () => {
             logger.trace('Tcp client has connected to ' + this.toString());
             client.stopNotify = false;

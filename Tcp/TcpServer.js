@@ -138,6 +138,7 @@ class TcpServer {
             let lastTempBuffer = null;
             logger.trace(commingInfo);
             //socket.setTimeout(this.socketTime);
+            socket.setKeepAlive(true, 10 * 1000);
             let instance = this;
 
             /**
@@ -216,7 +217,7 @@ class TcpServer {
             socket.on('error', (err) => {
                 lastTempBuffer = null;
                 this.clients.delete(socket);
-                logger.debug('Tcp  server on socket error ' + err);
+                logger.debug('Tcp  server on socket error ' + err.message + err.stack);
                 this.eventEmitter.emit('socketLost', socket);
                 this.eventEmitter.emit('socketError', socket, err);
                 socket.end();

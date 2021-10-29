@@ -473,11 +473,9 @@ async function createTunnel(authenKey, defaultConfigHost, defaultBridgeConfigPor
         );
         await tcpTunnelClient.startTunnel(tunnelItem.id);
         tcpTunnelClient.tcpClient.eventEmitter.on('error', (err) => {
-            isWorkingFine = false;
             logger.error('Tcp tunnel server has stoped:' + err);
         });
         tcpTunnelClient.tcpClient.eventEmitter.on('quitClient', (data) => {
-            isWorkingFine = false;
             logger.error('process will quit for : ' + data.info);
             PlatfromUtil.processExit();
         });
@@ -513,6 +511,7 @@ async function timerCheckServerStatus(seconds = 10) {
         let serverOk = await checkServerStatus();
         if (serverOk && isWorkingFine == false) {
             isWorkingFine = true;
+            clearInterval(timer);
             restartApplication();
         }
     }, seconds * 1000);
@@ -759,17 +758,15 @@ async function startProxy(authenKey, tunnelId) {
 }
 
 async function checkServerStatus() {
-
     try {
         let ret = await axios.get('/checkServerStatus');
         let result = await ret.data;
         return result.success;
     } catch (error) {
-        logger.trace('checkServerStatus error');
-        isWorkingFine == false;
+        logger.trace('checkServerStatus error' + error);
+        isWorkingFine = false;
         return false;
     }
-
 }
 
 main();
@@ -896,13 +893,27 @@ async function updateClientSystemInfo(natType, authenKey) {
 }
 
 function restartApplication() {
-    logger.debug("restart now,new pid= " + process.pid);
+
     let exe = process.argv.shift();
-    if (!process.argv.includes('-r')) {
-        process.argv.push('-r')
+    let args = [];
+    //如果打包程序在运行，就不要再有js文件的路径了
+    let isPackExe = !(exe.endsWith('node' || exe.endsWith('node.exe')));
+
+    for (const item of args) {
+        if (isPackExe == false || item.endsWith('.js') === false) {
+            args.push(item);
+        }
     }
+
+    if (!args.includes('-r')) {
+        args.push('-r')
+    }
+    logger.debug("will restart ,current pid= " + process.pid);
+    logger.debug(args.toString());
+    logger.debug('exe:' + exe);
+
     setTimeout(function() {
-        require("child_process").spawn(exe, process.argv, {
+        require("child_process").spawn(exe, args, {
             cwd: rootPath,
             detached: true,
             stdio: "inherit"

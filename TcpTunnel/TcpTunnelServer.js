@@ -65,7 +65,7 @@ class TcpTunnelServer {
     createProxyServer(fromSocket, config) {
 
         let proxyServer = net.createServer(async(proxySocket) => {
-
+            proxySocket.setKeepAlive(true, 10 * 1000);
             let info = `remote{${proxySocket.remoteAddress}:${proxySocket.remotePort}}->local:{${proxySocket.localAddress}:${proxySocket.localPort}}`;
             let commingInfo = `proxyServer new tcp  client ` + info;
             logger.trace(commingInfo);
@@ -74,6 +74,7 @@ class TcpTunnelServer {
             let middlePort = 0;
 
             let middleServer = net.createServer((middleSocket) => {
+                middleSocket.setKeepAlive(true, 10 * 1000);
                 middleSocket.pipe(proxySocket);
                 proxySocket.pipe(middleSocket);
                 middleSocket.on('error', (error) => {
