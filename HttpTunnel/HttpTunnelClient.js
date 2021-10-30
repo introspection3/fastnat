@@ -35,12 +35,14 @@ class HttpTunnelClient {
         const proxy = httpProxy.createProxy({});
 
         proxy.on('error', function(err, req, res) {
-            console.error(err);
-            res.writeHead(500, {
-                'Content-Type': 'text/plain'
-            });
+            logger.error(err);
+            if (res) {
+                res.writeHead(500, {
+                    'Content-Type': 'text/plain'
+                });
+                res.end('Something went wrong. And we are reporting a custom error message.');
+            }
 
-            res.end('Something went wrong. And we are reporting a custom error message.');
         });
         let finalAgent = null;
         if (tunnel.type === 'https') {

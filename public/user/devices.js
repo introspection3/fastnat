@@ -9,6 +9,15 @@ $(function() {
     closeDialog('dialogTunnel');
 });
 
+function uuid(len) {
+    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    let uuid = [],
+        i;
+    let radix = chars.length;
+    // Compact form
+    for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix];
+    return uuid.join('');
+}
 let _clientId = -1;
 let _tunneId = -1;
 let tunnelUrl = '/tunnel/add';
@@ -22,7 +31,9 @@ function onSelectDevice(rowIndex, rowData) {
     $("#toolbarDeviceDelete").linkbutton("enable");
     _clientId = rowData.id;
     $("#toolbarTunnelAdd").linkbutton("enable");
-    _connectorUrl = '/tunnel/add'
+    tunnelUrl = '/tunnel/add';
+
+
 
 }
 
@@ -55,9 +66,12 @@ function tooLongText(value, row, index) {
 
 function getDetail(index, selectdata) {
     if (selectdata) {
+        let title = `设备[${selectdata.clientName}]的映射列表`;
         $('#tableDevicesTunnel').datagrid('reload', {
             id: selectdata.id
         });
+        document.querySelectorAll('div .panel-title')[1].innerHTML = title;
+
     }
 }
 
@@ -123,6 +137,28 @@ let toolbarDevice = [{
         $("#toolbarDeviceSave").linkbutton("disable");
     }
 }, {
+    text: '复制Key',
+    id: 'toolbarDeviceCopy',
+    iconCls: 'icon-copy',
+    handler: function() {
+        let index = getGridRowIndex('tableDevices');
+        if (index == -1) {
+            $.messager.alert('提示', '请选择需要复制的设备');
+            return;
+        }
+        let row = $('#tableDevices').datagrid("getSelections")[0];
+        let authenKey = row.authenKey;
+        var oInput = document.createElement('input');
+        oInput.value = authenKey;
+        document.body.appendChild(oInput);
+        oInput.select(); // 选择对象
+        document.execCommand("Copy"); // 执行浏览器复制命令
+        oInput.className = 'oInput';
+        oInput.style.display = 'none';
+        $.messager.alert('提示', '复制成功!', '提示');
+
+    }
+}, {
     text: '删除',
     iconCls: 'icon-clear',
     id: 'toolbarDeviceDelete',
@@ -137,7 +173,7 @@ let toolbarDevice = [{
             cancel: "取消"
         };
 
-        $.messager.confirm("警告", "删除设备您所有的映射将删除,所以不建议您删除,你确定要继续吗?", function(data) {
+        $.messager.confirm("警告", "删除设备意味着您所有的映射将删除,所以不建议您删除,你确定要继续吗?", function(data) {
             if (data) {
                 let id = $('#tableDevices').datagrid("getSelections")[0].id;
                 $.post('/client/delete', {
@@ -169,6 +205,9 @@ let toolbarDevice = [{
             clientName: row.clientName
         }, function(result) {
             $('#tableDevices').datagrid('reload');
+            let title = `设备[${row.clientName}]的映射列表`;
+            document.querySelectorAll('div .panel-title')[1].innerHTML = title;
+
         });
     }
 }];
@@ -182,6 +221,7 @@ let toolbarTunnel = [{
         $('#fm').form('clear');
         $('#localIp').textbox('setValue', '127.0.0.1');
         $('#p2pPassword').textbox('setValue', 'fastnat');
+        $('#uniqueName').textbox('setValue', uuid(16));
         $("input[type='radio' ][name='type' ][value='tcp' ]").prop('checked', 'true');
     }
 }, {
@@ -191,7 +231,7 @@ let toolbarTunnel = [{
     handler: function() {
         $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
         let row = $('#tableDevicesTunnel').datagrid('getSelected');
-        _connectorUrl = '/tunnel/update'
+        tunnelUrl = '/tunnel/update'
         $('#fm').form('load', row);
     }
 }, {
@@ -221,7 +261,7 @@ let toolbarTunnel = [{
 
 function saveTunnel() {
     $('#fm').form('submit', {
-        url: _connectorUrl,
+        url: tunnelUrl,
         onSubmit: function() {
             let v = $(this).form('validate');
             $('#clientId').val(_clientId);

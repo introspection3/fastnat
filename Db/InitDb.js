@@ -144,7 +144,7 @@ async function initdbdata() {
  * 初始化
  * @param {Sequelize} sequelize 
  */
-async function initDb(sequelize) {
+async function initDb() {
     if (serverConfig.init.firstInit) {
         logger.debug('init.firstInit=true,init all at first....');
         if (dbConfig.dbType === 'mysql') {
@@ -158,4 +158,12 @@ async function initDb(sequelize) {
         await sequelize.sync({});
     }
 }
-module.exports = initdbdata;
+async function stopSever() {
+    await Client.update({
+        status: 0
+    });
+}
+module.exports = {
+    stopSever,
+    initDb
+};

@@ -96,6 +96,7 @@ router.post('/update', async(req, res, next) => {
         created: new Date(),
         updatedAt: new Date()
     };
+
     if (data.type === 'udp') {
         data.lowProtocol = 'udp';
     } else {

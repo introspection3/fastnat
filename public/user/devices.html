@@ -61,8 +61,7 @@
                 <input name="name" class="easyui-textbox" data-options="prompt:'给此映射取一个名',validType:'minLength[2]'" required="true" label="映射名称:" style="width:100%">
             </div>
             <div class="fitem">
-
-                <input name="uniqueName" class="easyui-textbox" required="true" data-options="prompt:'以字母开头,字母和数字组成',validType:'username'" label="网路唯一名:" style="width:100%" />
+                <input id="uniqueName" name="uniqueName" class="easyui-textbox" required="true" data-options="prompt:'以字母开头,字母和数字组成,6-16的长度',validType:'username'" label="网路唯一名:" style="width:100%" />
             </div>
             <div class="fitem">
                 <span>映射类型:</span>
@@ -94,15 +93,16 @@
             </div>
 
             <div class="fitem">
-                <input id='localIp' name="localIp" class="easyui-textbox" value="127.0.0.1" data-options="prompt: '本地映射IP',validType: 'ip'" required="true" label="本地IP:" style="width:100%" />
+                <input id='localIp' name="localIp" class="easyui-textbox" value="127.0.0.1" data-options="prompt: '本地映射IP,可以是局域网的任意IP',validType: 'ip'" required="true" label="本地IP:" style="width:100%" />
             </div>
             <div class="fitem">
                 <input name="localPort" class="easyui-numberspinner" placeholder="本地待映射端口" required="true" data-options="min:1,max:65535,prompt: '待映射端口'" style="width:60%;" label="本地端口:" />
                 <span>(1-65535)</span>
             </div>
             <div class="fitem">
-                <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '外网访问端口'" style="width:60%;" label="对外端口:" />
+                <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '公网对外端口'" style="width:60%;" label="对外端口:" />
                 <span>(5000-65535)</span>
+                <div style="margin-top: 3px;"><span style="text-align: right;float:right;">（到时你可用本站域名或IP+该端口进行远程访问）</span></div>
             </div>
             <input type="hidden" id='clientId' name="clientId" />
             <input type="hidden" id='id' name="id" />

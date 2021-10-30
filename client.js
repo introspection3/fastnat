@@ -62,7 +62,7 @@ const options = program.opts();
 function setAxiosDefaultConfig(isHttps, host, port, authenKey) {
     axios.defaults.timeout = 5000;
     axios.defaults.baseURL = `http${isHttps?'s':''}://${host}:${port}`;
-    logger.info('axios.defaults.baseURL=' + axios.defaults.baseURL);
+    logger.info('defaults.baseURL=' + axios.defaults.baseURL);
     axios.defaults.headers['authenKey'] = authenKey;
 }
 
@@ -280,7 +280,7 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
                 let item = array[index];
                 item.TcpSocket.end();
                 item.TcpSocket.destroy();
-                console.log('item.TcpSocket.destroy();')
+                logger.trace('item.TcpSocket.destroy();')
                 item.UtpClient.close();
             }
             SocketIOCreateUtpClientMap.delete(data.clientId);
@@ -420,13 +420,14 @@ async function main() {
 
     const ownClientId = clientResult.data.id;
     for (const tunnelItem of currentClientTunnels) {
-        createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, tunnelItem, socketIOSocket);
+        await createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, tunnelItem, socketIOSocket);
     }
     let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
         await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId);
     }
-    startEdgeProcessAsync(authenKey);
+    await sleep(1000);
+    await startEdgeProcessAsync(authenKey);
     timerCheckServerStatus();
 }
 
@@ -502,7 +503,7 @@ async function createTunnel(authenKey, defaultConfigHost, defaultBridgeConfigPor
 }
 
 let _timerCheckServerStatusStarted = false;
-async function timerCheckServerStatus(seconds = 10) {
+async function timerCheckServerStatus(seconds = 20) {
     if (_timerCheckServerStatusStarted) {
         return;
     }
@@ -523,8 +524,9 @@ async function startEdgeProcessAsync(authenKey) {
     let result = await ret.data;
     if (result.success) {
         let n2nInfo = result.data;
-        console.log(JSON.stringify(n2nInfo))
+        logger.trace(JSON.stringify(n2nInfo))
         N2NClient.startEdge(AesUtil.decrypt(n2nInfo.community), n2nInfo.communityKey, n2nInfo.virtualIp, `${n2nInfo.host}:${n2nInfo.port}`, n2nInfo.username, n2nInfo.password);
+        logger.trace('start edge success');
     } else {
         logger.warn(result.info);
     }
@@ -757,7 +759,7 @@ async function startProxy(authenKey, tunnelId) {
     return result;
 }
 
-async function checkServerStatus() {
+async function checkServer(params) {
     try {
         let ret = await axios.get('/checkServerStatus');
         let result = await ret.data;
@@ -767,6 +769,18 @@ async function checkServerStatus() {
         isWorkingFine = false;
         return false;
     }
+}
+async function checkServerStatus() {
+    let errorCount = 0;
+    while (errorCount < 3) {
+        let ok = await checkServer();
+        if (ok == false) {
+            errorCount = errorCount + 1;
+        } {
+            return true;
+        }
+    }
+    return false;
 }
 
 main();
@@ -869,7 +883,7 @@ async function trayIcon(params) {
         } else if (action.seq_id === 1) {
             // opens the url in the default browser 
             PlatfromUtil.openDefaultBrowser(axios.defaults.baseURL);
-            // console.log('open the url', action)
+
         } else if (action.seq_id === 2) {
             PlatfromUtil.processExit(0);
         }
@@ -893,16 +907,11 @@ async function updateClientSystemInfo(natType, authenKey) {
 }
 
 function restartApplication() {
-
     let exe = process.argv.shift();
     let args = [];
-    //如果打包程序在运行，就不要再有js文件的路径了
-    let isPackExe = !(exe.endsWith('node' || exe.endsWith('node.exe')));
 
-    for (const item of args) {
-        if (isPackExe == false || item.endsWith('.js') === false) {
-            args.push(item);
-        }
+    for (const item of process.argv) {
+        args.push(item);
     }
 
     if (!args.includes('-r')) {

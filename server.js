@@ -9,7 +9,9 @@ const cluster = require('cluster');
 const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
 const createHttpProxy = require('./Http/HttpProxy');
-const initdbdata = require('./Db/InitDb');
+const InitDb = require('./Db/InitDb');
+const initdbdata = InitDb.initDb;
+const stopServer = InitDb.stopSever;
 const { isTcpPortAvailable } = require('./Utils/PortUtil');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
 const defaultBridgeConfigPort = defaultBridgeConfig.port;
@@ -92,6 +94,7 @@ app.set('x-powered-by', false);
 //const bodyParser = require('body-parser');
 const GlobalData = require('./Common/GlobalData');
 const { requireAuthenKey: requireRole, allRequest } = require('./ExpressMiddleWare/authenMiddleWare');
+const { setgroups } = require('process');
 app.use(allRequest);
 app.use('/', express.static('public'));
 
@@ -143,6 +146,12 @@ process.on('SIGINT', function() {
     }
 });
 
+
 function serverExit(params) {
-    process.exit(0);
+    N2NServer.stopSuperNode();
+    stopServer();
+    setTimeout(() => {
+        console.log('stop')
+        process.exit(0);
+    }, 2000);
 }
