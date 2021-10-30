@@ -11,6 +11,7 @@ const commandType = {
     UPDATE_CONNECTOR: 'update.connector',
     START_CONNECTOR: 'start.connector',
     CLIENT_CREATE_UDP_TUNNEL_SERVER: 'client.createUpdTunnelServer',
-    CLIENT_STOP_UDP_TUNNEL_SERVER: 'client.stopUpdTunnelServer'
+    CLIENT_STOP_UDP_TUNNEL_SERVER: 'client.stopUpdTunnelServer',
+    CLIENT_REPEAT_LOGIN: 'client.repeat.login'
 }
 module.exports.commandType = commandType;

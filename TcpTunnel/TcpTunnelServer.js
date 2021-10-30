@@ -91,7 +91,7 @@ class TcpTunnelServer {
             });
 
             middleServer.on('close', () => {
-                console.log(`middleserver closed:` + middlePort);
+                logger.trace(`middleserver closed:` + middlePort);
             });
 
             middleServer.on('error', (err) => {

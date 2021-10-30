@@ -154,16 +154,22 @@ async function initDb() {
             connection.destroy();
         }
         await sequelize.sync({ force: true });
+
     } else {
         await sequelize.sync({});
     }
+
+    await stopSever();
 }
 async function stopSever() {
     await Client.update({
         status: 0
+    }, {
+        where: {
+            isAvailable: 1
+        }
     });
 }
 module.exports = {
-    stopSever,
-    initDb
+    initdbdata
 };

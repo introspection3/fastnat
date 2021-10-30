@@ -81,18 +81,22 @@ io.on('connection', async(socket) => {
         io.emit('client.disconnect', { clientId: clientId, socketIOSocketId: socket.id });
     });
 
-    logger.debug('socket.io new connection,socket.id=' + socket.id);
+    logger.debug('socket.io new connection,currentConnectSocketIoClientId=' + currentConnectSocketIoClientId);
 
     //-----------判断是否登录到系统了----------
     let currentOnlineSockets = await defaultNS.fetchSockets();
+    logger.trace('currentOnlineSockets.length=' + currentOnlineSockets.length);
     let existSockets = currentOnlineSockets.filter((value, index, array) => {
-        value.handshake.auth.clientId === currentConnectSocketIoClientId;
+        return value.handshake.auth.clientId === currentConnectSocketIoClientId;
     });
-
+    logger.trace('existSockets.length=' + existSockets.length);
     if (existSockets && existSockets.length > 1) {
         //已有连接了
-        socket.disconnect(true);
+        socket.emit(commandType.CLIENT_REPEAT_LOGIN, currentConnectSocketIoClientId);
         logger.error('client is already  online,clientId=' + currentConnectSocketIoClientId);
+        setTimeout(() => {
+            socket.disconnect(true);
+        }, 100);
         return;
     }
 

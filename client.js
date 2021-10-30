@@ -309,6 +309,11 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
 
     });
 
+    socketIOSocket.on(commandType.CLIENT_REPEAT_LOGIN, async(clientId) => {
+        logger.trace(commandType.CLIENT_REPEAT_LOGIN + clientId);
+        PlatfromUtil.processExit();
+    });
+
     socketIOSocket.on(commandType.DELETE_TUNNEL, async(id) => {
         id = Number.parseInt(id);
         logger.trace(commandType.DELETE_TUNNEL + id);
@@ -369,7 +374,7 @@ async function checkNatType(clientConfig) {
 }
 
 async function main() {
-
+    require('./Utils/WindowsUtil').disableCloseButton();
     trayIcon();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
@@ -872,6 +877,13 @@ async function trayIcon(params) {
 
     systray.onClick(action => {
         if (action.seq_id === 0) {
+            console.log('start');
+            if (action.item.checked) {
+                require('./Utils/WindowsUtil').hideConsole();
+            } else {
+                require('./Utils/WindowsUtil').showConsole();
+            }
+            console.log('end');
             systray.sendAction({
                 type: 'update-item',
                 item: {
@@ -879,7 +891,8 @@ async function trayIcon(params) {
                     checked: !action.item.checked,
                 },
                 seq_id: action.seq_id,
-            })
+            });
+
         } else if (action.seq_id === 1) {
             // opens the url in the default browser 
             PlatfromUtil.openDefaultBrowser(axios.defaults.baseURL);

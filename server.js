@@ -10,8 +10,8 @@ const cpuCount = require('os').cpus().length;
 const ClusterData = require('./Common/ClusterData');
 const createHttpProxy = require('./Http/HttpProxy');
 const InitDb = require('./Db/InitDb');
-const initdbdata = InitDb.initDb;
-const stopServer = InitDb.stopSever;
+const initdbdata = InitDb.initdbdata;
+
 const { isTcpPortAvailable } = require('./Utils/PortUtil');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
 const defaultBridgeConfigPort = defaultBridgeConfig.port;
@@ -41,6 +41,7 @@ if (clusterEnabled) {
         N2NServer.startSuperNode(communityListPath, netbuildingPort);
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
+
         setupPrimary({
             serialization: "advanced",
         });
@@ -65,6 +66,7 @@ if (clusterEnabled) {
     ClusterData.register2Worker();
 } else {
     initdbdata();
+
     P2PTracker.start();
     N2NServer.startSuperNode(communityListPath, netbuildingPort);
 }
@@ -149,9 +151,9 @@ process.on('SIGINT', function() {
 
 function serverExit(params) {
     N2NServer.stopSuperNode();
-    stopServer();
+
     setTimeout(() => {
-        console.log('stop')
+        logger.log('server has been stopped')
         process.exit(0);
     }, 2000);
 }

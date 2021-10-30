@@ -1,7 +1,7 @@
 {
     "db": {
         "dbType": "mysql",
-        "host": "192.168.1.4",
+        "host": "127.0.0.1",
         "port": 3306,
         "logging": false,
         "database": "database",
@@ -9,7 +9,7 @@
         "password": "root"
     },
     "init": {
-        "firstInit": false
+        "firstInit": true
     },
     "redis": {
         "host": "192.168.1.3",
@@ -37,8 +37,8 @@
         "port": 80
     },
     "cluster": {
-        "enabled": true,
-        "count": 4
+        "enabled": false,
+        "count": 1
     },
     "netbuilding": {
         "version": "2.9.0",
