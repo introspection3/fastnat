@@ -115,7 +115,7 @@ async function getProxy(req, res = null) {
     }
 
     if (secondDomainName === 'www') {
-        logger.trace(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
+        logger.trace(`www request,from ${JSON.stringify(req.socket.address())} ` + JSON.stringify(req.headers));
     }
     let port = await getPort(secondDomainName);
     if (HttpProxyCacheMap.has(port)) {
