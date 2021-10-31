@@ -31,8 +31,25 @@ class HttpTunnelClient {
             targetUrl = `${tunnel.type}://${tunnel.localIp}`;
         }
 
+        let finalAgent = null;
+        if (tunnel.type === 'https') {
+            finalAgent = https.globalAgent;
+
+        } else {
+            finalAgent = http.globalAgent;
+        }
+
         let parsedUrl = url.parse(targetUrl);
-        const proxy = httpProxy.createProxy({});
+        const proxy = httpProxy.createProxy({
+            target: targetUrl,
+            agent: finalAgent,
+            headers: { host: parsedUrl.hostname },
+            prependPath: false,
+            xfwd: true,
+            hostRewrite: targetUrl.host,
+            protocolRewrite: parsedUrl.protocol,
+            ws: true
+        });
 
         proxy.on('error', function(err, req, res) {
             logger.error(err);
@@ -44,28 +61,15 @@ class HttpTunnelClient {
             }
 
         });
-        let finalAgent = null;
-        if (tunnel.type === 'https') {
-            finalAgent = https.globalAgent;
 
-        } else {
-            finalAgent = http.globalAgent;
-        }
         let httpModule = http;
         let serverOptions = {};
 
         this.httpProxyServer = httpModule.createServer(serverOptions, function(req, res) {
             logReq(req)
-            proxy.web(req, res, {
-                target: targetUrl,
-                agent: finalAgent,
-                headers: { host: parsedUrl.hostname },
-                prependPath: false,
-                xfwd: true,
-                hostRewrite: targetUrl.host,
-                protocolRewrite: parsedUrl.protocol
-            });
+            proxy.web(req, res);
         });
+
         /**
          * 
          * @param {http.IncomingMessage} req 

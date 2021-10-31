@@ -61,7 +61,11 @@ function createHttpProxy() {
         }
     }, 15 * 1000);
 
-    let proxy = httpProxy.createProxy({});
+    let proxy = httpProxy.createProxy({
+        prependPath: false,
+        xfwd: true,
+        ws: true
+    });
     proxy.on('error', function(e) {
         logger.error(e);
     });
@@ -112,7 +116,6 @@ function createHttpProxy() {
                 return;
             }
             let secondDomainName = array[0];
-            console.log(secondDomainName)
             if (secondDomainName == null || secondDomainName == '') {
                 res.end('secondDomainName not exist');
                 return;
@@ -138,8 +141,13 @@ function createHttpProxy() {
                 prependPath: false,
                 xfwd: true,
                 hostRewrite: hostname,
-                protocolRewrite: 'https'
+                protocolRewrite: 'https',
+                ws: true
             });
+        });
+
+        server.on('upgrade', function(req, socket, head) {
+            proxy.ws(req, socket, head);
         });
 
         server.listen(sslConfig.port, () => {
@@ -176,7 +184,6 @@ function createHttpProxy() {
             return;
         }
         let secondDomainName = array[0];
-        console.log(secondDomainName)
         if (secondDomainName == null || secondDomainName == '') {
             res.end('secondDomainName not exist');
             return;
@@ -201,9 +208,15 @@ function createHttpProxy() {
             prependPath: false,
             xfwd: true,
             hostRewrite: hostname,
-            protocolRewrite: 'http'
+            protocolRewrite: 'http',
+            ws: true
         });
     });
+
+    server.on('upgrade', function(req, socket, head) {
+        proxy.ws(req, socket, head);
+    });
+
     server.listen(serverHttpConfig.port, () => {
         logger.debug('server http proxy start:' + JSON.stringify(server.address()))
     });
