@@ -18,8 +18,9 @@ const DomainMap = new Map();
 const currentDomainName = serverHttpConfig.domain;
 const currentDomainPort = serverHttpConfig.port;
 const currentDomainSslPort = serverHttpConfig.ssl.port;
+const fineEndArray = [currentDomainName, currentDomainName + ':' + currentDomainPort, currentDomainName + ':' + currentDomainSslPort];
 
-async function getPortBySecondDomainName(secondDomainName) {
+async function getPort(secondDomainName) {
     if (DomainMap.has(secondDomainName)) {
         let data = DomainMap.get(secondDomainName);
         return data.remotePort;
@@ -40,14 +41,107 @@ async function getPortBySecondDomainName(secondDomainName) {
 }
 
 /**
- * 
- * @param {String} host 
+ * 根据req获取对应二级域名
+ * @param {http.IncomingMessage} req 
+ * @param {http.ServerResponse} res
  */
-function isHostLegal(fineEnd, host, currentDomainName, currentPort) {
-    if (host.endsWith(fineEnd[0]) || host.endsWith(fineEnd[1])) {
-        return true;
+function getSecondDomainNameFromReq(req, res = null) {
+    let existHost = req.headers.hasOwnProperty('host');
+    let address = { localAddress: req.socket.localAddress, localPort: req.socket.localPort };
+    if (!existHost) {
+        logger.error(`bad req,no host from ${JSON.stringify(address)}`);
+        return null;
     }
-    return false;
+
+    let hostname = req.headers['host'];
+    if (hostname === 'www.liuchang88888.ltd') {
+        if (res) {
+            logger.warn(`bad host www.liuchang88888.ltd from ${JSON.stringify(address)}`);
+            req.statusCode = 403;
+            req.statusMessage = '.';
+            res.end('.');
+        }
+        return null;
+    }
+    if (!(hostname.endsWith(fineEndArray[0]) || hostname.endsWith(fineEndArray[1]) || hostname.endsWith(fineEndArray[2]))) {
+        logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
+        if (res) {
+            res.end('Illegal domain name,please close it');
+
+        }
+        return null;
+    }
+
+    if (net.isIPv4(hostname)) {
+        if (res) {
+            res.end('you should config domain,do not use ip');
+        }
+        logger.warn(`bad hostname:${hostname}`)
+        return null;
+    }
+
+    let array = hostname.split('.');
+    if (array.length == 1) {
+        if (res) {
+            res.end('domain error');
+        }
+        return null;
+    }
+    let secondDomainName = array[0];
+    if (secondDomainName == null || secondDomainName == '') {
+        if (res) {
+            res.end('secondDomainName null or  empty');
+        }
+        return null;
+    }
+    return secondDomainName;
+}
+
+const HttpProxyCacheMap = new Map();
+/**
+ * 根据req获取proxy
+ * @param {http.IncomingMessage} req 
+ * @param {http.ServerResponse} res
+ */
+async function getProxy(req, res = null) {
+    let secondDomainName = getSecondDomainNameFromReq(req, res);
+    if (secondDomainName === null || secondDomainName === '') {
+        if (req) {
+            req.statusCode = 403;
+            req.statusMessage = 'Not found';
+            res.end('');
+        }
+        return null;
+    }
+
+    if (secondDomainName === 'www') {
+        logger.trace(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
+    }
+    let port = await getPort(secondDomainName);
+    if (HttpProxyCacheMap.has(port)) {
+        let result = HttpProxyCacheMap.get(port);
+        result.time = new Date();
+    }
+    let targetUrl = `http://127.0.0.1:` + port;
+    let hostname = req.headers['host'];
+    let proxy = httpProxy.createProxy({
+        target: targetUrl,
+        agent: http.globalAgent,
+        prependPath: false,
+        xfwd: true,
+        hostRewrite: hostname,
+        protocolRewrite: 'https',
+        ws: true
+    });
+
+    // Listen for the `error` event on `proxy`.
+    proxy.on('error', function(err, req, res) {
+
+        logger.error('httpProxy' + err);
+    });
+    proxy.time = new Date();
+    HttpProxyCacheMap.set(port, proxy);
+    return proxy;
 }
 
 function createHttpProxy() {
@@ -59,16 +153,16 @@ function createHttpProxy() {
                 DomainMap.delete(key);
             }
         }
-    }, 15 * 1000);
 
-    let proxy = httpProxy.createProxy({
-        prependPath: false,
-        xfwd: true,
-        ws: true
-    });
-    proxy.on('error', function(e) {
-        logger.error(e);
-    });
+        for (const [key, item] of HttpProxyCacheMap) {
+            let passTime = new Date() - item.time;
+            if (passTime > fiveMinutes) {
+                item.close();
+                HttpProxyCacheMap.delete(key);
+            }
+        }
+
+    }, 15 * 1000);
 
     if (sslConfig.enabled === true) {
 
@@ -86,68 +180,18 @@ function createHttpProxy() {
                 passphrase: sslConfig.pfxPassword
             };
         }
-        let fineEndArray = [currentDomainName, currentDomainName + ':' + currentDomainSslPort];
+
 
         let server = https.createServer(serverOptions, async function(req, res) {
-
-            //获取二级域名的名字,然后从数据里找到对应的端口
-            let existHost = req.headers.hasOwnProperty('host');
-            let address = req.socket.address();
-            if (!existHost) {
-                logger.error(`bad req,no host from ${JSON.stringify(address)}`);
-                return;
-            }
-            let hostname = req.headers['host'];
-
-            if (!(hostname.endsWith(fineEndArray[0]) || hostname.endsWith(fineEndArray[1]))) {
-                logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
-                res.end('Illegal domain name,please close it');
-                return;
-            }
-
-            if (net.isIPv4(hostname)) {
-                res.end('you should config domain,do not use ip');
-                logger.warn(`bad hostname:${hostname}`)
-                return;
-            }
-            let array = hostname.split('.');
-            if (array.length == 1) {
-                res.end('domain error');
-                return;
-            }
-            let secondDomainName = array[0];
-            if (secondDomainName == null || secondDomainName == '') {
-                res.end('secondDomainName not exist');
-                return;
-            }
-            let targetUrl = `http://127.0.0.1:`;
-            if (secondDomainName === 'www') {
-                let address = req.socket.address();
-                logger.info(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
-            }
-            let port = await getPortBySecondDomainName(secondDomainName);
-            if (port <= 0) {
-                res.end('domain error');
-                return;
-            }
-            targetUrl += port;
-
-            //对于外界而言必然都是http
-            let finalAgent = http.globalAgent;
-            proxy.web(req, res, {
-                target: targetUrl,
-                agent: finalAgent,
-                headers: { host: hostname },
-                prependPath: false,
-                xfwd: true,
-                hostRewrite: hostname,
-                protocolRewrite: 'https',
-                ws: true
-            });
+            let proxy = await getProxy(req, res);
+            if (proxy)
+                proxy.web(req, res);
         });
 
-        server.on('upgrade', function(req, socket, head) {
-            proxy.ws(req, socket, head);
+        server.on('upgrade', async function(req, socket, head) {
+            let proxy = await getProxy(req);
+            if (proxy)
+                proxy.ws(req, socket, head);
         });
 
         server.listen(sslConfig.port, () => {
@@ -155,66 +199,16 @@ function createHttpProxy() {
         });
 
     }
-
-    let fineEndArray = [currentDomainName, currentDomainName + ':' + currentDomainPort];
-
     let server = http.createServer({}, async function(req, res) {
-        //获取二级域名的名字,然后从数据里找到对应的端口
-        let existHost = req.headers.hasOwnProperty('host');
-        let address = req.socket.address();
-        if (!existHost) {
-            logger.error(`bad req,no host from ${JSON.stringify(address)}`);
-            return;
-        }
-
-        let hostname = req.headers['host'];
-        if (!(hostname.endsWith(fineEndArray[0]) || hostname.endsWith(fineEndArray[1]))) {
-            logger.info(`bad request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
-            res.end('Illegal domain name,please close it');
-            return;
-        }
-        if (net.isIPv4(hostname)) {
-            res.end('you should config domain,do not use ip');
-            logger.warn(`bad hostname:${hostname}`)
-            return;
-        }
-        let array = hostname.split('.');
-        if (array.length == 1) {
-            res.end('domain error');
-            return;
-        }
-        let secondDomainName = array[0];
-        if (secondDomainName == null || secondDomainName == '') {
-            res.end('secondDomainName not exist');
-            return;
-        }
-        let targetUrl = `http://127.0.0.1:`;
-        if (secondDomainName === 'www') {
-            logger.info(`www request,from ${JSON.stringify(address)} ` + JSON.stringify(req.headers));
-        }
-        let port = await getPortBySecondDomainName(secondDomainName);
-        if (port <= 0) {
-            res.end('domain error');
-            return;
-        }
-        targetUrl += port;
-
-        //对于外界而言必然都是http
-        let finalAgent = http.globalAgent;
-        proxy.web(req, res, {
-            target: targetUrl,
-            agent: finalAgent,
-            headers: { host: hostname },
-            prependPath: false,
-            xfwd: true,
-            hostRewrite: hostname,
-            protocolRewrite: 'http',
-            ws: true
-        });
+        let proxy = await getProxy(req, res);
+        if (proxy)
+            proxy.web(req, res);
     });
 
-    server.on('upgrade', function(req, socket, head) {
-        proxy.ws(req, socket, head);
+    server.on('upgrade', async function(req, socket, head) {
+        let proxy = await getProxy(req);
+        if (proxy)
+            proxy.ws(req, socket, head);
     });
 
     server.listen(serverHttpConfig.port, () => {
