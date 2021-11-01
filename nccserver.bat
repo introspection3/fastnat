@@ -1,0 +1,1 @@
+ncc build server.js  -o dist
