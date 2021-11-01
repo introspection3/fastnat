@@ -10,6 +10,7 @@ const ServerConfig = require('../Common/ServerConfig');
 const userConfig = ServerConfig.user;
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 
+
 router.get('/getP2PInfo', async function(req, res, next) {
     let authenKey = req.params.authenKey;
     let tunnelId = req.params.tunnelId;
@@ -128,9 +129,9 @@ router.post('/update', async(req, res, next) => {
             return;
         }
         if (oldData.remotePort != data.remotePort) {
-            let isPortUsed = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
-            logger.trace('isPortUsed=' + isPortUsed);
-            if (!isPortUsed) {
+            let isPortUnused = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
+            logger.trace('isPortUnused=' + isPortUnused);
+            if (!isPortUnused) {
                 let result = {
                     success: false,
                     data: data,
@@ -188,7 +189,10 @@ router.post('/update', async(req, res, next) => {
                 }
             });
 
-            if (!(oldData.remotePort == newData.remotePort && oldData.localPort == newData.localPort && oldData.localIp == newData.localIp)) {
+            if (!(oldData.remotePort == newData.remotePort &&
+                    oldData.localPort == newData.localPort &&
+                    oldData.lowProtocol == newData.lowProtocol &&
+                    oldData.localIp == newData.localIp)) {
                 eventEmitter.emit(commandType.DELETE_TUNNEL, clientId, tunnelId);
                 setTimeout(() => {
                     eventEmitter.emit(commandType.ADD_TUNNEL, clientId, newData);
@@ -359,9 +363,9 @@ router.post('/add', async(req, res, next) => {
             return;
         }
         // we have the lock
-        let isPortUsed = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
-        logger.trace('isPortUsed+' + isPortUsed)
-        if (!isPortUsed) {
+        let isPortUnused = await NetUtil.isPortUnusedAsync(data.lowProtocol, data.remotePort);
+        logger.trace('isPortUnused+' + isPortUnused);
+        if (!isPortUnused) {
             let result = {
                 success: false,
                 data: data,

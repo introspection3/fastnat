@@ -26,15 +26,18 @@ class UdpTunnelServer {
         });
     }
 
+    onMessage = (msg, rinfo) => {
+        this.udpServer.send(msg, rinfo.port, rinfo.address);
+    };
+
     start() {
         if (this._started) {
             logger.warn('UdpTunnelServer has already started');
             return;
         }
+        logger.trace('udp tunnel server start,tunnel.id=' + this.tunnelId);
         this._started = true;
-        this.socketIOSocket.on(this.eventName, (msg, rinfo) => {
-            this.udpServer.send(msg, rinfo.port, rinfo.address);
-        });
+        this.socketIOSocket.on(this.eventName, this.onMessage);
     }
 
     _createUdpServer(port, tunnelId) {
@@ -42,9 +45,9 @@ class UdpTunnelServer {
         let serverName = this.serverName;
         //创建 udp server
         let udpServer = dgram.createSocket('udp4');
-
+        logger.trace('_createUdpServer:' + port);
         udpServer.bind(port); // 绑定端口
-
+        logger.trace('_createUdpServer2:' + port);
         // 监听端口
         udpServer.on('listening', () => {
             const address = udpServer.address();
@@ -67,9 +70,15 @@ class UdpTunnelServer {
 
 
     stop() {
+        logger.trace('udp tunnel server stop,tunnel.id=' + this.tunnelId);
+        this.socketIOSocket.off(this.eventName, this.onMessage);
         this.socketIOSocket.emit(this.stopEventName, this.tunnelId);
-        this.udpServer.close();
-        this.udpServer = null;
+        if (this.udpServer) {
+            this.udpServer.removeAllListeners();
+            this.udpServer.close();
+            this.udpServer = null;
+        }
+
     }
 
 }

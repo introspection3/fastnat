@@ -5,8 +5,9 @@ const http = require('http');
 const https = require('https');
 const httpProxy = require('http-proxy');
 const url = require('url');
-const defaultConfig = require('../config/default.json');
-const serverConfig = require('../config/server.json');
+const defaultConfig = require('../Common/DefaultConfig');
+const serverConfig = require('../Common/ServerConfig');
+
 const serverHttpConfig = serverConfig.http;
 const sslConfig = serverHttpConfig.ssl;
 const rootPath = require('../Common/GlobalData').rootPath;
@@ -52,11 +53,19 @@ function getSecondDomainNameFromReq(req, res = null) {
         logger.error(`bad req,no host from ${JSON.stringify(address)}`);
         return null;
     }
-
+    if (address.localAddress === '::ffff:127.0.0.1') {
+        logger.error(`bad req,from ${JSON.stringify(address)}`);
+        if (res) {
+            req.statusCode = 403;
+            req.statusMessage = '.';
+            res.end('.');
+        }
+        return null;
+    }
     let hostname = req.headers['host'];
     if (hostname === 'www.liuchang88888.ltd') {
+        logger.warn(`bad host www.liuchang88888.ltd from ${JSON.stringify(address)}`);
         if (res) {
-            logger.warn(`bad host www.liuchang88888.ltd from ${JSON.stringify(address)}`);
             req.statusCode = 403;
             req.statusMessage = '.';
             res.end('.');
@@ -130,13 +139,12 @@ async function getProxy(req, res = null) {
         prependPath: false,
         xfwd: true,
         hostRewrite: hostname,
-        protocolRewrite: 'https',
+        //protocolRewrite: 'https',
         ws: true
     });
 
     // Listen for the `error` event on `proxy`.
     proxy.on('error', function(err, req, res) {
-
         logger.error('httpProxy' + err);
     });
     proxy.time = new Date();

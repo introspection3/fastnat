@@ -17,17 +17,20 @@ class UdpTunnelClient {
         this.socketIOSocket = socketIOSocket;
         this.eventName = 'server.send.udp:' + this.udpTunnelItemOption.id;
         this.backEventName = 'client.back.udp:' + this.udpTunnelItemOption.id;
-        this.socketIOSocket.on(this.eventName, (data) => {
-            let msg = data.msg;
-            let rInfo = data.rInfo;
-            let udpClient = this._getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
-            //转发udp包
-            udpClient.send(msg, udpTunnelItemOption.localPort, udpTunnelItemOption.localIp);
-        });
+        this.socketIOSocket.on(this.eventName, this.onMessage);
 
         this.udpClientMap = new Map();
         this._checkUdpClientTimer = this._checkUdpClientInterval(udpClientTtl);
     }
+
+    onMessage = (data) => {
+        let msg = data.msg;
+        let rInfo = data.rInfo;
+        let udpTunnelItemOption = this.udpTunnelItemOption;
+        let udpClient = this._getUdpClient(udpTunnelItemOption.localIp, udpTunnelItemOption.localPort, udpTunnelItemOption.id, rInfo);
+        //转发udp包
+        udpClient.send(msg, udpTunnelItemOption.localPort, udpTunnelItemOption.localIp);
+    };
 
     start() {
         this.socketIOSocket.emit(commandType.CLIENT_CREATE_UDP_TUNNEL_SERVER, this.udpTunnelItemOption, (backData) => {
@@ -49,6 +52,7 @@ class UdpTunnelClient {
 
     destoryAllUdpClient() {
         for (let [key, udpClient] of this.udpClientMap) {
+            udpClient.removeAllListeners()
             udpClient.close();
         }
         this.udpClientMap.clear();
@@ -81,6 +85,7 @@ class UdpTunnelClient {
             return this.udpClientMap.get(clientName);
         } else {
             let udpClient = this._createUdpClient(localIp, localPort, tunnelId, rInfo);
+
             this.udpClientMap.set(clientName, udpClient);
             return udpClient;
         }
