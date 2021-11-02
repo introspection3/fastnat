@@ -18,7 +18,15 @@ router.post('/register', async function(req, res, next) {
         data: null,
         info: ''
     };
-
+    if (req.session.captcha !== info.vcode.toLowerCase()) {
+        result = {
+            success: false,
+            data: 'vcode',
+            info: '验证码错误'
+        };
+        res.send(result);
+        return;
+    }
     let count = await RegisterUser.count({
         where: {
             username: info.username

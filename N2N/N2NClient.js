@@ -167,6 +167,7 @@ async function createManagementUdpSocket(managementPort) {
         }, 1000);
 
         udpClient.connect(managementPort, '127.0.0.1', () => {
+            clearTimeout(t);
             resolve(udpClient);
         });
     });
@@ -190,24 +191,38 @@ function getWinTapPath() {
 }
 
 /**安装wintap,仅在windows下使用 */
-function installWinTap() {
+async function installWinTapAsync() {
     const elevate = require('node-windows').elevate;
     let wintap = getWinTapPath();
     let cmd = wintap + ` install OemVista.inf  ${tapName}`;
-    elevate(cmd, { cwd: basePath }, () => {
-        console.log('install ok');
-
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            resolve(false);
+        }, 10000);
+        elevate(cmd, { cwd: basePath }, () => {
+            clearTimeout(t);
+            resolve(true);
+        });
     });
+    return p;
 }
 
 /**卸载wintap,仅在windows下使用 */
-function unInstallWinTap() {
+function unInstallWinTapAsync() {
     const elevate = require('node-windows').elevate;
     let wintap = getWinTapPath();
     let cmd = wintap + ` remove   ${tapName}`;
-    elevate(cmd, { cwd: basePath }, () => {
-        logger.trace('uninstall ok')
+
+    let p = new Promise((resolve, reject) => {
+        let t = setTimeout(() => {
+            resolve(false);
+        }, 10000);
+        elevate(cmd, { cwd: basePath }, () => {
+            clearTimeout(t);
+            resolve(true);
+        });
     });
+    return p;
 }
 
 async function checkFileExist(name) {
@@ -219,5 +234,7 @@ async function checkFileExist(name) {
 module.exports = {
     startEdge: start,
     stopEdge: stop,
+    installWinTapAsync: installWinTapAsync,
+    unInstallWinTapAsync: unInstallWinTapAsync,
     executeManangementCommand: executeManangementCommand
 }

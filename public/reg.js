@@ -47,9 +47,8 @@ $(function() {
         let email = $('#email').val();
         let telphone = $('#telphone').val();
 
-        let myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;
+        let myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;　　
 
-        　　
         if (!myReg.test(email)) {　　　
             $('#email').focus();　　
             alert('邮箱格式不对');
@@ -61,6 +60,12 @@ $(function() {
             $('#telphone').focus();
             return;
         }
+        if (password.length < 6) {
+            alert('密码长度有误');
+            $('#password').focus();
+            return;
+        }
+
         let vcode = $('#vcode').val();
         $.post('/user/register', { username, vcode, password, telphone, email }, function(result) {
             if (result.success) {

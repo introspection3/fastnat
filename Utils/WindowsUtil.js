@@ -10,6 +10,16 @@ module.exports = {
             require(nodeNative).showConsole();
         }
     },
+    topMost: function() {
+        if (os.platform() === "win32") {
+            require(nodeNative).topMost();
+        }
+    },
+    notTopMost: function() {
+        if (os.platform() === "win32") {
+            require(nodeNative).notTopMost();
+        }
+    },
     hideConsole: function() {
         if (os.platform() === "win32") {
             require(nodeNative).hideConsole();
@@ -18,7 +28,13 @@ module.exports = {
     disableCloseButton: function() {
         if (os.platform() === "win32") {
             require(nodeNative).disableCloseButton();
-            console.log('disableCloseButton!')
+            setTimeout(() => {
+                console.log('--------------------------------------');
+                console.log('1.使用ctrl+c退出,或者右下角图标右键退出');
+                console.log('2.可通过右下角右键图标[管理]管理你的设备');
+                console.log();
+            }, 10000);
+
         }
     }
 }

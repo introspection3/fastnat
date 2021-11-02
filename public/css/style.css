@@ -7,7 +7,7 @@ body {
     width: 30%;
     height: 40px;
     position: absolute;
-    top: 0px;
+    top: -12px;
     left: 70%;
     cursor: pointer;
     display: inline-block;
@@ -139,7 +139,7 @@ h2 {
 .content .bg .form-control {
     border: none;
     padding: 0;
-    font-size: 20px;
+    font-size: 12px;
     border-radius: 0;
 }
 

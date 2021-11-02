@@ -27,7 +27,9 @@ const rootPath = require('./Common/GlobalData').rootPath;
 const SysTray = require('./SysTray/SysTray');
 const getPluginPath = require('./Utils/PluginUtil').getPluginPath;
 const prompt = require('prompt');
-
+const fs = require('fs').promises;
+const promptGetAsync = require('util').promisify(prompt.get);
+const WindowsUtil = require('./Utils/WindowsUtil');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -373,12 +375,17 @@ async function checkNatType(clientConfig) {
     return currentClientNatType;
 }
 
+async function rewriteClientConfig(clientConfig) {
+    const filepath = path.join(process.cwd(), "config", 'client.json');
+    await fs.writeFile(filepath, JSON.stringify(clientConfig));
+}
+
 async function main() {
-    require('./Utils/WindowsUtil').disableCloseButton();
     trayIcon();
+    WindowsUtil.topMost();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
-        logger.error('the client.json file in config directory not exist');
+        logger.error('the client.json file in config directory is not existed');
         return;
     }
     const clientConfig = require('./Common/ClientConfig');
@@ -387,14 +394,31 @@ async function main() {
         authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
         clientConfig.authenKey = authenKey;
     }
+    let firstUse = false;
     if (authenKey === '') {
-        console.log('请输入您的设备KEY');
+        firstUse = true;
+        let url = `http${defaultWebSeverConfig.https?'s':''}://${defaultConfig.host}:${defaultWebSeverConfig.port}/reg.html`;
+        let tip = `请输入设备KEY,如尚无KEY,请到${url}注册,已将尝试为您打开了浏览器`;
+        console.log(tip);
+        await sleep(1000);
+
+        PlatfromUtil.openDefaultBrowser(url);
+        let schema = {
+            properties: {
+                key: {
+                    pattern: /^[a-zA-Z0-9_-]{4,36}$/,
+                    message: '请注意KEY的格式',
+                    required: true
+                }
+            }
+        };
         prompt.start();
-        // ask user for the input
-        const promptGetAsync = require('util').promisify(prompt.get);
-        let result = await promptGetAsync(['authenKey']);
-        authenKey = result.authenKey;
+        let result = await promptGetAsync(schema);
+        authenKey = result.key;
+        clientConfig.authenKey = authenKey;
     }
+
+    WindowsUtil.disableCloseButton();
     setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
 
     if (options.restart) {
@@ -411,13 +435,30 @@ async function main() {
         timerCheckServerStatus();
         return;
     }
-    checkNatType(clientConfig);
+
     if (!clientResult.success) {
         logger.error(clientResult.info);
         PlatfromUtil.processExit();
         return;
     }
 
+    if (firstUse) {
+        console.log('下面将安装驱动和防火墙例外,请允许通过');
+        await sleep(5000);
+        let ok = await N2NClient.unInstallWinTapAsync();
+        if (ok === false) {
+            logger.warn('驱动安装超时,请及时允许安装通过');
+            return;
+        }
+        await rewriteClientConfig(clientConfig);
+        ok = await require('./Utils/FireWallUtil').addCurrentProgramException('fastnat');
+        if (ok === false) {
+            logger.warn('添加防火墙超时，请自行添加');
+        }
+    }
+
+
+    checkNatType(clientConfig);
     let currentClientTunnels = clientResult.data.tunnels;
     setCurrentClientTunnelsMap(currentClientTunnels)
     let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id);
@@ -877,13 +918,13 @@ async function trayIcon(params) {
 
     systray.onClick(action => {
         if (action.seq_id === 0) {
-            console.log('start');
+
             if (action.item.checked) {
                 require('./Utils/WindowsUtil').hideConsole();
             } else {
                 require('./Utils/WindowsUtil').showConsole();
             }
-            console.log('end');
+
             systray.sendAction({
                 type: 'update-item',
                 item: {

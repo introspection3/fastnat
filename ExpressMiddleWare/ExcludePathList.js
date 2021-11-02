@@ -7,5 +7,6 @@ module.exports = [
     '/login.html',
     '/register.html',
     '/home.html',
-    '/reg.html'
+    '/reg.html',
+    '/userAgreement.html'
 ];

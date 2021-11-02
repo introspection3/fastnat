@@ -1074,6 +1074,11 @@
     "arrify" "^1.0.1"
     "is-plain-obj" "^1.1.0"
 
+"minimist@~0.0.1":
+  "integrity" "sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8="
+  "resolved" "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz"
+  "version" "0.0.10"
+
 "moment-timezone@^0.5.31":
   "integrity" "sha1-slL9a7V/NBybWaWrYajlGnO70iw="
   "resolved" "https://registry.nlark.com/moment-timezone/download/moment-timezone-0.5.33.tgz"
@@ -1156,6 +1161,14 @@
   "resolved" "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.3.0.tgz"
   "version" "4.3.0"
 
+"node-windows@^1.0.0-beta.6":
+  "integrity" "sha512-Ehig70tF9A9Wns4VMpnsvT7dyat/d2fio6C4g1RAEaAi+piAjN6Wc+/fdSOifl8YCCncVllijv5Q9wdyHvdgeA=="
+  "resolved" "https://registry.npmjs.org/node-windows/-/node-windows-1.0.0-beta.6.tgz"
+  "version" "1.0.0-beta.6"
+  dependencies:
+    "optimist" "~0.6.0"
+    "xml" "0.0.12"
+
 "node-worker-threads-pool@^1.5.0":
   "integrity" "sha1-2sSOl01hwEhgLjJdJGG6ZWXmr8w="
   "resolved" "https://registry.nlark.com/node-worker-threads-pool/download/node-worker-threads-pool-1.5.0.tgz"
@@ -1211,6 +1224,14 @@
   "version" "0.7.3"
   dependencies:
     "tiny-inflate" "^1.0.2"
+
+"optimist@~0.6.0":
+  "integrity" "sha1-2j6nRob6IaGaERwybpDrFaAZZoY="
+  "resolved" "https://registry.npmjs.org/optimist/-/optimist-0.6.1.tgz"
+  "version" "0.6.1"
+  dependencies:
+    "minimist" "~0.0.1"
+    "wordwrap" "~0.0.2"
 
 "p-limit@^1.1.0":
   "integrity" "sha1-uGvV8MJWkJEcdZD8v8IBDVSzzLg="
@@ -1899,6 +1920,11 @@
   dependencies:
     "@types/node" "*"
 
+"wordwrap@~0.0.2":
+  "integrity" "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="
+  "resolved" "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz"
+  "version" "0.0.3"
+
 "wrappy@1":
   "integrity" "sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8="
   "resolved" "https://registry.nlark.com/wrappy/download/wrappy-1.0.2.tgz"
@@ -1908,6 +1934,11 @@
   "integrity" "sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A=="
   "resolved" "https://registry.npmjs.org/ws/-/ws-7.4.6.tgz"
   "version" "7.4.6"
+
+"xml@0.0.12":
+  "integrity" "sha1-8Is0cQmRK+AChXhfRvFa2OUKX2c="
+  "resolved" "https://registry.npmjs.org/xml/-/xml-0.0.12.tgz"
+  "version" "0.0.12"
 
 "yallist@^2.1.2":
   "integrity" "sha1-HBH5IY8HYImkfdUS+TxmmaaoHVI="
