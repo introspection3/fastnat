@@ -57,7 +57,7 @@ const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
-    .option('-r, --restart', 'only tell application ,this is a restart process')
+    .option('-s, --sleep', 'only tell application ,this process will sleep then go on')
     .parse(process.argv);
 const options = program.opts();
 
@@ -395,7 +395,16 @@ async function main() {
         clientConfig.authenKey = authenKey;
     }
     let firstUse = false;
+    logger.log('当前正以管理员身份运行?');
     if (authenKey === '') {
+        let isAdmin = WindowsUtil.isRunAsAdmin();
+        if (isAdmin == false) {
+            console.log('需要以管理员运行后进行初始化');
+            await restartApplicationAsAdmin();
+            return;
+        } else {
+            console.log('当前正以管理员身份运行');
+        }
         firstUse = true;
         let url = `http${defaultWebSeverConfig.https?'s':''}://${defaultConfig.host}:${defaultWebSeverConfig.port}/reg.html`;
         let tip = `请输入设备KEY,如尚无KEY,请到${url}注册,已将尝试为您打开了浏览器`;
@@ -421,8 +430,8 @@ async function main() {
     WindowsUtil.disableCloseButton();
     setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
 
-    if (options.restart) {
-        logger.debug('sleep 1s,then restart,new pid=' + process.pid);
+    if (options.sleep) {
+        logger.debug('sleep 1s,then go  on,new pid=' + process.pid);
         await sleep(1000);
     }
 
@@ -445,7 +454,7 @@ async function main() {
     if (firstUse) {
         console.log('下面将安装驱动和防火墙例外,请允许通过');
         await sleep(5000);
-        let ok = await N2NClient.unInstallWinTapAsync();
+        let ok = await N2NClient.installWinTapAsync();
         if (ok === false) {
             logger.warn('驱动安装超时,请及时允许安装通过,请重试');
             return;
@@ -965,8 +974,8 @@ function restartApplication() {
         args.push(item);
     }
 
-    if (!args.includes('-r')) {
-        args.push('-r')
+    if (!args.includes('-s')) {
+        args.push('-s')
     }
     logger.debug("will restart ,current pid= " + process.pid);
     logger.debug(args.toString());
@@ -980,6 +989,28 @@ function restartApplication() {
         });
         PlatfromUtil.processExit();
     }, 500);
+}
+
+function getJSNameFromProcess() {
+    for (const item of process.argv) {
+        if (item.endsWith(".js")) {
+            console.log(item);
+            return item;
+        }
+    }
+    return "client.js";
+}
+
+async function restartApplicationAsAdmin(params) {
+    if (os.platform() === 'win32') {
+        //  const elevate = require('node-windows').elevate;
+        let cmd = `${getJSNameFromProcess()} -s`;
+        WindowsUtil.runCurrentAppAsAdmin(cmd);
+        PlatfromUtil.processExit();
+    } else {
+        logger.error('尚未实现')
+        restartApplication();
+    }
 }
 
 process.on("exit", function(code) {

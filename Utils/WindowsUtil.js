@@ -5,6 +5,16 @@ const nodeNative = path.join(rootPath, 'config', 'native', os.platform(), os.arc
 
 
 module.exports = {
+    runCurrentAppAsAdmin: function(args) {
+        if (os.platform() === "win32") {
+            return require(nodeNative).runCurrentAppAsAdmin(args);
+        }
+    },
+    isRunAsAdmin: function() {
+        if (os.platform() === "win32") {
+            return require(nodeNative).isRunAsAdmin();
+        }
+    },
     showConsole: function() {
         if (os.platform() === "win32") {
             require(nodeNative).showConsole();

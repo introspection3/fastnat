@@ -155,7 +155,7 @@ let toolbarDevice = [{
         document.execCommand("Copy"); // 执行浏览器复制命令
         oInput.className = 'oInput';
         oInput.style.display = 'none';
-        $.messager.alert('提示', '复制成功!', '提示');
+        $.messager.alert('提示', '复制成功,<br/>接下来请粘贴到程序中!', 'info');
 
     }
 }, {
