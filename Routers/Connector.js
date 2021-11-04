@@ -18,18 +18,44 @@ const { commandType } = require('../Communication/CommandType');
 const eventEmitter = require('../Communication/CommunicationEventEmiter').eventEmitter;
 
 router.get('/getByClientId', async function(req, res, next) {
-    if (!req.query.id) {
+    let clientId = req.query.id;
+    let count = await Client.count({
+        where: {
+            id: clientId,
+            isAvailable: true
+        },
+        include: [{
+            model: RegisterUser,
+            required: true,
+            where: {
+                isAvailable: true,
+                id: req.session.user.id
+            }
+        }]
+    });
+
+    if (count == 0) {
         let result = {
             "total": 0,
             "rows": []
         }
-
         res.send(result);
         return;
     }
+
+    if (!clientId) {
+        let result = {
+            "total": 0,
+            "rows": []
+        }
+        res.send(result);
+        return;
+    }
+
+
     let all = await Connector.findAll({
         where: {
-            clientId: req.query.id
+            clientId: clientId
         }
     });
     let result = {

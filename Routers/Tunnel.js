@@ -9,9 +9,22 @@ const logger = require('../Log/logger');
 const ServerConfig = require('../Common/ServerConfig');
 const userConfig = ServerConfig.user;
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+router.use(function(req, res, next) {
+    if (req.path.startsWith('/api')) {
+        next();
+    } else {
+        if (req.session.user) {
+            next();
+        } else {
+            res.send('no login');
+            logger.warn('no login' + req.path);
+        }
 
+    }
 
-router.get('/getP2PInfo', async function(req, res, next) {
+});
+
+router.get('/api/getP2PInfo', async function(req, res, next) {
     let authenKey = req.params.authenKey;
     let tunnelId = req.params.tunnelId;
     let password = req.params.password;

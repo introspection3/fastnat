@@ -10,7 +10,7 @@ class P2PRest {
         this.authenKey = authenKey;
     }
     async getTunnelP2PInfoAsync(tunnelId, password) {
-        let url = '/getP2PInfo';
+        let url = '/tunnel/api/getP2PInfo';
         let result = await (await axios.get(url, { params: { tunnelId: tunnelId, password: password, authenKey: this.authenKey } })).data;
         return result;
     }

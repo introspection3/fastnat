@@ -447,7 +447,7 @@ async function main() {
         await sleep(5000);
         let ok = await N2NClient.unInstallWinTapAsync();
         if (ok === false) {
-            logger.warn('驱动安装超时,请及时允许安装通过');
+            logger.warn('驱动安装超时,请及时允许安装通过,请重试');
             return;
         }
         await rewriteClientConfig(clientConfig);
@@ -566,7 +566,7 @@ async function timerCheckServerStatus(seconds = 20) {
 }
 
 async function startEdgeProcessAsync(authenKey) {
-    let ret = await axios.get('/n2n/' + authenKey);
+    let ret = await axios.get('/n2n/api/' + authenKey);
     let result = await ret.data;
     if (result.success) {
         let n2nInfo = result.data;
@@ -783,14 +783,14 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
 
 
 async function getClient(authenKey) {
-    let ret = await axios.get('/client/' + authenKey);
+    let ret = await axios.get('/client/api/' + authenKey);
     let result = await ret.data;
     return result;
 }
 
 
 async function getClientP2PInfoByTunnelId(authenKey, tunnelId) {
-    let ret = await axios.get('/client/getClientP2PInfoByTunnelId', {
+    let ret = await axios.get('/client/api/getClientP2PInfoByTunnelId', {
         params: {
             authenKey: authenKey,
             tunnelId: tunnelId,
@@ -800,10 +800,7 @@ async function getClientP2PInfoByTunnelId(authenKey, tunnelId) {
     return result;
 }
 
-async function startProxy(authenKey, tunnelId) {
-    let result = await (await axios.post('/client/startProxy', { tunnelId: tunnelId, authenKey: authenKey })).data;
-    return result;
-}
+
 
 async function checkServer(params) {
     try {
@@ -956,7 +953,7 @@ async function updateClientSystemInfo(natType, authenKey) {
         natType: natType,
         mac: getMAC()
     }
-    let result = await (await axios.put('/client/' + authenKey, data)).data;
+    let result = await (await axios.put('/client/api/' + authenKey, data)).data;
     return result;
 }
 

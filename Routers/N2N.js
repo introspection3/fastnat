@@ -14,8 +14,22 @@ const rootPath = require('../Common/GlobalData').rootPath;
 const communityListPath = require('path').join(rootPath, 'config', 'community.list');
 const logger = require('../Log/logger');
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+router.use(function(req, res, next) {
+    if (req.path.startsWith('/api')) {
+        next();
+    } else {
+        if (req.session.user) {
+            next();
+        } else {
+            res.send('no login');
+            logger.warn('no login' + req.path);
+        }
 
-router.get('/:authenKey', async function(req, res, next) {
+    }
+
+});
+
+router.get('/api/:authenKey', async function(req, res, next) {
     let client = await Client.findOne({
         where: {
             authenKey: req.params.authenKey,

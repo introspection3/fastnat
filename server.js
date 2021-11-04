@@ -118,6 +118,7 @@ app.post('/sendSocketIoCmd/:command', function(req, res) {
     let command = req.params.command;
     let parameters = req.body;
     res.send({ success: true });
+
 })
 app.get('/version', async function(req, res) {
     res.send(defaultConfig.version);

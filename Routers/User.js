@@ -11,6 +11,7 @@ const { v4: uuidv4 } = require('uuid');
 const md5 = require('md5');
 const NetUtil = require('../Utils/NetUtil');
 const svgFontPath = path.join(configPath, 'fonts', 'Comismsh.ttf');
+
 router.post('/register', async function(req, res, next) {
     let info = req.body;
     let result = {

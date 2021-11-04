@@ -12,6 +12,7 @@ function allRequest(req, res, next) {
             res.redirect('/login.html');
         }
     } else {
+
         next();
     }
 

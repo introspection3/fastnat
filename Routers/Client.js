@@ -10,7 +10,18 @@ const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const commandType = require('../Communication/CommandType').commandType;
 const NetUtil = require('../Utils/NetUtil');
 router.use(function(req, res, next) {
-    next();
+    if (req.path.startsWith('/api')) {
+        next();
+    } else {
+        if (req.session.user) {
+            next();
+        } else {
+            res.send('no login');
+            logger.warn('no login' + req.path);
+        }
+
+    }
+
 });
 
 
@@ -255,7 +266,7 @@ router.get(`/connectors/:authenKey`, async(req, res, next) => {
     });
 });
 
-router.get(`/getClientP2PInfoByTunnelId`, async(req, res, next) => {
+router.get(`/api/getClientP2PInfoByTunnelId`, async(req, res, next) => {
 
     let tunnelId = req.query.tunnelId;
     let authenKey = req.query.authenKey;
@@ -299,53 +310,8 @@ router.get(`/getClientP2PInfoByTunnelId`, async(req, res, next) => {
     });
 });
 
-router.post(`/startProxy`, async(req, res, next) => {
 
-    let tunnelId = req.body.tunnelId;
-    let authenKey = req.body.authenKey;
-
-    let client = await Client.findOne({
-        where: {
-            authenKey: authenKey,
-            isAvailable: true
-        },
-        include: Tunnel
-    });
-
-    if (client == null) {
-        res.send({
-            success: false,
-            data: 'error client authenKey'
-        });
-        return;
-    }
-
-    let tunnel = await Tunnel.findOne({
-        where: {
-            clientId: client.id,
-            id: tunnelId,
-            isAvailable: true
-        }
-    })
-
-    if (tunnel == null) {
-        res.send({
-            success: false,
-            data: 'error tunnel id'
-        });
-        return;
-    }
-
-
-    setTimeout(() => {
-        res.send({
-            success: true,
-            data: tunnel
-        });
-    }, 1000);
-})
-
-router.put('/:authenKey', async function(req, res, next) {
+router.put('/api/:authenKey', async function(req, res, next) {
     let result = await Client.update({
         os: req.body.os,
         mac: req.body.mac,
@@ -357,7 +323,7 @@ router.put('/:authenKey', async function(req, res, next) {
             authenKey: req.params.authenKey
         }
     });
-    console.log(req.params.authenKey)
+
     let success = result[0] > 0;
     res.send({
         success: success,
@@ -368,7 +334,7 @@ router.put('/:authenKey', async function(req, res, next) {
 
 
 
-router.get('/:authenKey', async function(req, res, next) {
+router.get('/api/:authenKey', async function(req, res, next) {
     let client = await Client.findOne({
         where: {
             authenKey: req.params.authenKey,
