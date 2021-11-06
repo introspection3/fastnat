@@ -31,7 +31,15 @@ $(function() {
     function checkNotEmpty(id) {
         let targetDom = $('#' + id);
         if (targetDom.val().trim() === '') {
-            targetDom.focus();
+            let d = dialog({
+                quickClose: true,
+                content: '此项不能为空',
+                onclose: function() {
+                    targetDom.focus();
+                },
+                follow: targetDom[0]
+            });
+            d.show();
             return 0;
         }
         return 1;
@@ -39,7 +47,6 @@ $(function() {
     $('#btnLogin').click(function() {
         let info = checkNotEmpty('password') + checkNotEmpty('vcode') + checkNotEmpty('username');
         if (info !== 3) {
-            alert('此项不能为空');
             return;
         }
         let username = $('#username').val();
@@ -49,12 +56,22 @@ $(function() {
             if (result.success) {
                 location.href = '/';
             } else {
-                $('#' + result.data).focus();
+
                 if (result.data === 'vcode') {
                     $('#imgvcode').click();
-                    $('#vcode').val('')
+                    $('#vcode').val('');
                 }
-                alert(result.info);
+
+                let d = dialog({
+                    title: '提示',
+                    width: 200,
+                    content: result.info,
+                    quickClose: true,
+                    ok: function() {
+                        $('#' + result.data).focus();
+                    }
+                });
+                d.show();
             }
         });
     });

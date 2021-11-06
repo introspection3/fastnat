@@ -30,6 +30,7 @@ const prompt = require('prompt');
 const fs = require('fs').promises;
 const promptGetAsync = require('util').promisify(prompt.get);
 const WindowsUtil = require('./Utils/WindowsUtil');
+const Tap9Util = require('./Utils/Tap9Util');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -376,11 +377,20 @@ async function checkNatType(clientConfig) {
 }
 
 async function rewriteClientConfig(clientConfig) {
-    const filepath = path.join(process.cwd(), "config", 'client.json');
+    let rootPath = require('./Common/GlobalData').rootPath;
+    const filepath = path.join(rootPath, "config", 'client.json');
     await fs.writeFile(filepath, JSON.stringify(clientConfig));
 }
 
 async function main() {
+
+    if (os.platform() === 'win32') {
+        let allTaps = await Tap9Util.getAllTap9AdaptersAsync();
+        if (allTaps.length == 0) {
+            logger.warn('尚未安装网卡驱动,请允许安装');
+        }
+    }
+
     trayIcon();
     WindowsUtil.topMost();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
@@ -453,16 +463,39 @@ async function main() {
 
     if (firstUse) {
         console.log('下面将安装驱动和防火墙例外,请允许通过');
-        await sleep(5000);
-        let ok = await N2NClient.installWinTapAsync();
-        if (ok === false) {
-            logger.warn('驱动安装超时,请及时允许安装通过,请重试');
-            return;
-        }
+        await sleep(1000);
         await rewriteClientConfig(clientConfig);
-        ok = await require('./Utils/FireWallUtil').addCurrentProgramException('fastnat');
-        if (ok === false) {
-            logger.warn('添加防火墙超时，请自行添加');
+        if (os.platform() === 'win32') {
+            //------是否已经有存在的tap
+            let allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
+            let targetName = 'tap-' + clientResult.data.id;
+            let targetAdapter = allTap9.find(function(item) {
+                return item.FriendlyName == targetName;
+            });
+
+            if (targetAdapter == null || targetAdapter == undefined) {
+                await N2NClient.installWinTapAsync();
+                await sleep(3000);
+                allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
+                let changeTap = allTap9.find(function(item) {
+                    return item.FriendlyName.startsWith('tap-') === false;
+                });
+                let oldName = changeTap.FriendlyName;
+                await Tap9Util.renameAdapterAsync(oldName, targetName);
+            }
+            let ok = await require('./Utils/FireWallUtil').addCurrentProgramExceptionAsync('fastnat');
+            if (ok === false) {
+                logger.warn('添加防火墙fastnat超时，请自行添加');
+            }
+            let edgePath = N2NClient.getPath();
+            ok = await require('./Utils/FireWallUtil').addProgramExceptionAsync('p2p', edgePath);
+            if (ok === false) {
+                logger.warn('添加防火墙p2p超时，请自行添加');
+            }
+            ok = await require('./Utils/FireWallUtil').allowIcmpAsync();
+            if (ok === false) {
+                logger.warn('添加防火墙icmp超时，请自行添加');
+            }
         }
     }
 
@@ -580,7 +613,7 @@ async function startEdgeProcessAsync(authenKey) {
     if (result.success) {
         let n2nInfo = result.data;
         logger.trace(JSON.stringify(n2nInfo))
-        N2NClient.startEdge(AesUtil.decrypt(n2nInfo.community), n2nInfo.communityKey, n2nInfo.virtualIp, `${n2nInfo.host}:${n2nInfo.port}`, n2nInfo.username, n2nInfo.password);
+        N2NClient.startEdge(n2nInfo.clientId, AesUtil.decrypt(n2nInfo.community), n2nInfo.communityKey, n2nInfo.virtualIp, `${n2nInfo.host}:${n2nInfo.port}`, n2nInfo.username, n2nInfo.password);
         logger.trace('start edge success');
     } else {
         logger.warn(result.info);

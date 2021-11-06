@@ -1,6 +1,6 @@
 const express = require(`express`);
 const router = express.Router();
-const { RegisterUser, Client, Tunnel } = require('../Db/Models');
+const { RegisterUser, Client, Tunnel, Connector } = require('../Db/Models');
 const commandType = require('../Communication/CommandType').commandType;
 const eventEmitter = require('../Communication/CommunicationEventEmiter').eventEmitter;
 const redlock = require('../Utils/RedisUtil').redlock;
@@ -265,6 +265,20 @@ router.post('/delete', async(req, res, next) => {
         return;
     }
 
+    let allConnectors = await Connector.findAll({
+        where: {
+            p2pTunnelId: tunnelId
+        }
+    });
+    for (const c of allConnectors) {
+        eventEmitter.emit(commandType.DELETE_CONNECTOR, c.clientId, c.id);
+    }
+
+    count = await Connector.destroy({
+        where: {
+            p2pTunnelId: tunnelId
+        }
+    });
 
     count = await Tunnel.destroy({
         where: {
@@ -276,6 +290,7 @@ router.post('/delete', async(req, res, next) => {
     if (count > 0) {
         eventEmitter.emit(commandType.DELETE_TUNNEL, clientId, tunnelId);
     }
+
 
     let result = {
         success: true,

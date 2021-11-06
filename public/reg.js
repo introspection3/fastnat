@@ -39,7 +39,16 @@ $(function() {
     $('#btnReg').click(function() {
         let info = checkNotEmpty('vcode') + checkNotEmpty('telphone') + checkNotEmpty('email') + checkNotEmpty('password') + checkNotEmpty('username');
         if (info !== 5) {
-            alert('此项不能为空');
+            let d = dialog({
+                title: '提示',
+                width: 200,
+                content: '此项不能为空',
+                quickClose: true,
+                ok: function() {
+
+                }
+            });
+            d.show();
             return;
         }
         let username = $('#username').val();

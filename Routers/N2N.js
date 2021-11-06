@@ -63,6 +63,7 @@ async function getN2NAsync(clientId, authenKey) {
         community: community,
         communityKey: netbuildingCommunityKey,
         username: clientId,
+        clientId: clientId,
         password: authenKey,
         virtualIp: virtualIp,
         mode: 'M1'

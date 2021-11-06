@@ -1,28 +1,52 @@
 const os = require('os');
+const ExecUtil = require('./ExecUtil');
 
-
-function addProgramException(ruleName, processPath) {
-    const elevate = require('node-windows').elevate;
-    let cmd = `netsh advfirewall firewall add rule name="${ruleName}" dir=in action=allow program="${processPath}" enable=yes`;
-    let p = new Promise((resolve, reject) => {
-        let t = setTimeout(() => {
-            resolve(false);
-        }, 10000);
-        elevate(cmd, { cwd: process.cwd() }, () => {
-            clearTimeout(t);
-            resolve(true);
-        });
-    });
-    return p;
+async function addProgramExceptionAsync(ruleName, processPath) {
+    if (os.platform() === 'win32') {
+        let cmd = `netsh advfirewall firewall add rule name="${ruleName}" dir=in action=allow program="${processPath}" enable=yes`;
+        return await ExecUtil.execute(cmd);
+    } else {
+        return 'not implement';
+    }
 }
 
-function addCurrentProgramException(ruleName) {
-    let processPath = process.argv0;
-    console.log(processPath);
-    addProgramException(ruleName, processPath);
+async function addCurrentProgramExceptionAsync(ruleName) {
+    if (os.platform() === 'win32') {
+        let processPath = process.argv0;
+        return await addProgramExceptionAsync(ruleName, processPath);
+    } else {
+        return 'not implement';
+    }
 }
 
+async function addPortAsync(ruleName, protocol, localport) {
+    if (os.platform() === 'win32') {
+        let cmd = `netsh advfirewall firewall add rule name="${ruleName}" protocol=${protocol} dir=in localport=${localport} action=allow`;
+        return await ExecUtil.execute(cmd);
+    } else {
+        return 'not implement';
+    }
+}
+async function allowIcmpAsync() {
+    if (os.platform() === 'win32') {
+        let cmd = `netsh advfirewall firewall add rule name="ICMP Allow incoming V4 echo request" protocol=icmpv4:8,any dir=in action=allow`;
+        return await ExecUtil.execute(cmd);
+    } else {
+        return 'not implement';
+    }
+}
+async function disableIcmpAsync() {
+    if (os.platform() === 'win32') {
+        let cmd = `netsh advfirewall firewall add rule name="ICMP Allow incoming V4 echo request" protocol=icmpv4:8,any dir=in action=block`;
+        return await ExecUtil.execute(cmd);
+    } else {
+        return 'not implement';
+    }
+}
 module.exports = {
-    addProgramException,
-    addCurrentProgramException
+    allowIcmpAsync,
+    disableIcmpAsync,
+    addPortAsync: addPortAsync,
+    addProgramExceptionAsync: addProgramExceptionAsync,
+    addCurrentProgramExceptionAsync: addCurrentProgramExceptionAsync
 }

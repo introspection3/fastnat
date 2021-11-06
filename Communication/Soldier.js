@@ -11,11 +11,8 @@ const Socket = require('socket.io-client').Socket;
  * @returns {Socket}
  */
 function startConnect2SocketIO(authenKey, clientId) {
-
     let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
-
-    logger.debug('SocketIO Url:' + ioUrl);
-
+    logger.trace('socket.io url:' + ioUrl);
     const socketIOSocket = io(ioUrl, {
         auth: {
             token: authenKey,
@@ -23,7 +20,6 @@ function startConnect2SocketIO(authenKey, clientId) {
         },
         transports: ["websocket"]
     });
-
 
     let p = new Promise((resolve, reject) => {
         let t = setTimeout(() => {

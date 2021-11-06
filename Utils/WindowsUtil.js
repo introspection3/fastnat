@@ -40,8 +40,9 @@ module.exports = {
             require(nodeNative).disableCloseButton();
             setTimeout(() => {
                 console.log('--------------------------------------');
-                console.log('1.使用ctrl+c退出,或者右下角图标右键退出');
-                console.log('2.可通过右下角右键图标[管理]管理你的设备');
+                console.log('1.可通过右下角右键图标[管理]管理你的设备');
+                console.log('2.可使用右下角图标右键退出');
+                console.log('--------------------------------------');
                 console.log();
             }, 10000);
 

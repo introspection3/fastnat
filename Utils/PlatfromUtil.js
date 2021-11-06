@@ -28,6 +28,10 @@ function getIPAdress() {
 }
 
 const openDefaultBrowser = function(url) {
+    if (process.platform === 'linux') {
+        console.log('请自己打开浏览器');
+        return;
+    }
     let exec = require('child_process').exec;
     switch (process.platform) {
         case "darwin":
