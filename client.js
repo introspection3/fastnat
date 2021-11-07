@@ -31,6 +31,7 @@ const fs = require('fs').promises;
 const promptGetAsync = require('util').promisify(prompt.get);
 const WindowsUtil = require('./Utils/WindowsUtil');
 const Tap9Util = require('./Utils/Tap9Util');
+const readline = require('readline');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -393,6 +394,7 @@ async function main() {
 
     trayIcon();
     WindowsUtil.topMost();
+    WindowsUtil.disableConsoleInsertEdit();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
         logger.error('the client.json file in config directory is not existed');
@@ -405,35 +407,37 @@ async function main() {
         clientConfig.authenKey = authenKey;
     }
     let firstUse = false;
-    logger.log('当前正以管理员身份运行?');
+
     if (authenKey === '') {
         let isAdmin = WindowsUtil.isRunAsAdmin();
+        logger.log('current app is running as admin:' + isAdmin);
         if (isAdmin == false) {
-            console.log('需要以管理员运行后进行初始化');
             await restartApplicationAsAdmin();
             return;
-        } else {
-            console.log('当前正以管理员身份运行');
         }
         firstUse = true;
         let url = `http${defaultWebSeverConfig.https?'s':''}://${defaultConfig.host}:${defaultWebSeverConfig.port}/reg.html`;
-        let tip = `请输入设备KEY,如尚无KEY,请到${url}注册,已将尝试为您打开了浏览器`;
-        console.log(tip);
+        let tip = `\n提示：下面将进行设备初始化,如您尚无设备KEY(有了设备KEY您就能使用此系统了),\n请到${url}注册,已为您尝试打开了浏览器\n`;
+        console.warn(tip);
         await sleep(1000);
-
+        let rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        })
+        let question = require('util').promisify(rl.question).bind(rl);;
         PlatfromUtil.openDefaultBrowser(url);
-        let schema = {
-            properties: {
-                key: {
-                    pattern: /^[a-zA-Z0-9_-]{4,36}$/,
-                    message: '请注意KEY的格式',
-                    required: true
-                }
-            }
-        };
-        prompt.start();
-        let result = await promptGetAsync(schema);
-        authenKey = result.key;
+        try {
+            authenKey = await question('KEY:');
+        } catch (err) {
+            console.error('录入有误,请重启重试', err);
+            return;
+        }
+        let pattern = /^[a-zA-Z0-9_-]{4,36}$/;
+        if (!pattern.test(authenKey)) {
+            console.warn('KEY格式有误,请重启重试');
+            return;
+        }
+        authenKey = authenKey.trim();
         clientConfig.authenKey = authenKey;
     }
 
@@ -496,6 +500,8 @@ async function main() {
             if (ok === false) {
                 logger.warn('添加防火墙icmp超时，请自行添加');
             }
+            await WindowsUtil.openMstscAsync();
+            await WindowsUtil.enableAutoStartAsync();
         }
     }
 
@@ -612,7 +618,6 @@ async function startEdgeProcessAsync(authenKey) {
     let result = await ret.data;
     if (result.success) {
         let n2nInfo = result.data;
-        logger.trace(JSON.stringify(n2nInfo))
         N2NClient.startEdge(n2nInfo.clientId, AesUtil.decrypt(n2nInfo.community), n2nInfo.communityKey, n2nInfo.virtualIp, `${n2nInfo.host}:${n2nInfo.port}`, n2nInfo.username, n2nInfo.password);
         logger.trace('start edge success');
     } else {
@@ -935,18 +940,18 @@ async function trayIcon(params) {
             title: "fastnat",
             tooltip: "fastnat",
             items: [{
-                title: "显示",
+                title: "系统管理",
+                tooltip: "manage",
+                checked: false,
+                enabled: true
+            }, {
+                title: "显示日志",
                 tooltip: "display",
                 // checked is implement by plain text in linux
                 checked: true,
                 enabled: true
             }, {
-                title: "管理",
-                tooltip: "manage",
-                checked: false,
-                enabled: true
-            }, {
-                title: "退出",
+                title: "退出系统",
                 tooltip: "quit",
                 checked: false,
                 enabled: true
@@ -956,7 +961,7 @@ async function trayIcon(params) {
     });
 
     systray.onClick(action => {
-        if (action.seq_id === 0) {
+        if (action.seq_id === 1) {
 
             if (action.item.checked) {
                 require('./Utils/WindowsUtil').hideConsole();
@@ -973,7 +978,7 @@ async function trayIcon(params) {
                 seq_id: action.seq_id,
             });
 
-        } else if (action.seq_id === 1) {
+        } else if (action.seq_id === 0) {
             // opens the url in the default browser 
             PlatfromUtil.openDefaultBrowser(axios.defaults.baseURL);
 

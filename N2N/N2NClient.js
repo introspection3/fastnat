@@ -58,7 +58,7 @@ function start(clientId, communityName, communityPassword, virtualIp = '', serve
         } else {
             result = iconvLite.decode(data, 'cp936');
         }
-        logger.trace(result);
+        logger.trace('\n' + result);
     });
 
     _edgePs.stderr.on('data', (data) => {

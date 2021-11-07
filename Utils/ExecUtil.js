@@ -23,16 +23,24 @@ async function execute(cmd, cwd = null, timeout = 5000) {
         exec(cmd, { cwd: cwd }, (error, stdout, stderr) => {
             clearTimeout(t);
             if (error) {
-                reject(`exec error: ${error}`);
+                reject(`exec error: ${getGoodString(error.message)}`);
                 return;
             }
-            resolve(stdout);
+            resolve(getGoodString(stdout));
         });
 
     });
     return p;
 }
 
+function getGoodString(text) {
+    if (os.platform() !== 'win32') {
+        return text;
+    }
+    let data = Buffer.from(text, 'ascii');
+    let result = iconvLite.decode(data, 'cp936');
+    return result;
+}
 module.exports = {
     execute: execute
 }
