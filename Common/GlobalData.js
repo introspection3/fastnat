@@ -7,5 +7,5 @@ if (rootPath.endsWith('node.exe') || rootPath.endsWith('node')) {
 }
 module.exports = {
     rootPath: rootPath,
-    configPath: path.join(process.cwd(), 'config')
+    configPath: path.join(rootPath, 'config')
 };

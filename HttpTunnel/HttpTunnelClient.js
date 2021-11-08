@@ -32,11 +32,11 @@ class HttpTunnelClient {
         }
 
         let finalAgent = null;
+        let agentOption = { keepAlive: true, timeout: 10 * 1000 };
         if (tunnel.type === 'https') {
-            finalAgent = https.globalAgent;
-
+            finalAgent = new https.Agent(agentOption);
         } else {
-            finalAgent = http.globalAgent;
+            finalAgent = new http.Agent(agentOption);
         }
 
         let parsedUrl = url.parse(targetUrl);
@@ -48,7 +48,7 @@ class HttpTunnelClient {
             xfwd: true,
             hostRewrite: targetUrl.host,
             protocolRewrite: parsedUrl.protocol,
-            ws: true
+            ws: true,
         });
 
         proxy.on('error', function(err, req, res) {

@@ -5,6 +5,14 @@ const nodeNative = path.join(rootPath, 'config', 'native', os.platform(), os.arc
 const ExecUtil = require('./ExecUtil');
 const logger = require('../Log/logger');
 
+function success() {
+    console.log('');
+    console.log('--------------------fastnat启动成功------------------');
+    console.log('1.可在电脑右下角右键图标[系统管理]管理所有设备');
+    console.log('2.可在电脑右下角图标右键退出系统');
+    console.log('----------------------------------------------------');
+    console.log('');
+}
 module.exports = {
     runCurrentAppAsAdmin: function(args) {
         if (os.platform() === "win32") {
@@ -48,15 +56,12 @@ module.exports = {
     },
     disableCloseButton: function() {
         if (os.platform() === "win32") {
-            require(nodeNative).disableCloseButton();
+
             setTimeout(() => {
-                console.log();
-                console.log('--------------------fastnat启动成功------------------');
-                console.log('1.可在电脑右下角右键图标[系统管理]管理所有设备');
-                console.log('2.可在电脑右下角图标右键退出系统');
-                console.log('----------------------------------------------------');
-                console.log();
+                success();
             }, 10000);
+
+            require(nodeNative).disableCloseButton();
         }
     },
     openMstscAsync: async function() {

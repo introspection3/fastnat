@@ -6,7 +6,7 @@ function processExit(code = 0) {
 
     setTimeout(() => {
         process.exit(code);
-    }, 1500);
+    }, 1700);
 }
 
 function cpus() {

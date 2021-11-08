@@ -384,15 +384,16 @@ async function rewriteClientConfig(clientConfig) {
 }
 
 async function main() {
-
     if (os.platform() === 'win32') {
+        WindowsUtil.hideConsole();
         let allTaps = await Tap9Util.getAllTap9AdaptersAsync();
         if (allTaps.length == 0) {
             logger.warn('尚未安装网卡驱动,请允许安装');
         }
     }
 
-    trayIcon();
+
+
     WindowsUtil.topMost();
     WindowsUtil.disableConsoleInsertEdit();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
@@ -406,16 +407,17 @@ async function main() {
         authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
         clientConfig.authenKey = authenKey;
     }
-    let firstUse = false;
-
-    if (authenKey === '') {
+    let firstUse = authenKey === '';
+    await trayIcon(firstUse);
+    if (firstUse) {
+        WindowsUtil.showConsole();
         let isAdmin = WindowsUtil.isRunAsAdmin();
         logger.log('current app is running as admin:' + isAdmin);
         if (isAdmin == false) {
             await restartApplicationAsAdmin();
             return;
         }
-        firstUse = true;
+
         let url = `http${defaultWebSeverConfig.https?'s':''}://${defaultConfig.host}:${defaultWebSeverConfig.port}/reg.html`;
         let tip = `\n提示：下面将进行设备初始化,如您尚无设备KEY(有了设备KEY您就能使用此系统了),\n请到${url}注册,已为您尝试打开了浏览器\n`;
         console.warn(tip);
@@ -445,8 +447,8 @@ async function main() {
     setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
 
     if (options.sleep) {
-        logger.debug('sleep 1s,then go  on,new pid=' + process.pid);
-        await sleep(1000);
+        logger.debug('sleep 3s,then go  on,new pid=' + process.pid);
+        await sleep(3000);
     }
 
     let clientResult = null;
@@ -466,7 +468,7 @@ async function main() {
     }
 
     if (firstUse) {
-        console.log('下面将安装驱动和防火墙例外,请允许通过');
+        console.warn('下面将安装三方驱动和防火墙的例外,请允许通过');
         await sleep(1000);
         await rewriteClientConfig(clientConfig);
         if (os.platform() === 'win32') {
@@ -912,7 +914,7 @@ function failoverTcp(remotePort, tcpSocket) {
 }
 
 
-async function trayIcon(params) {
+async function trayIcon(isConsoleDisplay = false) {
     if (os.arch().indexOf('arm') > -1 || os.arch().indexOf('mip') > -1) {
         return;
     }
@@ -948,7 +950,7 @@ async function trayIcon(params) {
                 title: "显示日志",
                 tooltip: "display",
                 // checked is implement by plain text in linux
-                checked: true,
+                checked: isConsoleDisplay,
                 enabled: true
             }, {
                 title: "退出系统",
@@ -986,6 +988,7 @@ async function trayIcon(params) {
             PlatfromUtil.processExit(0);
         }
     });
+    return systray;
 }
 
 
@@ -1015,18 +1018,20 @@ function restartApplication() {
     if (!args.includes('-s')) {
         args.push('-s')
     }
-    logger.debug("will restart ,current pid= " + process.pid);
-    logger.debug(args.toString());
-    logger.debug('exe:' + exe);
+    logger.debug("app will restart ,current pid= " + process.pid);
+    logger.debug("args:" + args.toString());
+    logger.debug('app path:' + exe);
 
-    setTimeout(function() {
-        require("child_process").spawn(exe, args, {
-            cwd: rootPath,
-            detached: true,
-            stdio: "inherit"
-        });
-        PlatfromUtil.processExit();
-    }, 500);
+    const subprocess = require("child_process").spawn(exe, args, {
+        cwd: rootPath,
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: false
+    });
+
+
+    subprocess.unref();
+    PlatfromUtil.processExit();
 }
 
 function getJSNameFromProcess() {
