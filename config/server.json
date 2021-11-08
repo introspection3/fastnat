@@ -50,18 +50,18 @@
     "user": {
         "normal": {
             "client": {
-                "count": 2
+                "count": 3
             },
             "tunnel": {
-                "count": 3
+                "count": 2
             }
         },
         "vip": {
             "client": {
-                "count": 3
+                "count": 4
             },
             "tunnel": {
-                "count": 5
+                "count": 3
             }
         },
         "admin": {

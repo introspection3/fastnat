@@ -33,16 +33,16 @@
                                         <input type="text" minlength="2" maxlength="50" class="form-control" id="username" />
                                     </div>
 
-                                    <div class="form-group last mb-4">
+                                    <div class="mb-4 form-group last">
                                         <label for="password">密码(*)</label>
                                         <input type="password" class="form-control" placeholder="               密码长度六位起" id="password" />
 
                                     </div>
-                                    <div class="form-group mb-4">
+                                    <div class="mb-4 form-group">
                                         <label for="email">邮箱(*)</label>
                                         <input type="email" minlength="4" maxlength="20" placeholder="               邮箱如不能验证，将不能使用" class="form-control" id="email" />
                                     </div>
-                                    <div class="form-group mb-4">
+                                    <div class="mb-4 form-group">
                                         <label for="telphone">电话(*)</label>
                                         <input type="text" class="form-control" id="telphone" />
                                     </div>
@@ -51,8 +51,8 @@
                                         <input type="text" minlength="4" maxlength="4" class="form-control" style="width: 70%;" id="vcode" />
                                         <img src='/user/vcode' id="imgvcode" alt="点击刷新" />
                                     </div>
-                                    <div class="d-flex mb-5 align-items-center">
-                                        <label class="control control--checkbox mb-0">
+                                    <div class="mb-5 d-flex align-items-center">
+                                        <label class="mb-0 control control--checkbox">
                                             <span class="caption">用户协议</span>
                                             <input type="checkbox" checked="checked"/>
                                             <div class="control__indicator"></div>
@@ -60,7 +60,7 @@
                                         <span class="ml-auto"><a href="/login.html" class="forgot-pass">登录</a></span>
                                     </div>
 
-                                    <input id='btnReg' type="button" value="注册" class="btn btn-pill text-white btn-block btn-primary" />
+                                    <input id='btnReg' type="button" value="注册" class="text-white btn btn-pill btn-block btn-primary" />
                                     <div style="text-align: center;margin-top: 10px;">
                                         <span><a target="_blank" href="/userAgreement.html">请仔细阅读用户协议</a></span>
                                     </div>
@@ -82,5 +82,20 @@
     <script src="/libs/bootstrap.min.js"></script>
     <script src="/reg.js"></script>
 </body>
+<!-- Start of Rocket.Chat Livechat Script -->
+<script type="text/javascript">
+    (function(w, d, s, u) {
+        w.RocketChat = function(c) {
+            w.RocketChat._.push(c)
+        };
+        w.RocketChat._ = [];
+        w.RocketChat.url = u;
+        var h = d.getElementsByTagName(s)[0],
+            j = d.createElement(s);
+        j.async = true;
+        j.src = 'http://www.fastnat.club:30000/livechat/rocketchat-livechat.min.js?_=201903270000';
+        h.parentNode.insertBefore(j, h);
+    })(window, document, 'script', 'http://www.fastnat.club:30000/livechat');
+</script>
 
 </html>
