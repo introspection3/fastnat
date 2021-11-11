@@ -11,11 +11,14 @@ if (serverConfig.cluster.enabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     io.adapter(createAdapter());
 }
+
 const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
 const ClusterData = require('../Common/ClusterData');
 const DefaultConfig = require('../Common/DefaultConfig');
 const eventEmitter = require('./CommunicationEventEmiter').eventEmitter;
 const commandType = require('./CommandType').commandType;
+
+
 
 const UpdTunnelServerMap = new Map();
 /**
@@ -104,7 +107,6 @@ io.on('connection', async(socket) => {
     updateClientStatus(currentConnectSocketIoClientId, 1);
     //------------------------------------------
     socket.on(commandType.P2P_REQUEST_OPEN, async(data, fn) => {
-
         let targetClientId = data.targetClientId;
         let result = false;
         let info = '';
@@ -112,8 +114,10 @@ io.on('connection', async(socket) => {
         let targetSocket = allSockets.find((value, index, array) => {
             return value.handshake.auth.clientId === targetClientId;
         });
+
         if (targetSocket != null) {
             result = true;
+            logger.trace('start to notify targe socket to open p2p');
             targetSocket.emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
                 fn(ret);
             });
@@ -167,7 +171,7 @@ io.on('connection', async(socket) => {
     });
 
 
-    socket.on('client.stopUpdTunnelServer', async(udpTunnelItemOption, fn) => {
+    socket.on(commandType.CLIENT_STOP_UDP_TUNNEL_SERVER, async(udpTunnelItemOption, fn) => {
 
         let tunnelId = udpTunnelItemOption.id;
         let authenKey = socket.handshake.auth.token;
@@ -230,6 +234,11 @@ eventEmitter.on(commandType.DELETE_CONNECTOR, async function(clientId, data) {
 eventEmitter.on(commandType.ADD_CONNECTOR, async function(clientId, data) {
     notify2Client(commandType.ADD_CONNECTOR, clientId, data);
 });
+
+
+
+
+
 async function notify2Client(theCommandType, clientId, data) {
     logger.trace(theCommandType)
     clientId = Number.parseInt(clientId);
@@ -237,6 +246,7 @@ async function notify2Client(theCommandType, clientId, data) {
     let targetSocket = allSockets.find((value, index, array) => {
         return value.handshake.auth.clientId === clientId;
     });
+    // targetSocket = defaultNS.to(targetSocket.id); //---new
     let result = false;
     if (targetSocket != null) {
         logger.trace(theCommandType + " " + clientId + "  " + JSON.stringify(data));

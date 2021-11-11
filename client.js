@@ -4,6 +4,8 @@ const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
 const logger = require('./Log/logger');
 const defaultWebSeverConfig = defaultConfig.webserver;
 const defaultBridgeConfig = defaultConfig.bridge;
+const defaultBridgeConfigRpcPort = defaultBridgeConfig.rpcPort;
+const RpCTcpClient = require('./Rpc/RpcTcpClient');
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 const UdpTunnelClient = require('./UdpTunnel/UdpTunnelClient');
 const UpnpUtil = require('./Utils/UpnpUtil');
@@ -56,6 +58,8 @@ checkType(isNumber, p2pmtu, 'p2pmtu');
 const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
 
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
+const rcpClient = new RpCTcpClient({ host: defaultConfig.host, port: defaultBridgeConfigRpcPort });
+
 program.version('1.0.0');
 program
     .option('-t, --test', 'is test')
@@ -383,6 +387,20 @@ async function rewriteClientConfig(clientConfig) {
     await fs.writeFile(filepath, JSON.stringify(clientConfig));
 }
 
+function readLineData(questionTip = '请输入Key:') {
+    let p = new Promise((resolve, reject) => {
+        let rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        })
+
+        rl.question(questionTip, (answer) => {
+            rl.close();
+            resolve(answer);
+        });
+    });
+    return p;
+}
 async function main() {
     if (os.platform() === 'win32') {
         WindowsUtil.hideConsole();
@@ -422,18 +440,12 @@ async function main() {
         let tip = `\n提示：下面将进行设备初始化,如您尚无设备KEY(有了设备KEY您就能使用此系统了),\n请到${url}注册,已为您尝试打开了浏览器\n`;
         console.warn(tip);
         await sleep(1000);
-        let rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        })
-        let question = require('util').promisify(rl.question).bind(rl);;
+
+
         PlatfromUtil.openDefaultBrowser(url);
-        try {
-            authenKey = await question('KEY:');
-        } catch (err) {
-            console.error('录入有误,请重启重试', err);
-            return;
-        }
+
+        authenKey = await readLineData();
+
         let pattern = /^[a-zA-Z0-9_-]{4,36}$/;
         if (!pattern.test(authenKey)) {
             console.warn('KEY格式有误,请重启重试');
@@ -466,7 +478,7 @@ async function main() {
         PlatfromUtil.processExit();
         return;
     }
-
+    await rcpClient.start();
     if (firstUse) {
         console.warn('下面将安装三方驱动和防火墙的例外,请允许通过');
         await sleep(1000);
@@ -629,6 +641,52 @@ async function startEdgeProcessAsync(authenKey) {
     //ServiceUtil.installService('fastnat');
 }
 
+async function processBackData(backData, tcpSocket, utpclient, remotePort) {
+    logger.trace('backData:' + JSON.stringify(backData));
+    if (backData.success == false) { //因对方不支持而不能创建P2P
+        logger.warn(`can't connect to p2p client for:` + backData.info);
+        utpclient.close();
+        logger.warn('start failover to tcp tunnel');
+        let tcpClient = failoverTcp(remotePort, tcpSocket);
+        return;
+    }
+    //---------tryConnect2Public------
+    let server = { address: backData.data.host, port: backData.data.port };
+    logger.debug(`p2p connector: begin punching a hole to ${server.address}:${server.port}...`);
+    utpclient.punch(10, server.port, server.address, success => {
+
+        logger.debug(`p2p connector: punching result: ${success ? 'success' : 'failure'}`);
+
+        if (!success) {
+            utpclient.close();
+            let tcpClient = failoverTcp(remotePort, tcpSocket);
+            return;
+        }
+
+        utpclient.on('timeout', () => {
+            logger.trace('p2p connector: connect timeout');
+            utpclient.close();
+            tcpSocket.end();
+            tcpSocket.destroy();
+        });
+
+        utpclient.connect(server.port, server.address, (utpSocket) => {
+            logger.debug('p2p connector:  has connected to the p2p client');
+            //let address = utpSocket.address();
+            utpSocket.pipe(tcpSocket);
+            utpSocket.on('end', () => {
+                logger.debug('p2p connector: utpSocket end');
+                utpclient.close();
+                tcpSocket.end();
+                tcpSocket.destroy();
+                return;
+            });
+            //------------------这个时候的tcpsocket才能正式使用---------------
+            tcpSocket.pipe(utpSocket); //--
+        });
+    });
+    //------------------
+}
 
 /**
  * 
@@ -699,10 +757,9 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
             let timer = null;
             let timeout = null;
 
-            let onMessage = (msg, rinfo) => {
-
+            let onMessage = async(msg, rinfo) => {
                 if (rinfo.port === trackerPort) {
-
+                    logger.trace('remove onMessage');
                     udpSocket.removeListener('message', onMessage);
 
                     let message = {};
@@ -720,7 +777,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                     }
                     logger.info(`p2p client remote address info:` + JSON.stringify(message));
                     //通知对应的客户端进行同时打洞操作
-                    socketIOSocket.emit(commandType.P2P_REQUEST_OPEN, {
+                    let reqData = {
                         targetTunnelId: connectorItem.p2pTunnelId,
                         targetP2PPassword: connectorItem.p2pPassword,
                         connectorclientId: ownClientId,
@@ -728,53 +785,15 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         connectorHost: message.host,
                         connectorPort: message.port,
                         socketIOSocketId: socketIOSocket.id
-                    }, (backData) => {
-                        logger.trace('backData:' + JSON.stringify(backData));
-                        if (backData.success == false) { //因对方不支持而不能创建P2P
-                            logger.warn(`can't connect to p2p client for:` + backData.info);
-                            utpclient.close();
-                            logger.warn('start failover to tcp tunnel');
-                            let tcpClient = failoverTcp(remotePort, tcpSocket);
-                            return;
-                        }
-                        //---------tryConnect2Public------
-                        let server = { address: backData.data.host, port: backData.data.port };
-                        logger.debug(`p2p connector: begin punching a hole to ${server.address}:${server.port}...`);
-                        utpclient.punch(10, server.port, server.address, success => {
+                    };
+                    // socketIOSocket.emit(commandType.P2P_REQUEST_OPEN, reqData, (backData) => {
+                    //     processBackData(backData, tcpSocket, utpclient, remotePort);
+                    // });
 
-                            logger.debug(`p2p connector: punching result: ${success ? 'success' : 'failure'}`);
-
-                            if (!success) {
-                                utpclient.close();
-                                let tcpClient = failoverTcp(remotePort, tcpSocket);
-                                return;
-                            }
-
-                            utpclient.on('timeout', () => {
-                                logger.trace('p2p connector: connect timeout');
-                                utpclient.close();
-                                tcpSocket.end();
-                                tcpSocket.destroy();
-                            });
-
-                            utpclient.connect(server.port, server.address, (utpSocket) => {
-                                logger.debug('p2p connector:  has connected to the p2p client');
-                                //let address = utpSocket.address();
-                                utpSocket.pipe(tcpSocket);
-                                utpSocket.on('end', () => {
-                                    logger.debug('p2p connector: utpSocket end');
-                                    utpclient.close();
-                                    tcpSocket.end();
-                                    tcpSocket.destroy();
-                                    return;
-                                });
-                                //------------------这个时候的tcpsocket才能正式使用---------------
-                                tcpSocket.pipe(utpSocket); //--
-
-                            });
-                        });
-                        //------------------
-                    });
+                    let backData = await rcpClient.invoke('RpcTcpServer', 'p2pOpenRequest', [reqData]);
+                    processBackData(backData, tcpSocket, utpclient, remotePort);
+                } else {
+                    logger.trace('rinfo.port !== trackerPort');
                 }
             };
             //---------来至tracker的回应------------------

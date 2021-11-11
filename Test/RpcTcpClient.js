@@ -1,4 +1,3 @@
-
 const RpCTcpClient = require('../Rpc/RpcTcpClient');
 
 let rcpClient = new RpCTcpClient({ host: '0.0.0.0', port: 3927 });
@@ -13,7 +12,7 @@ async function test(params) {
 
     }
 
-    setInterval(async () => {
+    setInterval(async() => {
         let a = Math.ceil(Math.random() * 100);
         let b = Math.ceil(Math.random() * 100);
         let result = await rcpClient.invoke('test', 'add', [a, b]);
@@ -24,8 +23,7 @@ async function test(params) {
 
 test();
 
-process.on("uncaughtException", function (err) {
+process.on("uncaughtException", function(err) {
     console.warn('uncaughtException');
     console.error(err);
 });
-

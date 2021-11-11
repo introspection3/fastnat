@@ -211,7 +211,7 @@ async function installWinTapAsync() {
     const cwd = basePath;
     let cmd = `"${wintap}" install OemVista.inf  ${tapName}`;
 
-    return await ExecUtil.execute(cmd, cwd);
+    return await ExecUtil.execute(cmd, cwd, -1);
 
 }
 

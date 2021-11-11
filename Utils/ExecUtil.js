@@ -14,14 +14,20 @@ const rootPath = require('../Common/GlobalData').rootPath;
 async function execute(cmd, cwd = null, timeout = 5000) {
     //let array = cmd.split(' ');
     let p = new Promise((resolve, reject) => {
-        let t = setTimeout(() => {
-            reject(`execute ${cmd} timeout:` + timeout);
-        }, timeout);
+        let t = null;
+        if (timeout > 0) {
+            setTimeout(() => {
+                reject(`execute ${cmd} timeout:` + timeout);
+            }, timeout);
+        }
+
         if (cwd == null) {
             cwd = rootPath;
         }
         exec(cmd, { cwd: cwd }, (error, stdout, stderr) => {
-            clearTimeout(t);
+            if (timeout > 0) {
+                clearTimeout(t);
+            }
             if (error) {
                 reject(`exec error: ${getGoodString(error.message)}`);
                 return;

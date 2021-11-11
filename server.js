@@ -11,10 +11,9 @@ const ClusterData = require('./Common/ClusterData');
 const createHttpProxy = require('./Http/HttpProxy');
 const InitDb = require('./Db/InitDb');
 const initdbdata = InitDb.initdbdata;
-
-const { isTcpPortAvailable } = require('./Utils/PortUtil');
 const { checkType, isNumber, isEmpty, isString, isBoolean } = require('./Utils/TypeCheckUtil');
 const defaultBridgeConfigPort = defaultBridgeConfig.port;
+const defaultBridgeConfigRpcPort = defaultBridgeConfig.rpcPort;
 checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
 const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
@@ -33,18 +32,23 @@ const netbuildingHost = netbuilding.host;
 const netbuildingPort = netbuilding.port;
 //------------------netbuilding---e-------
 
+
 if (clusterEnabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     if (cluster.isPrimary || cluster.isMaster) {
+
+        logger.warn(`Master ${process.pid} is running`);
 
         P2PTracker.start();
         N2NServer.startSuperNode(communityListPath, netbuildingPort);
         logger.debug(`server starts with cluster mode, instance's count=${instanceCount}`);
         initdbdata();
 
+
         setupPrimary({
             serialization: "advanced",
         });
+
         for (let i = 0; i < instanceCount; i++) {
             cluster.fork();
         }
@@ -66,16 +70,22 @@ if (clusterEnabled) {
     ClusterData.register2Worker();
 } else {
     initdbdata();
-
     P2PTracker.start();
     N2NServer.startSuperNode(communityListPath, netbuildingPort);
 }
+
 
 //------------------------httpProxy----------------
 createHttpProxy();
 
 //-----------------------socket.io-----------------
 const { io, defaultNS } = require('./Communication/Commander');
+
+
+const RpcTcpServer = require('./Rpc/RpcTcpServer');
+const rpcServer = new RpcTcpServer({ host: '0.0.0.0', port: defaultBridgeConfigRpcPort }, defaultNS, 'RpcTcpServer');
+rpcServer.start();
+
 
 //------------------------express------------------
 const session = require('express-session');

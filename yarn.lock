@@ -18,6 +18,11 @@
     "debug" "~4.3.1"
     "socket.io-adapter" "~2.3.0"
 
+"@socket.io/sticky@^1.0.1":
+  "integrity" "sha512-g5vmW25QZ1sDA6/NqgKJHhUKWI6b11BPWqwQBvPTVodGqbYMkfuY7hQtEXDoUPf+0WhySgcdVLf9o2AgOAXUhA=="
+  "resolved" "https://registry.npmjs.org/@socket.io/sticky/-/sticky-1.0.1.tgz"
+  "version" "1.0.1"
+
 "@types/component-emitter@^1.2.10":
   "integrity" "sha512-bsjleuRKWmGqajMerkzox19aGbscQX5rmmvvXl3wlIp5gMG1HgkiwPxsN5p070fBDKTNSPgojVbuY1+HWMbFhg=="
   "resolved" "https://registry.npmjs.org/@types/component-emitter/-/component-emitter-1.2.10.tgz"
@@ -1173,6 +1178,11 @@
   "integrity" "sha1-2sSOl01hwEhgLjJdJGG6ZWXmr8w="
   "resolved" "https://registry.nlark.com/node-worker-threads-pool/download/node-worker-threads-pool-1.5.0.tgz"
   "version" "1.5.0"
+
+"nodemailer@^6.7.0":
+  "integrity" "sha512-AtiTVUFHLiiDnMQ43zi0YgkzHOEWUkhDgPlBXrsDzJiJvB29Alo4OKxHQ0ugF3gRqRQIneCLtZU3yiUo7pItZw=="
+  "resolved" "https://registry.npmjs.org/nodemailer/-/nodemailer-6.7.0.tgz"
+  "version" "6.7.0"
 
 "normalize-package-data@^2.3.2", "normalize-package-data@^2.3.4":
   "integrity" "sha1-5m2xg4sgDB38IzIl0SyzZSDiNKg="

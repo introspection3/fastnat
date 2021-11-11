@@ -1,13 +1,14 @@
 {
     "version": "1.0.0",
-    "host": "fastnat.club",
+    "host": "192.168.1.4",
     "webserver": {
         "https": false,
         "port": 8081,
         "socketioPort": 8082
     },
     "bridge": {
-        "port": 3927
+        "port": 3927,
+        "rpcPort": 4728
     },
     "//": "p2p需要的相关配置信息",
     "p2p": {

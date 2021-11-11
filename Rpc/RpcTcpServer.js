@@ -7,6 +7,7 @@ const TcpServer = require('../Tcp/TcpServer');
 const { RpcClientProtocal, RpcServerProtocal } = require('./RpcProtocal');
 const path = require('path');
 const rootPath = require('../Common/GlobalData').rootPath;
+const commandType = require('../Communication/CommandType').commandType;
 /**
  * Tcp隧道服务端程序
  */
@@ -14,25 +15,17 @@ class RpcTcpServer {
 
     /**
      * 
-     * @param {Object} tcpServer' config
+     * @param {object} tcpServerConfig 
+     * @param {SocketIO.Namespace<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap>} defaultNS 
+     * @param {string} serverSignature 
      */
-    constructor(tcpServerConfig, dirPath = null) {
-        this.setServicesDirLocation(dirPath);
+    constructor(tcpServerConfig, defaultNS, serverSignature) {
+        this.serverSignature = serverSignature;
         this.tcpServer = new TcpServer(tcpServerConfig);
+        this.defaultNS = defaultNS;
     }
 
-    /**
-     * set services js directory path
-     * @param {string} dirPath 
-     */
-    setServicesDirLocation(dirPath) {
-        if (dirPath === null || dirPath === '') {
-            dirPath = './RpcServices'
-        }
-        dirPath = path.join(rootPath, dirPath);
-        console.log(dirPath);
-        this.path = dirPath;
-    }
+
 
     /*启动Tcp隧道服务端程序,只会调用一次
      */
@@ -45,16 +38,43 @@ class RpcTcpServer {
         });
 
         this.tcpServer.eventEmitter.on('onCodecMessage', (data, socket) => {
-            let serverSignaturePath = path.join(this.path, data.serverSignature);
-            let targetObj = require(serverSignaturePath);
-            let result = targetObj[data.method](...data.args);
-            let response = new RpcServerProtocal({});
-            response.result = result;
-            response.uuid = data.uuid;
-            this.tcpServer.sendCodecData2OneClient(response, socket);
+            if (data.serverSignature === this.serverSignature) {
+                this[data.method](...data.args, data.uuid, socket);
+            }
+        });
+    }
+
+    fn(result, uuid, socket) {
+        let response = new RpcServerProtocal({});
+        response.result = result;
+        response.uuid = uuid;
+        this.tcpServer.sendCodecData2OneClient(response, socket);
+    }
+
+    async p2pOpenRequest(data, uuid, socket) {
+
+        let targetClientId = data.targetClientId;
+        let result = false;
+        let info = '';
+        let allSockets = await this.defaultNS.fetchSockets();
+        let targetSocket = allSockets.find((value, index, array) => {
+            return value.handshake.auth.clientId === targetClientId;
         });
 
+        if (targetSocket != null) {
+            result = true;
+            logger.trace('start to notify targe socket to open p2p');
+            targetSocket.emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
+
+                this.fn(ret, uuid, socket);
+            });
+        } else {
+            info = `targetTunnelId's client is not online:targetClientId=` + targetClientId;
+            this.fn({ success: result, data: data, info: info }, uuid, socket);
+        }
     }
+
+
 }
 
 module.exports = RpcTcpServer;
