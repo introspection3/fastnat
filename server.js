@@ -91,8 +91,8 @@ rpcServer.start();
 const session = require('express-session');
 const RedisStore = require('connect-redis')(session);
 const redisUtil = require('./Utils/RedisUtil');
-const redisClient = redisUtil.redisClient;
-const redisStoreInstance = new RedisStore({ client: redisClient });
+const redisClient2 = redisUtil.redisClient2;
+const redisStoreInstance = new RedisStore({ client: redisClient2 });
 const app = express();
 app.use(
     session({

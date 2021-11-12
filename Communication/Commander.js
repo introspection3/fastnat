@@ -11,13 +11,15 @@ if (serverConfig.cluster.enabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
     io.adapter(createAdapter());
 }
+const redisUtil = require('../Utils/RedisUtil');
+const redisClient = redisUtil.redisClient;
 
 const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
 const ClusterData = require('../Common/ClusterData');
 const DefaultConfig = require('../Common/DefaultConfig');
 const eventEmitter = require('./CommunicationEventEmiter').eventEmitter;
 const commandType = require('./CommandType').commandType;
-
+const sleep = require('es7-sleep');
 
 
 const UpdTunnelServerMap = new Map();
@@ -82,6 +84,7 @@ io.on('connection', async(socket) => {
         updateClientStatus(clientId, 0);
         logger.debug(`clientId=${clientId} disconnect,socket.id=${socket.id}`);
         io.emit('client.disconnect', { clientId: clientId, socketIOSocketId: socket.id });
+        socket.removeAllListeners();
     });
 
     logger.debug('socket.io new connection,currentConnectSocketIoClientId=' + currentConnectSocketIoClientId);
@@ -105,7 +108,16 @@ io.on('connection', async(socket) => {
 
     //------------------------------------------
     updateClientStatus(currentConnectSocketIoClientId, 1);
+
     //------------------------------------------
+
+    socket.on(commandType.P2P_REQUEST_OPEN_RETURN, async(data, uuid, serverPid) => {
+        let eventName = serverPid + ':' + uuid;
+        let str = JSON.stringify(data);
+        console.log('eventName:' + eventName + ",message:" + str)
+        await redisClient.set(eventName, str, "EX", 5);
+    });
+
     socket.on(commandType.P2P_REQUEST_OPEN, async(data, fn) => {
         let targetClientId = data.targetClientId;
         let result = false;
@@ -118,14 +130,31 @@ io.on('connection', async(socket) => {
         if (targetSocket != null) {
             result = true;
             logger.trace('start to notify targe socket to open p2p');
-            targetSocket.emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
+            data.serverPid = process.pid;
+            let eventName = data.serverPid + ':' + data.uuid;
+            targetSocket.emit(commandType.P2P_REQUEST_OPEN, data);
+            let count = 1;
+            await sleep(50);
+            let resultData = await redisClient.get(eventName);
+            if (resultData != null && resultData != '') {
+                let ret = JSON.parse(resultData);
                 fn(ret);
-            });
+            } else {
+                while (resultData == null) {
+                    await sleep(10);
+                    resultData = await redisClient.get(eventName);
+                    if (resultData != null && resultData != '') {
+                        ret = JSON.parse(resultData);
+                        fn(ret);
+                        console.log('count,' + (count++));
+                    }
+                }
+            }
+
         } else {
             info = `targetTunnelId's client is not online:targetClientId=` + targetClientId;
             fn({ success: result, data: data, info: info });
         }
-
     });
 
     socket.on(commandType.CLIENT_CREATE_UDP_TUNNEL_SERVER, async(udpTunnelItemOption, fn) => {

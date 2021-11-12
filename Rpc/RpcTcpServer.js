@@ -64,8 +64,12 @@ class RpcTcpServer {
         if (targetSocket != null) {
             result = true;
             logger.trace('start to notify targe socket to open p2p');
-            targetSocket.emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
+            // targetSocket.emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
 
+            //     this.fn(ret, uuid, socket);
+            // });
+
+            this.defaultNS.to(targetSocket.id).emit(commandType.P2P_REQUEST_OPEN, data, (ret) => {
                 this.fn(ret, uuid, socket);
             });
         } else {

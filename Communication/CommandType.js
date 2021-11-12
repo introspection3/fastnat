@@ -1,5 +1,6 @@
 const commandType = {
     P2P_REQUEST_OPEN: 'p2p.request.open',
+    P2P_REQUEST_OPEN_RETURN: 'p2p.request.open.return',
     START_TUNNEL: 'start.tunnel',
     ADD_TUNNEL: 'add.tunnel',
     DELETE_TUNNEL: 'delete.tunnel',

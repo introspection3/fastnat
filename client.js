@@ -34,6 +34,7 @@ const promptGetAsync = require('util').promisify(prompt.get);
 const WindowsUtil = require('./Utils/WindowsUtil');
 const Tap9Util = require('./Utils/Tap9Util');
 const readline = require('readline');
+const { v4: uuidv4 } = require('uuid');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -96,6 +97,17 @@ const ALL_TUNNEL_MAP = new Map();
 /**所有创建的Connector通讯实例 */
 const ALL_CONNECTOR_MAP = new Map();
 
+
+/**
+ * 
+ * @param {*} returnData 
+ * @param {Socket} socketIOSocket 
+ * @param {*} fromSocketIoClientSocketId 
+ */
+function p2pOpenReturn(returnData, socketIOSocket, data) {
+    socketIOSocket.emit(commandType.P2P_REQUEST_OPEN_RETURN, returnData, data.uuid, data.serverPid);
+}
+
 /**
  * 
  * @param {Socket} socketIOSocket 
@@ -103,21 +115,21 @@ const ALL_CONNECTOR_MAP = new Map();
  */
 async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
 
-    socketIOSocket.on(commandType.P2P_REQUEST_OPEN, async(data, fn) => {
+    socketIOSocket.on(commandType.P2P_REQUEST_OPEN, async(data) => { //fn
         if (currentClientTunnelsMap.has(data.targetTunnelId)) {
             let tunnel = currentClientTunnelsMap.get(data.targetTunnelId);
             if (data.targetTunnelId != tunnel.id || data.targetP2PPassword != tunnel.p2pPassword) {
-                fn({ success: false, data: null, info: 'targetTunnelId or p2pPassword is not right' });
+                p2pOpenReturn({ success: false, data: null, info: 'targetTunnelId or p2pPassword is not right' }, socketIOSocket, data);
                 return;
             } else {
                 if (currentClientNatType === SYMMETRIC_NAT) {
-                    fn({ success: false, data: null, info: 'target client is  SYMMETRIC_NAT' });
+                    p2pOpenReturn({ success: false, data: null, info: 'target client is  SYMMETRIC_NAT' }, socketIOSocket, data);
                     return;
                 }
                 logger.info(currentClientNatType);
             }
         } else {
-            fn({ success: false, data: null, info: 'targetTunnelId not exist' });
+            p2pOpenReturn({ success: false, data: null, info: 'targetTunnelId not exist' }, socketIOSocket, data);
             return;
         }
         let connectorHost = data.connectorHost;
@@ -194,9 +206,9 @@ async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
                         message.host = res.address;
                         message.port = res.port;
                     }
-                    logger.info(`p2p info:` + JSON.stringify(message))
-                    fn({ success: true, data: message, info: 'target client is ready.nat type=' + currentClientNatType });
-
+                    logger.info(`p2p info:` + JSON.stringify(message));
+                    //  fn({ success: true, data: message, info: 'target client is ready.nat type=' + currentClientNatType });
+                    p2pOpenReturn({ success: true, data: message, info: 'target client is ready.nat type=' + currentClientNatType }, socketIOSocket, data);
                     //------------tryConnect2Public---
                     let publicInfo = {
                         address: connectorHost,
@@ -422,7 +434,7 @@ async function main() {
     const clientConfig = require('./Common/ClientConfig');
     let authenKey = clientConfig.authenKey;
     if (options.test) {
-        authenKey = '742af98b-e977-48a8-b1c8-1a2a091b93a2';
+        authenKey = '5cee9c48-c6d7-4eec-806d-206956699be4';
         clientConfig.authenKey = authenKey;
     }
     let firstUse = authenKey === '';
@@ -784,14 +796,15 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         targetClientId: targetClientId,
                         connectorHost: message.host,
                         connectorPort: message.port,
-                        socketIOSocketId: socketIOSocket.id
+                        socketIOSocketId: socketIOSocket.id,
+                        uuid: uuidv4()
                     };
-                    // socketIOSocket.emit(commandType.P2P_REQUEST_OPEN, reqData, (backData) => {
-                    //     processBackData(backData, tcpSocket, utpclient, remotePort);
-                    // });
+                    socketIOSocket.emit(commandType.P2P_REQUEST_OPEN, reqData, (backData) => {
+                        processBackData(backData, tcpSocket, utpclient, remotePort);
+                    });
 
-                    let backData = await rcpClient.invoke('RpcTcpServer', 'p2pOpenRequest', [reqData]);
-                    processBackData(backData, tcpSocket, utpclient, remotePort);
+                    // let backData = await rcpClient.invoke('RpcTcpServer', 'p2pOpenRequest', [reqData]);
+                    // processBackData(backData, tcpSocket, utpclient, remotePort);
                 } else {
                     logger.trace('rinfo.port !== trackerPort');
                 }
