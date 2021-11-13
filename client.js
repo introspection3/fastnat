@@ -644,8 +644,8 @@ async function timerCheckServerStatus(seconds = 20) {
     }
     _timerCheckServerStatusStarted = true;
     let timer = setInterval(async() => {
-        let serverOk = await checkServerStatus();
-        if (serverOk && isWorkingFine == false) {
+        let status = await checkServerStatus();
+        if (status && isWorkingFine == false) {
             isWorkingFine = true;
             clearInterval(timer);
             restartApplication();
@@ -898,10 +898,11 @@ async function getClientP2PInfoByTunnelId(authenKey, tunnelId) {
 
 
 
-async function checkServer(params) {
+async function checkServer() {
     try {
         let ret = await axios.get('/checkServerStatus');
         let result = await ret.data;
+
         return result.success;
     } catch (error) {
         logger.trace('checkServerStatus error' + error);
@@ -911,15 +912,20 @@ async function checkServer(params) {
 }
 async function checkServerStatus() {
     let errorCount = 0;
-    while (errorCount < 3) {
-        let ok = await checkServer();
+    let ok = await checkServer();
+
+    if (ok == false) {
+        errorCount = errorCount + 1;
+        ok = await checkServer();
+
         if (ok == false) {
             errorCount = errorCount + 1;
-        } {
-            return true;
+        } else {
+            return ok;
         }
     }
-    return false;
+
+    return ok;
 }
 
 main();
@@ -962,6 +968,7 @@ function failoverTcp(remotePort, tcpSocket) {
 
 
 async function trayIcon(isConsoleDisplay = false) {
+
     if (os.arch().indexOf('arm') > -1 || os.arch().indexOf('mip') > -1) {
         return;
     }
@@ -973,7 +980,7 @@ async function trayIcon(isConsoleDisplay = false) {
         ext = '.ico';
     }
     let imgPath = path.join(rootPath, 'config', 'img', 'tray');
-
+    logger.trace('imgPath:' + imgPath);
     let bitmap = await readFile(imgPath + ext);
     const basePath = getPluginPath('tray', 'client');
     let trayPath = path.join(basePath, `tray`);
@@ -1011,13 +1018,11 @@ async function trayIcon(isConsoleDisplay = false) {
 
     systray.onClick(action => {
         if (action.seq_id === 1) {
-
             if (action.item.checked) {
                 require('./Utils/WindowsUtil').hideConsole();
             } else {
                 require('./Utils/WindowsUtil').showConsole();
             }
-
             systray.sendAction({
                 type: 'update-item',
                 item: {
@@ -1026,7 +1031,6 @@ async function trayIcon(isConsoleDisplay = false) {
                 },
                 seq_id: action.seq_id,
             });
-
         } else if (action.seq_id === 0) {
             // opens the url in the default browser 
             PlatfromUtil.openDefaultBrowser(axios.defaults.baseURL);
@@ -1065,17 +1069,17 @@ function restartApplication() {
     if (!args.includes('-s')) {
         args.push('-s')
     }
-    logger.debug("app will restart ,current pid= " + process.pid);
+    logger.debug("app will restart ,old pid= " + process.pid);
     logger.debug("args:" + args.toString());
-    logger.debug('app path:' + exe);
+    logger.debug('app exe:' + exe);
 
     const subprocess = require("child_process").spawn(exe, args, {
         cwd: rootPath,
         detached: true,
+        shell: false,
         stdio: 'ignore',
         windowsHide: false
     });
-
 
     subprocess.unref();
     PlatfromUtil.processExit();
