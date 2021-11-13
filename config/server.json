@@ -8,6 +8,15 @@
         "username": "root",
         "password": "root"
     },
+    "email": {
+        "host": "smtp.126.com",
+        "port": 25,
+        "secure": false,
+        "auth": {
+            "user": "flameskyorg@126.com",
+            "pass": "705507"
+        }
+    },
     "init": {
         "firstInit": false
     },

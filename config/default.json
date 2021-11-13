@@ -16,7 +16,7 @@
         "host": "stun.l.google.com",
         "port": 19302,
         "trackerPort": 19302,
-        "isStun": true,
+        "isStun": false,
         "sampleCount": 1
     },
     "log": {

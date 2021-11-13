@@ -49,7 +49,7 @@ const RegisterUser = sequelize.define('registerUser', {
         allowNull: false,
         comment: 'telphone',
         validate: {
-            len: [7, 20]
+            len: [7, 50]
         }
     },
     createdAt: {

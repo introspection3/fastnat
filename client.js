@@ -59,7 +59,7 @@ checkType(isNumber, p2pmtu, 'p2pmtu');
 const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
 
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
-const rcpClient = new RpCTcpClient({ host: defaultConfig.host, port: defaultBridgeConfigRpcPort });
+// const rcpClient = new RpCTcpClient({ host: defaultConfig.host, port: defaultBridgeConfigRpcPort });
 
 program.version('1.0.0');
 program
@@ -490,7 +490,7 @@ async function main() {
         PlatfromUtil.processExit();
         return;
     }
-    await rcpClient.start();
+    //await rcpClient.start();
     if (firstUse) {
         console.warn('下面将安装三方驱动和防火墙的例外,请允许通过');
         await sleep(1000);
@@ -513,24 +513,39 @@ async function main() {
                 let oldName = changeTap.FriendlyName;
                 await Tap9Util.renameAdapterAsync(oldName, targetName);
             }
-            let ok = await require('./Utils/FireWallUtil').addCurrentProgramExceptionAsync('fastnat');
+            const FireWallUtil = require('./Utils/FireWallUtil');
+            let ok = await FireWallUtil.addCurrentProgramExceptionAsync('fastnat');
             if (ok === false) {
                 logger.warn('添加防火墙fastnat超时，请自行添加');
             }
             let edgePath = N2NClient.getPath();
-            ok = await require('./Utils/FireWallUtil').addProgramExceptionAsync('p2p', edgePath);
+            ok == await FireWallUtil.addProgramExceptionAsync('p2p', edgePath);
             if (ok === false) {
                 logger.warn('添加防火墙p2p超时，请自行添加');
             }
-            ok = await require('./Utils/FireWallUtil').allowIcmpAsync();
+            ok == await FireWallUtil.allowIcmpAsync();
             if (ok === false) {
                 logger.warn('添加防火墙icmp超时，请自行添加');
             }
             await WindowsUtil.openMstscAsync();
             await WindowsUtil.enableAutoStartAsync();
+            await FireWallUtil.addPortAsync('remote', 'tcp', 3389);
+        }
+    } else {
+        if (os.platform() === 'win32') {
+            //------是否已经有存在的tap
+            let allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
+            let targetName = 'tap-' + clientResult.data.id;
+            let targetAdapter = allTap9.find(function(item) {
+                return item.FriendlyName == targetName;
+            });
+            if (targetAdapter == null || targetAdapter == undefined) {
+                logger.warn(`对应的tap驱动尚未安装，请从client.json里剪切出authenKey,然后重启程序`);
+                PlatfromUtil.processExit();
+                return;
+            }
         }
     }
-
 
     checkNatType(clientConfig);
     let currentClientTunnels = clientResult.data.tunnels;

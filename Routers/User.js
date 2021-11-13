@@ -11,6 +11,7 @@ const { v4: uuidv4 } = require('uuid');
 const md5 = require('md5');
 const NetUtil = require('../Utils/NetUtil');
 const svgFontPath = path.join(configPath, 'fonts', 'Comismsh.ttf');
+const EmailUtil = require('../Utils/EmailUtil');
 
 router.post('/register', async function(req, res, next) {
     let info = req.body;
@@ -28,6 +29,15 @@ router.post('/register', async function(req, res, next) {
         res.send(result);
         return;
     }
+    if (req.session.emailCode !== info.emailCode.toUpperCase()) {
+        result = {
+            success: false,
+            data: 'vcode',
+            info: '邮箱验证码错误'
+        };
+        res.send(result);
+        return;
+    }
     let count = await RegisterUser.count({
         where: {
             username: info.username
@@ -39,17 +49,7 @@ router.post('/register', async function(req, res, next) {
         res.send(result);
         return;
     }
-    count = await RegisterUser.count({
-        where: {
-            telphone: info.telphone
-        }
-    });
-    if (count >= 1) {
-        result.success = false;
-        result.info = '此的电话已被使用';
-        res.send(result);
-        return;
-    }
+    info.telphone = 'NO_' + uuidv4();
     count = await RegisterUser.count({
         where: {
             email: info.email
@@ -139,6 +139,43 @@ router.get('/vcode', async function(req, res, next) {
     req.session.captcha = captcha.text.toLowerCase();
     res.type('image/svg+xml');
     res.send(captcha.data);
+});
+
+
+router.post('/sendEmailCode', async function(req, res, next) {
+    let result = {
+        success: false,
+        data: null,
+        info: ''
+    }
+    let email = req.body.email;
+    let myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;　　
+    if (!myReg.test(email)) {　　　
+        result.info = '邮箱格式有误';
+        res.send(result);
+    } else {
+
+        let count = await RegisterUser.count({
+            where: {
+                email: email
+            }
+        });
+
+        if (count >= 1) {
+            result.success = false;
+            result.info = '此邮箱已被其他人使用';
+            res.send(result);
+            return;
+        }
+
+        let code = Math.random().toString(36).substr(2, 4).toUpperCase();
+        req.session.emailCode = code;
+        let info = await EmailUtil.sendMailAsync(email, 'fastnat邮箱验证码', `欢迎使用注册fastnat,您的邮箱验证码是:<b>${code}</b>,<br/>请勿回复`);
+        result.info = '邮箱验证码已发送,请查收';
+        result.success = true;
+        res.send(result);
+    }
+
 });
 
 router.post('/doLogin', async function(req, res, next) {

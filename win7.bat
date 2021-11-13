@@ -1,0 +1,1 @@
+ ncc build client.js  -o dist    && cd /d dist  &&  pkg -t node12-win index.js

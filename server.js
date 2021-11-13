@@ -82,9 +82,9 @@ createHttpProxy();
 const { io, defaultNS } = require('./Communication/Commander');
 
 
-const RpcTcpServer = require('./Rpc/RpcTcpServer');
-const rpcServer = new RpcTcpServer({ host: '0.0.0.0', port: defaultBridgeConfigRpcPort }, defaultNS, 'RpcTcpServer');
-rpcServer.start();
+// const RpcTcpServer = require('./Rpc/RpcTcpServer');
+// const rpcServer = new RpcTcpServer({ host: '0.0.0.0', port: defaultBridgeConfigRpcPort }, defaultNS, 'RpcTcpServer');
+// rpcServer.start();
 
 
 //------------------------express------------------
