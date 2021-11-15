@@ -27,11 +27,41 @@ const Client = sequelize.define('client', {
         defaultValue: '',
         comment: 'client name'
     },
+    hostName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'host name'
+    },
+    arch: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'arch'
+    },
+    osReleaseVersion: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'os release version'
+    },
     os: {
         type: DataTypes.STRING(500),
         allowNull: false,
         defaultValue: '{}',
         comment: 'client os info'
+    },
+    platform: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'os platform'
+    },
+    version: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: '',
+        comment: 'client version'
     },
     publicIp: {
         type: DataTypes.STRING(50),

@@ -9,6 +9,7 @@ const userConfig = ServerConfig.user;
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const commandType = require('../Communication/CommandType').commandType;
 const NetUtil = require('../Utils/NetUtil');
+
 router.use(function(req, res, next) {
     if (req.path.startsWith('/api')) {
         next();
@@ -317,7 +318,12 @@ router.put('/api/:authenKey', async function(req, res, next) {
         mac: req.body.mac,
         natType: req.body.natType,
         publicIp: req.ip,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        hostName: req.body.hostName || '',
+        arch: req.body.arch || '',
+        platform: req.body.platform || '',
+        version: req.body.version || '',
+        osReleaseVersion: req.body.osReleaseVersion || ''
     }, {
         where: {
             authenKey: req.params.authenKey

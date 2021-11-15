@@ -1,3 +1,5 @@
+const version = '1.0.0';
+
 const defaultConfig = require('./Common/DefaultConfig');
 const axios = require('axios').default;
 const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
@@ -61,7 +63,7 @@ const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 // const rcpClient = new RpCTcpClient({ host: defaultConfig.host, port: defaultBridgeConfigRpcPort });
 
-program.version('1.0.0');
+program.version(version);
 program
     .option('-t, --test', 'is test')
     .option('-s, --sleep', 'only tell application ,this process will sleep then go on')
@@ -1042,17 +1044,36 @@ async function trayIcon(isConsoleDisplay = false) {
     return systray;
 }
 
+const dealMem = (mem) => {
+    let G = 0,
+        M = 0,
+        KB = 0;
+    (mem > (1 << 30)) && (G = (mem / (1 << 30)).toFixed(2));
+    (mem > (1 << 20)) && (mem < (1 << 30)) && (M = (mem / (1 << 20)).toFixed(2));
+    (mem > (1 << 10)) && (mem > (1 << 20)) && (KB = (mem / (1 << 10)).toFixed(2));
+    return G > 0 ? G + 'G' : M > 0 ? M + 'M' : KB > 0 ? KB + 'KB' : mem + 'B';
+};
+
 
 async function updateClientSystemInfo(natType, authenKey) {
     let osInfo = {
         cpuCount: os.cpus().length,
-        arch: os.arch(),
-        platform: os.platform()
+        osType: os.type(),
+        totalmem: dealMem(os.totalmem())
     };
+    if (os.platform() === 'win32') {
+        osInfo.osType = await WindowsUtil.osVersion();
+        osInfo.osType = osInfo.osType.trim();
+    }
     let data = {
         os: JSON.stringify(osInfo),
         natType: natType,
-        mac: getMAC()
+        mac: getMAC(),
+        arch: os.arch(),
+        platform: os.platform(),
+        osReleaseVersion: os.release(),
+        version: version,
+        hostName: os.hostname()
     }
     let result = await (await axios.put('/client/api/' + authenKey, data)).data;
     return result;
