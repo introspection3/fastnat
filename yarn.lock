@@ -294,6 +294,15 @@
     "object-assign" "^4"
     "vary" "^1"
 
+"cross-spawn@^7.0.3":
+  "integrity" "sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w=="
+  "resolved" "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.3.tgz"
+  "version" "7.0.3"
+  dependencies:
+    "path-key" "^3.1.0"
+    "shebang-command" "^2.0.0"
+    "which" "^2.0.1"
+
 "crypt@0.0.2":
   "integrity" "sha1-iNf/fsDfuG9xPch7u0LQRNPmxBs="
   "resolved" "https://registry.npmjs.org/crypt/-/crypt-0.0.2.tgz"
@@ -505,6 +514,21 @@
   "resolved" "https://registry.nlark.com/eventemitter3/download/eventemitter3-4.0.7.tgz"
   "version" "4.0.7"
 
+"execa@^5.1.1":
+  "integrity" "sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg=="
+  "resolved" "https://registry.npmjs.org/execa/-/execa-5.1.1.tgz"
+  "version" "5.1.1"
+  dependencies:
+    "cross-spawn" "^7.0.3"
+    "get-stream" "^6.0.0"
+    "human-signals" "^2.1.0"
+    "is-stream" "^2.0.0"
+    "merge-stream" "^2.0.0"
+    "npm-run-path" "^4.0.1"
+    "onetime" "^5.1.2"
+    "signal-exit" "^3.0.3"
+    "strip-final-newline" "^2.0.0"
+
 "express-session@^1.17.2":
   "integrity" "sha512-mPcYcLA0lvh7D4Oqr5aNJFMtBMKPLl++OKKxkHzZ0U0oDq1rpKBnkR5f5vCHR26VeArlTOEF9td4x5IjICksRQ=="
   "resolved" "https://registry.npmjs.org/express-session/-/express-session-1.17.2.tgz"
@@ -671,6 +695,11 @@
   "resolved" "https://registry.nlark.com/get-port/download/get-port-5.1.1.tgz?cache=0&sync_timestamp=1624715321987&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fget-port%2Fdownload%2Fget-port-5.1.1.tgz"
   "version" "5.1.1"
 
+"get-stream@^6.0.0":
+  "integrity" "sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg=="
+  "resolved" "https://registry.npmjs.org/get-stream/-/get-stream-6.0.1.tgz"
+  "version" "6.0.1"
+
 "get-symbol-from-current-process-h@^1.0.1", "get-symbol-from-current-process-h@^1.0.2":
   "integrity" "sha512-syloC6fsCt62ELLrr1VKBM1ggOpMdetX9hTrdW77UQdcApPHLmf7CI7OKcN1c9kYuNxKcDe4iJ4FY9sX3aw2xw=="
   "resolved" "https://registry.npmjs.org/get-symbol-from-current-process-h/-/get-symbol-from-current-process-h-1.0.2.tgz"
@@ -759,6 +788,11 @@
     "eventemitter3" "^4.0.0"
     "follow-redirects" "^1.0.0"
     "requires-port" "^1.0.0"
+
+"human-signals@^2.1.0":
+  "integrity" "sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw=="
+  "resolved" "https://registry.npmjs.org/human-signals/-/human-signals-2.1.0.tgz"
+  "version" "2.1.0"
 
 "iconv-lite@^0.6.3":
   "integrity" "sha1-pS+AvzjaGVLrXGgXkHGYcaGnJQE="
@@ -885,6 +919,11 @@
   dependencies:
     "protocols" "^1.1.0"
 
+"is-stream@^2.0.0":
+  "integrity" "sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg=="
+  "resolved" "https://registry.npmjs.org/is-stream/-/is-stream-2.0.1.tgz"
+  "version" "2.0.1"
+
 "is-stun@^2.0.0":
   "integrity" "sha1-tOtMMUDn82o2DWRyto/vuWfRJ4o="
   "resolved" "https://registry.nlark.com/is-stun/download/is-stun-2.0.0.tgz"
@@ -903,6 +942,11 @@
     "deep-is" "^0.1.3"
     "ip-regex" "^4.1.0"
     "is-url" "^1.2.4"
+
+"isexe@^2.0.0":
+  "integrity" "sha1-6PvzdNxVb/iUehDcsFctYz8s+hA="
+  "resolved" "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz"
+  "version" "2.0.0"
 
 "isobject@^3.0.1":
   "integrity" "sha1-TkMekrEalzFjaqH5yNHMvP2reN8="
@@ -1003,6 +1047,11 @@
   dependencies:
     "yallist" "^4.0.0"
 
+"macos-release@^3.0.1":
+  "integrity" "sha512-3l6OrhdDg2H2SigtuN3jBh+5dRJRWxNKuJTPBbGeNJTsmt/pj9PO25wYaNb05NuNmAsl435j4rDP6rgNXz7s7g=="
+  "resolved" "https://registry.npmjs.org/macos-release/-/macos-release-3.0.1.tgz"
+  "version" "3.0.1"
+
 "map-obj@^1.0.0":
   "integrity" "sha1-2TPOuSBdgr3PSIb2dCvcK03qFG0="
   "resolved" "https://registry.nlark.com/map-obj/download/map-obj-1.0.1.tgz"
@@ -1047,6 +1096,11 @@
   "resolved" "https://registry.nlark.com/merge-descriptors/download/merge-descriptors-1.0.1.tgz"
   "version" "1.0.1"
 
+"merge-stream@^2.0.0":
+  "integrity" "sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w=="
+  "resolved" "https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz"
+  "version" "2.0.0"
+
 "methods@~1.1.2":
   "integrity" "sha1-VSmk1nZUE07cxSZmVoNbD4Ua/O4="
   "resolved" "https://registry.nlark.com/methods/download/methods-1.1.2.tgz"
@@ -1068,6 +1122,11 @@
   "integrity" "sha1-Ms2eXGRVO9WNGaVor0Uqz/BJgbE="
   "resolved" "https://registry.nlark.com/mime/download/mime-1.6.0.tgz"
   "version" "1.6.0"
+
+"mimic-fn@^2.1.0":
+  "integrity" "sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg=="
+  "resolved" "https://registry.npmjs.org/mimic-fn/-/mimic-fn-2.1.0.tgz"
+  "version" "2.1.0"
 
 "minimatch@^3.0.4":
   "integrity" "sha1-UWbihkV/AzBgZL5Ul+jbsMPTIIM="
@@ -1204,6 +1263,13 @@
   "resolved" "https://registry.nlark.com/normalize-url/download/normalize-url-4.5.1.tgz?cache=0&sync_timestamp=1628689099559&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fnormalize-url%2Fdownload%2Fnormalize-url-4.5.1.tgz"
   "version" "4.5.1"
 
+"npm-run-path@^4.0.1":
+  "integrity" "sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw=="
+  "resolved" "https://registry.npmjs.org/npm-run-path/-/npm-run-path-4.0.1.tgz"
+  "version" "4.0.1"
+  dependencies:
+    "path-key" "^3.0.0"
+
 "object-assign@^4":
   "integrity" "sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM="
   "resolved" "https://registry.nlark.com/object-assign/download/object-assign-4.1.1.tgz"
@@ -1233,6 +1299,13 @@
   dependencies:
     "wrappy" "1"
 
+"onetime@^5.1.2":
+  "integrity" "sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg=="
+  "resolved" "https://registry.npmjs.org/onetime/-/onetime-5.1.2.tgz"
+  "version" "5.1.2"
+  dependencies:
+    "mimic-fn" "^2.1.0"
+
 "opentype.js@^0.7.3":
   "integrity" "sha1-QPuM4Yv9YOdESO/f5EKDQJg5eqs="
   "resolved" "https://registry.npmjs.org/opentype.js/-/opentype.js-0.7.3.tgz"
@@ -1247,6 +1320,14 @@
   dependencies:
     "minimist" "~0.0.1"
     "wordwrap" "~0.0.2"
+
+"os-name@^5.0.1":
+  "integrity" "sha512-0EQpaHUHq7olp2/YFUr+0vZi9tMpDTblHGz+Ch5RntKxiRXOAY0JOz1UlxhSjMSksHvkm13eD6elJj3M8Ht/kw=="
+  "resolved" "https://registry.npmjs.org/os-name/-/os-name-5.0.1.tgz"
+  "version" "5.0.1"
+  dependencies:
+    "macos-release" "^3.0.1"
+    "windows-release" "^5.0.1"
 
 "p-limit@^1.1.0":
   "integrity" "sha1-uGvV8MJWkJEcdZD8v8IBDVSzzLg="
@@ -1324,6 +1405,11 @@
   "integrity" "sha1-F0uSaHNVNP+8es5r9TpanhtcX18="
   "resolved" "https://registry.nlark.com/path-is-absolute/download/path-is-absolute-1.0.1.tgz"
   "version" "1.0.1"
+
+"path-key@^3.0.0", "path-key@^3.1.0":
+  "integrity" "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="
+  "resolved" "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz"
+  "version" "3.1.1"
 
 "path-parse@^1.0.6":
   "integrity" "sha1-+8EUtgykKzDZ2vWFjkvWi77bZzU="
@@ -1628,6 +1714,18 @@
   "resolved" "https://registry.nlark.com/setprototypeof/download/setprototypeof-1.1.1.tgz"
   "version" "1.1.1"
 
+"shebang-command@^2.0.0":
+  "integrity" "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA=="
+  "resolved" "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz"
+  "version" "2.0.0"
+  dependencies:
+    "shebang-regex" "^3.0.0"
+
+"shebang-regex@^3.0.0":
+  "integrity" "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A=="
+  "resolved" "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz"
+  "version" "3.0.0"
+
 "shelljs@^0.8.4":
   "integrity" "sha512-7gk3UZ9kOfPLIAbslLzyWeGiEqx9e3rxwZM0KE6EL8GlGwjym9Mrlx5/p33bWTu9YG6vcS4MBxYZDHYr5lr8BQ=="
   "resolved" "https://registry.npmjs.org/shelljs/-/shelljs-0.8.4.tgz"
@@ -1646,7 +1744,7 @@
     "get-intrinsic" "^1.0.2"
     "object-inspect" "^1.9.0"
 
-"signal-exit@^3.0.0":
+"signal-exit@^3.0.0", "signal-exit@^3.0.3":
   "integrity" "sha1-oUEMLt2PB3sItOJTyOrPyvBXRhw="
   "resolved" "https://registry.nlark.com/signal-exit/download/signal-exit-3.0.3.tgz"
   "version" "3.0.3"
@@ -1770,6 +1868,11 @@
   "integrity" "sha1-IzTBjpx1n3vdVv3vfprj1YjmjtM="
   "resolved" "https://registry.nlark.com/strip-bom/download/strip-bom-3.0.0.tgz"
   "version" "3.0.0"
+
+"strip-final-newline@^2.0.0":
+  "integrity" "sha512-BrpvfNAE3dcvq7ll3xVumzjKjZQ5tI1sEUIKr3Uoks0XUl45St3FlatVqef9prk4jRDzhW6WZg+3bk93y6pLjA=="
+  "resolved" "https://registry.npmjs.org/strip-final-newline/-/strip-final-newline-2.0.0.tgz"
+  "version" "2.0.0"
 
 "strip-indent@^2.0.0":
   "integrity" "sha1-XvjbKV0B5u1sv3qrlpmNeCJSe2g="
@@ -1915,6 +2018,20 @@
   "integrity" "sha1-PHHGp/Ps90OsH2+b65ayYmzDvYA="
   "resolved" "https://registry.npmjs.org/vs-stun/-/vs-stun-0.0.7.tgz"
   "version" "0.0.7"
+
+"which@^2.0.1":
+  "integrity" "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="
+  "resolved" "https://registry.npmjs.org/which/-/which-2.0.2.tgz"
+  "version" "2.0.2"
+  dependencies:
+    "isexe" "^2.0.0"
+
+"windows-release@^5.0.1":
+  "integrity" "sha512-y1xFdFvdMiDXI3xiOhMbJwt1Y7dUxidha0CWPs1NgjZIjZANTcX7+7bMqNjuezhzb8s5JGEiBAbQjQQYYy7ulw=="
+  "resolved" "https://registry.npmjs.org/windows-release/-/windows-release-5.0.1.tgz"
+  "version" "5.0.1"
+  dependencies:
+    "execa" "^5.1.1"
 
 "winston@2.x":
   "integrity" "sha512-TWoamHt5yYvsMarGlGEQE59SbJHqGsZV8/lwC+iCcGeAe0vUaOh+Lv6SYM17ouzC/a/LB1/hz/7sxFBtlu1l4A=="

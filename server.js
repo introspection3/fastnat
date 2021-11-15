@@ -1,3 +1,4 @@
+global.programType = 'server';
 const express = require('express');
 const logger = require('./Log/logger');
 const TcpTunnelServer = require('./TcpTunnel/TcpTunnelServer');

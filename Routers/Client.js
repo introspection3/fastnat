@@ -9,6 +9,11 @@ const userConfig = ServerConfig.user;
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const commandType = require('../Communication/CommandType').commandType;
 const NetUtil = require('../Utils/NetUtil');
+const path = require('path');
+const parentDir = require('../Common/GlobalData').rootPath;
+const configDir = path.join(parentDir, "config");
+const defaultConfigPath = path.join(configDir, 'default.json');
+const readFile = require('fs').promises.readFile;
 
 router.use(function(req, res, next) {
     if (req.path.startsWith('/api')) {
@@ -338,7 +343,15 @@ router.put('/api/:authenKey', async function(req, res, next) {
     });
 });
 
-
+router.get('/api/getDefaultConfig/:authenKey', async function(req, res, next) {
+    let content = await readFile(defaultConfigPath);
+    var data = JSON.parse(content);
+    res.send({
+        success: false,
+        data: data,
+        info: ''
+    });
+});
 
 router.get('/api/:authenKey', async function(req, res, next) {
     let client = await Client.findOne({

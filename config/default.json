@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "host": "fastnat.club",
+    "host": "localhost",
     "webserver": {
         "https": false,
         "port": 8081,
@@ -18,12 +18,5 @@
         "trackerPort": 19302,
         "isStun": false,
         "sampleCount": 1
-    },
-    "log": {
-        "level": "trace",
-        "enableCallStack": false
-    },
-    "monitor": {
-        "enabled": false
     }
 }

@@ -2,7 +2,6 @@ const express = require(`express`);
 const router = express.Router();
 const { RegisterUser, Client, Tunnel, Connector } = require('../Db/Models');
 const serverConfig = require('../Common/ServerConfig');
-const defaultConfig = require('../Common/DefaultConfig');
 const netbuilding = serverConfig.netbuilding;
 const netbuildingHost = netbuilding.host;
 const netbuildingPort = netbuilding.port;

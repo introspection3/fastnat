@@ -1,13 +1,8 @@
 const version = '1.0.0';
-
-const defaultConfig = require('./Common/DefaultConfig');
+global.programType = 'client';
 const axios = require('axios').default;
 const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
 const logger = require('./Log/logger');
-const defaultWebSeverConfig = defaultConfig.webserver;
-const defaultBridgeConfig = defaultConfig.bridge;
-const defaultBridgeConfigRpcPort = defaultBridgeConfig.rpcPort;
-const RpCTcpClient = require('./Rpc/RpcTcpClient');
 const HttpTunnelClient = require('./HttpTunnel/HttpTunnelClient');
 const UdpTunnelClient = require('./UdpTunnel/UdpTunnelClient');
 const UpnpUtil = require('./Utils/UpnpUtil');
@@ -30,9 +25,7 @@ const commandType = require('./Communication/CommandType').commandType;
 const rootPath = require('./Common/GlobalData').rootPath;
 const SysTray = require('./SysTray/SysTray');
 const getPluginPath = require('./Utils/PluginUtil').getPluginPath;
-const prompt = require('prompt');
 const fs = require('fs').promises;
-const promptGetAsync = require('util').promisify(prompt.get);
 const WindowsUtil = require('./Utils/WindowsUtil');
 const Tap9Util = require('./Utils/Tap9Util');
 const readline = require('readline');
@@ -42,20 +35,8 @@ const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
 const Node = require('utp-punch');
 const stun = require('stun');
-const p2pHost = defaultConfig.p2p.host;
-checkType(isString, p2pHost, 'p2pHost');
 
-const trackerPort = defaultConfig.p2p.trackerPort;
-checkType(isNumber, trackerPort, 'trackerPort');
 
-const isStun = defaultConfig.p2p.isStun;
-checkType(isBoolean, isStun, 'isStun');
-
-const sampleCount = defaultConfig.p2p.sampleCount;
-checkType(isNumber, sampleCount, 'sampleCount');
-
-const p2pmtu = defaultConfig.p2p.mtu;
-checkType(isNumber, p2pmtu, 'p2pmtu');
 //---------------p2p config -----e-----
 
 const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
@@ -70,18 +51,14 @@ program
     .parse(process.argv);
 const options = program.opts();
 
-function setAxiosDefaultConfig(isHttps, host, port, authenKey) {
+function setAxiosDefaultConfig(serverUrl, authenKey) {
     axios.defaults.timeout = 5000;
-    axios.defaults.baseURL = `http${isHttps?'s':''}://${host}:${port}`;
+    axios.defaults.baseURL = serverUrl;
     logger.info('defaults.baseURL=' + axios.defaults.baseURL);
     axios.defaults.headers['authenKey'] = authenKey;
 }
 
 
-if (defaultConfig.monitor.enabled) {
-    // const easyMonitor = require('easy-monitor');
-    // easyMonitor('client');
-}
 
 let isWorkingFine = true;
 let currentClientNatType = null;
@@ -115,7 +92,23 @@ function p2pOpenReturn(returnData, socketIOSocket, data) {
  * @param {Socket} socketIOSocket 
  * @param {Number} ownClientId 
  */
-async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey) {
+async function registerSocketIOEvent(socketIOSocket, ownClientId, authenKey, defaultConfig) {
+    let defaultBridgeConfig = defaultConfig.bridge;
+
+    const p2pHost = defaultConfig.p2p.host;
+    checkType(isString, p2pHost, 'p2pHost');
+
+    const trackerPort = defaultConfig.p2p.trackerPort;
+    checkType(isNumber, trackerPort, 'trackerPort');
+
+    const isStun = defaultConfig.p2p.isStun;
+    checkType(isBoolean, isStun, 'isStun');
+
+    const sampleCount = defaultConfig.p2p.sampleCount;
+    checkType(isNumber, sampleCount, 'sampleCount');
+
+    const p2pmtu = defaultConfig.p2p.mtu;
+    checkType(isNumber, p2pmtu, 'p2pmtu');
 
     socketIOSocket.on(commandType.P2P_REQUEST_OPEN, async(data) => { //fn
         if (currentClientTunnelsMap.has(data.targetTunnelId)) {
@@ -389,8 +382,9 @@ function setCurrentClientTunnelsMap(currentClientTunnels) {
 /**
  * check current nat type
  */
-async function checkNatType(clientConfig) {
-    currentClientNatType = await require('./Utils/StunUtil')({ sampleCount: sampleCount, stunHost: clientConfig.stunHost })
+async function checkNatType(clientConfig, defaultConfig) {
+    const sampleCount = defaultConfig.p2p.sampleCount;
+    currentClientNatType = await require('./Utils/StunUtil')({ sampleCount: sampleCount, p2pHost: defaultConfig.p2p.host })
     await updateClientSystemInfo(currentClientNatType, clientConfig.authenKey);
     return currentClientNatType;
 }
@@ -450,7 +444,7 @@ async function main() {
             return;
         }
 
-        let url = `http${defaultWebSeverConfig.https?'s':''}://${defaultConfig.host}:${defaultWebSeverConfig.port}/reg.html`;
+        let url = `${clientConfig.serverUrl}/reg.html`;
         let tip = `\n提示：下面将进行设备初始化,如您尚无设备KEY(有了设备KEY您就能使用此系统了),\n请到${url}注册,已为您尝试打开了浏览器\n`;
         console.warn(tip);
         await sleep(1000);
@@ -470,7 +464,7 @@ async function main() {
     }
 
     WindowsUtil.disableCloseButton();
-    setAxiosDefaultConfig(defaultWebSeverConfig.https, defaultConfig.host, defaultWebSeverConfig.port, authenKey);
+    setAxiosDefaultConfig(clientConfig.serverUrl, authenKey);
 
     if (options.sleep) {
         logger.debug('sleep 3s,then go  on,new pid=' + process.pid);
@@ -492,7 +486,14 @@ async function main() {
         PlatfromUtil.processExit();
         return;
     }
-    //await rcpClient.start();
+
+    let defaultConfig = await getDefaultConfig(authenKey);
+
+    let defaultBridgeConfig = defaultConfig.bridge;
+    let defaultWebSeverConfig = defaultConfig.webserver;
+
+    let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
+
     if (firstUse) {
         console.warn('下面将安装三方驱动和防火墙的例外,请允许通过');
         await sleep(1000);
@@ -549,31 +550,33 @@ async function main() {
         }
     }
 
-    checkNatType(clientConfig);
+    checkNatType(clientConfig, defaultConfig);
     let currentClientTunnels = clientResult.data.tunnels;
     setCurrentClientTunnelsMap(currentClientTunnels)
-    let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id);
-    registerSocketIOEvent(socketIOSocket, clientResult.data.id, authenKey);
+
+    let socketIOSocket = await startConnect2SocketIO(authenKey, clientResult.data.id, ioUrl);
+    registerSocketIOEvent(socketIOSocket, clientResult.data.id, authenKey, defaultConfig);
 
     const ownClientId = clientResult.data.id;
+
     for (const tunnelItem of currentClientTunnels) {
         await createTunnel(authenKey, defaultConfig.host, defaultBridgeConfig.port, tunnelItem, socketIOSocket);
     }
     let connectors = clientResult.data.connectors;
     for (const connectorItem of connectors) {
-        await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId);
+        await createConnector(connectorItem, authenKey, socketIOSocket, ownClientId, defaultConfig);
     }
     await sleep(1000);
     await startEdgeProcessAsync(authenKey);
     timerCheckServerStatus();
 }
 
-async function createConnector(connectorItem, authenKey, socketIOSocket, ownClientId) {
+async function createConnector(connectorItem, authenKey, socketIOSocket, ownClientId, defaultConfig) {
     let result = await getClientP2PInfoByTunnelId(authenKey, connectorItem.p2pTunnelId);
     if (result.success) {
         let targetClientId = result.data.clientId;
         let remotePort = result.data.remotePort;
-        await startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey);
+        await startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey, defaultConfig);
     } else {
         logger.error(result.info);
     }
@@ -670,13 +673,13 @@ async function startEdgeProcessAsync(authenKey) {
     //ServiceUtil.installService('fastnat');
 }
 
-async function processBackData(backData, tcpSocket, utpclient, remotePort) {
+async function processBackData(backData, tcpSocket, utpclient, remotePort, defaultConfig) {
     logger.trace('backData:' + JSON.stringify(backData));
     if (backData.success == false) { //因对方不支持而不能创建P2P
         logger.warn(`can't connect to p2p client for:` + backData.info);
         utpclient.close();
         logger.warn('start failover to tcp tunnel');
-        let tcpClient = failoverTcp(remotePort, tcpSocket);
+        let tcpClient = failoverTcp(remotePort, tcpSocket, defaultConfig);
         return;
     }
     //---------tryConnect2Public------
@@ -688,7 +691,7 @@ async function processBackData(backData, tcpSocket, utpclient, remotePort) {
 
         if (!success) {
             utpclient.close();
-            let tcpClient = failoverTcp(remotePort, tcpSocket);
+            let tcpClient = failoverTcp(remotePort, tcpSocket, defaultConfig);
             return;
         }
 
@@ -726,7 +729,22 @@ async function processBackData(backData, tcpSocket, utpclient, remotePort) {
  * @param {Number} remotePort remote tcp port
  * @param {string} authenKey current authenKey
  */
-async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey) {
+async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, targetClientId, remotePort, authenKey, defaultConfig) {
+    const p2pHost = defaultConfig.p2p.host;
+    checkType(isString, p2pHost, 'p2pHost');
+
+    const trackerPort = defaultConfig.p2p.trackerPort;
+    checkType(isNumber, trackerPort, 'trackerPort');
+
+    const isStun = defaultConfig.p2p.isStun;
+    checkType(isBoolean, isStun, 'isStun');
+
+    const sampleCount = defaultConfig.p2p.sampleCount;
+    checkType(isNumber, sampleCount, 'sampleCount');
+
+    const p2pmtu = defaultConfig.p2p.mtu;
+    checkType(isNumber, p2pmtu, 'p2pmtu');
+
     let p2pConnectorResouce = new P2PConnectorResouce(connectorItem.id);
     ALL_CONNECTOR_MAP.set(p2pConnectorResouce.ConnectorId, p2pConnectorResouce);
     let server = net.createServer(async(tcpSocket) => {
@@ -817,7 +835,7 @@ async function startCreateP2PTunnel(connectorItem, socketIOSocket, ownClientId, 
                         uuid: uuidv4()
                     };
                     socketIOSocket.emit(commandType.P2P_REQUEST_OPEN, reqData, (backData) => {
-                        processBackData(backData, tcpSocket, utpclient, remotePort);
+                        processBackData(backData, tcpSocket, utpclient, remotePort, defaultConfig);
                     });
 
                     // let backData = await rcpClient.invoke('RpcTcpServer', 'p2pOpenRequest', [reqData]);
@@ -886,6 +904,16 @@ async function getClient(authenKey) {
     return result;
 }
 
+let _defaultConfig = null;
+async function getDefaultConfig(authenKey) {
+    if (_defaultConfig) {
+        return _defaultConfig;
+    }
+    let ret = await axios.get('/client/api/getDefaultConfig/' + authenKey);
+    let result = await ret.data;
+    _defaultConfig = result.data;
+    return _defaultConfig;
+}
 
 async function getClientP2PInfoByTunnelId(authenKey, tunnelId) {
     let ret = await axios.get('/client/api/getClientP2PInfoByTunnelId', {
@@ -926,13 +954,13 @@ async function checkServerStatus() {
             return ok;
         }
     }
-
     return ok;
 }
 
 main();
 
-function failoverTcp(remotePort, tcpSocket) {
+function failoverTcp(remotePort, tcpSocket, defaultConfig) {
+
     let address = { host: defaultConfig.host, port: remotePort };
     let addressStr = JSON.stringify(address);
     let tcpClient = net.createConnection(address, () => {
@@ -1056,15 +1084,13 @@ const dealMem = (mem) => {
 
 
 async function updateClientSystemInfo(natType, authenKey) {
+
     let osInfo = {
         cpuCount: os.cpus().length,
         osType: os.type(),
         totalmem: dealMem(os.totalmem())
     };
-    if (os.platform() === 'win32') {
-        osInfo.osType = await WindowsUtil.osVersion();
-        osInfo.osType = osInfo.osType.trim();
-    }
+
     let data = {
         os: JSON.stringify(osInfo),
         natType: natType,

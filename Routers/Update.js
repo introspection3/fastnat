@@ -32,13 +32,14 @@ router.get('/api/check', async function(req, res, next) {
 
     let newVersion = '11.1.1';
     let url = `${platform}_${arch}_${newVersion}.zip`;
+
     let canUpdate = compareVersions(newVersion, version);
 
     let data = {
         canUpdate: canUpdate,
         when: 'restart',
         version: newVersion,
-        url: '',
+        url: url,
         des: '最新版本'
     }
     let result = {

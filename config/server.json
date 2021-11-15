@@ -8,6 +8,10 @@
         "username": "root",
         "password": "root"
     },
+    "log": {
+        "level": "trace",
+        "enableCallStack": false
+    },
     "email": {
         "host": "smtp.126.com",
         "port": 25,
@@ -43,7 +47,7 @@
             "pfxPassword": "fastnat.."
         },
         "domain": "fastnat.club",
-        "port": 80
+        "port": 8088
     },
     "cluster": {
         "enabled": false,

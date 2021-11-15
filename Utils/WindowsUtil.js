@@ -118,19 +118,8 @@ module.exports = {
                 logger.error(error);
             }
         }
-    },
-
-    osVersion: async function() {
-        if (os.platform() === "win32") {
-            let reg1 = `ver`;
-            try {
-                return await ExecUtil.execute(reg1).trim();
-            } catch (error) {
-                return '';
-                logger.error(error);
-            }
-        }
-        return '';
     }
+
+
 
 }

@@ -16,7 +16,7 @@ const redisClient = redisUtil.redisClient;
 
 const UpdTunnelServer = require('../UdpTunnel/UpdTunnelServer');
 const ClusterData = require('../Common/ClusterData');
-const DefaultConfig = require('../Common/DefaultConfig');
+
 const eventEmitter = require('./CommunicationEventEmiter').eventEmitter;
 const commandType = require('./CommandType').commandType;
 const sleep = require('es7-sleep');
