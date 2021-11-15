@@ -8,6 +8,12 @@
         "username": "root",
         "password": "root"
     },
+    "//update": "客户端升级相关配置,此配置可以动态调整",
+    "update": {
+        "version": "1.0.0",
+        "baseUrl": "/pkg/",
+        "des": "简单性能提升"
+    },
     "log": {
         "level": "trace",
         "enableCallStack": false

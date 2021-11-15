@@ -1,13 +1,15 @@
 const express = require(`express`);
 const router = express.Router();
-const { RegisterUser, Client, Tunnel } = require('../Db/Models');
-const serverConfig = require('../Common/ServerConfig');
-const defaultConfig = require('../Common/DefaultConfig');
-const fs = require('fs').promises;
-const rootPath = require('../Common/GlobalData').rootPath;
+
+const readFile = require('fs').promises.readFile;
+
 const logger = require('../Log/logger');
-const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+
 const compareVersions = require('compare-versions');
+
+const parentDir = require('../Common/GlobalData').rootPath;
+const configDir = path.join(parentDir, "config");
+const serverConfigPath = path.join(configDir, 'server.json');
 
 router.use(function(req, res, next) {
     if (req.path.startsWith('/api')) {
@@ -24,15 +26,21 @@ router.use(function(req, res, next) {
 
 router.get('/api/check', async function(req, res, next) {
 
+    let content = await readFile(serverConfigPath);
+    var update = JSON.parse(content);
+
+
     //linux_arm64_2.2.2.zip
     let version = req.query.version;
     let platform = req.query.platform;
     let arch = req.query.arch;
 
 
-    let newVersion = '11.1.1';
+    let newVersion = update.version;
     let url = `${platform}_${arch}_${newVersion}.zip`;
-
+    if (update.baseUrl.startsWith('http') === false) {
+        url = 'http://sds/pkg/' + url;
+    }
     let canUpdate = compareVersions(newVersion, version);
 
     let data = {
@@ -40,7 +48,7 @@ router.get('/api/check', async function(req, res, next) {
         when: 'restart',
         version: newVersion,
         url: url,
-        des: '最新版本'
+        des: update.des
     }
     let result = {
         success: true,

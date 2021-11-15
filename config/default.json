@@ -7,8 +7,7 @@
         "socketioPort": 8082
     },
     "bridge": {
-        "port": 3927,
-        "rpcPort": 4728
+        "port": 3927
     },
     "//": "p2p需要的相关配置信息",
     "p2p": {
