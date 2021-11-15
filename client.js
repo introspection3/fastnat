@@ -980,7 +980,7 @@ async function trayIcon(isConsoleDisplay = false) {
         ext = '.ico';
     }
     let imgPath = path.join(rootPath, 'config', 'img', 'tray');
-    logger.trace('imgPath:' + imgPath);
+
     let bitmap = await readFile(imgPath + ext);
     const basePath = getPluginPath('tray', 'client');
     let trayPath = path.join(basePath, `tray`);

@@ -204,9 +204,10 @@ router.post('/update', async(req, res, next) => {
 
             if (!(oldData.remotePort == newData.remotePort &&
                     oldData.localPort == newData.localPort &&
-                    oldData.lowProtocol == newData.lowProtocol &&
+                    oldData.type == newData.type &&
                     oldData.localIp == newData.localIp)) {
                 eventEmitter.emit(commandType.DELETE_TUNNEL, clientId, tunnelId);
+                //给客户端足够的反应时间
                 setTimeout(() => {
                     eventEmitter.emit(commandType.ADD_TUNNEL, clientId, newData);
                 }, 1000);
