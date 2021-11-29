@@ -61,7 +61,7 @@ function openConnector(clientId, tabTitle) {
 }
 
 function tooLongText(value, row, index) {
-    return '<span title=\"' + value + '\">' + value + '</span>';
+    return '<span title=\'' + value + '\'>' + value + '</span>';
 }
 
 function formateVisit(value, row, index) {
@@ -71,6 +71,13 @@ function formateVisit(value, row, index) {
     }
     return value;
 
+}
+
+function formatSystem(value, row, index) {
+    if (value != null && value != '') {
+        return `${value}:${row.arch}`;
+    }
+    return value;
 }
 
 function getDetail(index, selectdata) {

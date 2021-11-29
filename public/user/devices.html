@@ -26,7 +26,7 @@
                 <th data-options="field:'authenKey', width:fixWidth(18),formatter:tooLongText">设备Key</th>
                 <th data-options="field:'os',width:fixWidth(10),formatter:tooLongText">设备信息</th>
                 <th data-options="field:'hostName',width:fixWidth(10),formatter:tooLongText">主机名</th>
-                <th data-options="field:'platform',width:fixWidth(5),formatter:tooLongText">系统</th>
+                <th data-options="field:'platform',width:fixWidth(5),formatter:formatSystem">系统</th>
                 <th data-options="field:'osReleaseVersion',width:fixWidth(8),formatter:tooLongText">系统版本</th>
                 <th data-options="field:'virtualIp',width:fixWidth(7)">设备IP</th>
                 <th data-options="field:'publicIp',width:fixWidth(7),">出口IP</th>
@@ -105,7 +105,7 @@
             <div class="fitem">
                 <input name="remotePort" class="easyui-numberspinner" required="true" data-options="min:5000,max:65535,prompt: '公网对外端口'" style="width:60%;" label="对外端口:" />
                 <span>(5000-65535)</span>
-                <div style="margin-top: 10px;"><span style="text-align: right;float:right; border-bottom: 1px dotted #000">（可用本站域名或IP+该端口进行远程访问）</span></div>
+                <div style="margin-top: 10px;"><span style="text-align: right;float:right; border-bottom: 1px dotted #000">（可用<b>本站域名或IP+该端口</b>进行远程访问）</span></div>
             </div>
             <input type="hidden" id='clientId' name="clientId" />
             <input type="hidden" id='id' name="id" />
