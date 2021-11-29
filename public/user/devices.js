@@ -61,7 +61,16 @@ function openConnector(clientId, tabTitle) {
 }
 
 function tooLongText(value, row, index) {
-    return '<span title=' + value + '>' + value + '</span>'
+    return '<span title=\"' + value + '\">' + value + '</span>';
+}
+
+function formateVisit(value, row, index) {
+    if (row.type === 'http' || row.type === 'https') {
+        let link = `<a target='_blank' href="${window.location.protocol+'//'+window.location.hostname+':'+value}">${value}</a>`;
+        return link;
+    }
+    return value;
+
 }
 
 function getDetail(index, selectdata) {
@@ -86,7 +95,8 @@ function getGridRowIndex(id) {
 
 function formatDateTime(val, row) {
     var now = new Date(val);
-    return new moment(now).format('YYYY-MM-DD HH:mm:ss');
+    var value = new moment(now).format('YYYY-MM-DD HH:mm:ss');
+    return '<span title=\"' + value + '\">' + value + '</span>';
 }
 let toolbarDeviceEditRow = null;
 let toolbarDevice = [{

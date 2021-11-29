@@ -45,5 +45,5 @@ log4js.configure({
         default: { appenders: ['out', 'app'], level: logLevel, enableCallStack: enableCallStack }
     }
 });
-console.log('use logger............');
+
 module.exports = log4js.getLogger();

@@ -669,8 +669,6 @@ async function startEdgeProcessAsync(authenKey) {
     } else {
         logger.warn(result.info);
     }
-
-    //ServiceUtil.installService('fastnat');
 }
 
 async function processBackData(backData, tcpSocket, utpclient, remotePort, defaultConfig) {
@@ -1149,7 +1147,7 @@ async function restartApplicationAsAdmin(params) {
         WindowsUtil.runCurrentAppAsAdmin(cmd);
         PlatfromUtil.processExit();
     } else {
-        logger.error('尚未实现')
+        logger.error('not implement for this platform');
         restartApplication();
     }
 }

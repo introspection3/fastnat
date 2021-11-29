@@ -23,12 +23,15 @@
                 <th data-options="field:'status', width:fixWidth(3)">状态</th>
                 <th data-options="field:'id', width:fixWidth(3)">ID</th>
                 <th data-options="field:'clientName',width:fixWidth(5),'editor':'text'">设备名称</th>
-                <th data-options="field:'authenKey', width:fixWidth(20)">设备Key</th>
-                <th data-options="field:'os',width:fixWidth(15),formatter:tooLongText">设备信息</th>
-                <th data-options="field:'virtualIp',width:fixWidth(8)">设备IP</th>
-                <th data-options="field:'publicIp',width:fixWidth(8),">出口IP</th>
-                <th data-options="field:'mac',width:fixWidth(9),">MAC地址</th>
-                <th data-options="field:'natType',width:fixWidth(7)">NAT类型</th>
+                <th data-options="field:'authenKey', width:fixWidth(18),formatter:tooLongText">设备Key</th>
+                <th data-options="field:'os',width:fixWidth(10),formatter:tooLongText">设备信息</th>
+                <th data-options="field:'hostName',width:fixWidth(10),formatter:tooLongText">主机名</th>
+                <th data-options="field:'platform',width:fixWidth(5),formatter:tooLongText">系统</th>
+                <th data-options="field:'osReleaseVersion',width:fixWidth(8),formatter:tooLongText">系统版本</th>
+                <th data-options="field:'virtualIp',width:fixWidth(7)">设备IP</th>
+                <th data-options="field:'publicIp',width:fixWidth(7),">出口IP</th>
+                <th data-options="field:'mac',width:fixWidth(8),">MAC地址</th>
+                <th data-options="field:'natType',width:fixWidth(8)">NAT类型</th>
                 <th data-options="field:'createdAt',width:fixWidth(6), formatter:formatDateTime">创建时间</th>
                 <th data-options="field:'updatedAt',width:fixWidth(8), formatter:formatDateTime">更新时间</th>
                 <th data-options="field:'operator',width:fixWidth(6), formatter:operateFunction">操作</th>
@@ -48,7 +51,7 @@
                 <th data-options="field:'p2pPassword',width:fixWidth(8),">P2P密码</th>
                 <th data-options="field:'localIp',width:fixWidth(5),">本地IP</th>
                 <th data-options="field:'localPort',width:fixWidth(5),'editor':'numberbox'">本地端口</th>
-                <th data-options="field:'remotePort',width:fixWidth(5),'editor':'numberbox'">对外端口</th>
+                <th data-options="field:'remotePort',width:fixWidth(5),'editor':'numberbox',formatter:formateVisit">对外端口</th>
                 <th data-options="field:'createdAt',width:fixWidth(10), formatter:formatDateTime">创建时间</th>
                 <th data-options="field:'updatedAt',width:fixWidth(10), formatter:formatDateTime">更新时间</th>
             </tr>

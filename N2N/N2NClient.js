@@ -192,21 +192,6 @@ function getWinTapPath() {
 
 /**安装wintap,仅在windows下使用 */
 async function installWinTapAsync() {
-    // const elevate = require('node-windows').elevate;
-    // let wintap = getWinTapPath();
-    // let cmd = wintap + ` install OemVista.inf  ${tapName}`;
-    // let p = new Promise((resolve, reject) => {
-    //     let t = setTimeout(() => {
-    //         resolve(false);
-    //     }, 10000);
-    //     elevate(cmd, { cwd: basePath }, () => {
-    //         clearTimeout(t);
-    //         resolve(true);
-    //     });
-    // });
-    // return p;
-
-
     let wintap = getWinTapPath();
     const cwd = basePath;
     let cmd = `"${wintap}" install OemVista.inf  ${tapName}`;
@@ -217,21 +202,11 @@ async function installWinTapAsync() {
 
 /**卸载wintap,仅在windows下使用 */
 async function unInstallWinTapAsync() {
-    // const elevate = require('node-windows').elevate;
+
     let wintap = getWinTapPath();
     let cmd = `"${wintap}" remove   ${tapName}`;
 
     return await ExecUtil.execute(cmd);
-    // let p = new Promise((resolve, reject) => {
-    //     let t = setTimeout(() => {
-    //         resolve(false);
-    //     }, 10000);
-    //     elevate(cmd, { cwd: basePath }, () => {
-    //         clearTimeout(t);
-    //         resolve(true);
-    //     });
-    // });
-    // return p;
 }
 
 async function checkFileExist(name) {
