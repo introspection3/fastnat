@@ -29,9 +29,9 @@ $(function() {
     });
 
     function checkNotEmpty(id) {
-        let targetDom = $('#' + id);
+        var targetDom = $('#' + id);
         if (targetDom.val().trim() === '') {
-            let d = dialog({
+            var d = dialog({
                 quickClose: true,
                 content: '此项不能为空',
                 onclose: function() {
@@ -45,16 +45,18 @@ $(function() {
         return 1;
     }
     $('#btnLogin').click(function() {
-        let info = checkNotEmpty('password') + checkNotEmpty('vcode') + checkNotEmpty('username');
+        var info = checkNotEmpty('password') + checkNotEmpty('vcode') + checkNotEmpty('username');
         if (info !== 3) {
             return;
         }
-        let username = $('#username').val();
-        let vcode = $('#vcode').val();
-        let password = $('#password').val();
-        $.post('/user/doLogin', { username, vcode, password }, function(result) {
+        var username = $('#username').val();
+        var vcode = $('#vcode').val();
+        var password = $('#password').val();
+        $.post('/user/doLogin', { username: username, vcode: vcode, password: password }, function(result) {
             if (result.success) {
-                location.href = '/';
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
             } else {
 
                 if (result.data === 'vcode') {
@@ -62,7 +64,7 @@ $(function() {
                     $('#vcode').val('');
                 }
 
-                let d = dialog({
+                var d = dialog({
                     title: '提示',
                     width: 200,
                     content: result.info,

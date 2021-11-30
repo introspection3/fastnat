@@ -10,17 +10,17 @@ $(function() {
 });
 
 function uuid(len) {
-    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    let uuid = [],
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    var uuid = [],
         i;
-    let radix = chars.length;
+    var radix = chars.length;
     // Compact form
     for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix];
     return uuid.join('');
 }
-let _clientId = -1;
-let _tunneId = -1;
-let tunnelUrl = '/tunnel/add';
+var _clientId = -1;
+var _tunneId = -1;
+var tunnelUrl = '/tunnel/add';
 
 function closeDialog(id) {
     $('#' + id).dialog('close');
@@ -49,14 +49,18 @@ function fixWidth(percent) {
 
 
 function operateFunction(value, row, index) {
-    let title = `[${row.clientName}]P2P连接`;
-    let tabTitle = encodeURI(title);
-    return `<a href="#" onclick="openConnector(${row.id},'${tabTitle}')">P2P连接</a>`;
+    var title = '[${row.clientName}]P2P连接';
+    title = title.replace('${row.clientName}', row.clientName);
+    var tabTitle = encodeURI(title);
+    var ret = '<a href="#" onclick="openConnector(${row.id},\'${tabTitle}\')">P2P连接</a>';
+    ret = ret.replace("${row.id}", row.id);
+    ret = ret.replace("${tabTitle}", tabTitle);
+    return ret;
 }
 
 function openConnector(clientId, tabTitle) {
-    let href = '/user/connectors.html?id=' + clientId;
-    let title = decodeURI(tabTitle);
+    var href = '/user/connectors.html?id=' + clientId;
+    var title = decodeURI(tabTitle);
     parent.addTab(title, href);
 }
 
@@ -66,7 +70,10 @@ function tooLongText(value, row, index) {
 
 function formateVisit(value, row, index) {
     if (row.type === 'http' || row.type === 'https') {
-        let link = `<a target='_blank' href="${window.location.protocol+'//'+window.location.hostname+':'+value}">${value}</a>`;
+        var hrefStr = window.location.protocol + '//' + window.location.hostname + ':' + value;
+        var link = '<a target="_blank" href="${hrefStr}">${value}</a>';
+        link = link.replace('${hrefStr}', hrefStr);
+        link = link.replace('${value', value);
         return link;
     }
     return value;
@@ -75,14 +82,15 @@ function formateVisit(value, row, index) {
 
 function formatSystem(value, row, index) {
     if (value != null && value != '') {
-        return `${value}:${row.arch}`;
+        return value + ':' + row.arch;
     }
     return value;
 }
 
 function getDetail(index, selectdata) {
     if (selectdata) {
-        let title = `设备[${selectdata.clientName}]的映射列表`;
+        var title = '设备[${selectdata.clientName}]的映射列表';
+        title = title.replace('${selectdata.clientName}', selectdata.clientName)
         $('#tableDevicesTunnel').datagrid('reload', {
             id: selectdata.id
         });
@@ -92,11 +100,11 @@ function getDetail(index, selectdata) {
 }
 
 function getGridRowIndex(id) {
-    let rows = $('#' + id).datagrid("getSelections");
+    var rows = $('#' + id).datagrid("getSelections");
     if (rows.length == 0) {
         return -1;
     }
-    let index = $('#' + id).datagrid("getRowIndex", rows[0]);
+    var index = $('#' + id).datagrid("getRowIndex", rows[0]);
     return index;
 }
 
@@ -105,8 +113,8 @@ function formatDateTime(val, row) {
     var value = new moment(now).format('YYYY-MM-DD HH:mm:ss');
     return '<span title=\"' + value + '\">' + value + '</span>';
 }
-let toolbarDeviceEditRow = null;
-let toolbarDevice = [{
+var toolbarDeviceEditRow = null;
+var toolbarDevice = [{
     text: '添加',
     id: 'toolbarDeviceAdd',
     iconCls: 'icon-add',
@@ -134,7 +142,7 @@ let toolbarDevice = [{
     id: 'toolbarDeviceEdit',
     iconCls: 'icon-edit',
     handler: function() {
-        let index = getGridRowIndex('tableDevices');
+        var index = getGridRowIndex('tableDevices');
         if (index == -1) {
             $.messager.alert('提示', '请选择需要编辑的设备');
             return;
@@ -158,13 +166,13 @@ let toolbarDevice = [{
     id: 'toolbarDeviceCopy',
     iconCls: 'icon-copy',
     handler: function() {
-        let index = getGridRowIndex('tableDevices');
+        var index = getGridRowIndex('tableDevices');
         if (index == -1) {
             $.messager.alert('提示', '请选择需要复制的设备');
             return;
         }
-        let row = $('#tableDevices').datagrid("getSelections")[0];
-        let authenKey = row.authenKey;
+        var row = $('#tableDevices').datagrid("getSelections")[0];
+        var authenKey = row.authenKey;
         var oInput = document.createElement('input');
         oInput.value = authenKey;
         document.body.appendChild(oInput);
@@ -180,7 +188,7 @@ let toolbarDevice = [{
     iconCls: 'icon-clear',
     id: 'toolbarDeviceDelete',
     handler: function() {
-        let index = getGridRowIndex('tableDevices');
+        var index = getGridRowIndex('tableDevices');
         if (index == -1) {
             $.messager.alert('提示', '请选择需要删除的设备');
             return;
@@ -192,7 +200,7 @@ let toolbarDevice = [{
 
         $.messager.confirm("警告", "删除设备意味着您所有的映射将删除,所以不建议您删除,你确定要继续吗?", function(data) {
             if (data) {
-                let id = $('#tableDevices').datagrid("getSelections")[0].id;
+                var id = $('#tableDevices').datagrid("getSelections")[0].id;
                 $.post('/client/delete', {
                     id: id
                 }, function(result) {
@@ -206,13 +214,13 @@ let toolbarDevice = [{
     iconCls: 'icon-save',
     id: 'toolbarDeviceSave',
     handler: function() {
-        let index = getGridRowIndex('tableDevices');
+        var index = getGridRowIndex('tableDevices');
         if (index == -1) {
             $.messager.alert('提示', '请选择需要保存的设备');
             return;
         }
         $('#tableDevices').datagrid('endEdit', index);
-        let row = $('#tableDevices').datagrid("getSelections")[0];
+        var row = $('#tableDevices').datagrid("getSelections")[0];
         if (row.clientName.trim() === '') {
             $.messager.alert('提示', '客户名称不能为空');
             return;
@@ -222,14 +230,15 @@ let toolbarDevice = [{
             clientName: row.clientName
         }, function(result) {
             $('#tableDevices').datagrid('reload');
-            let title = `设备[${row.clientName}]的映射列表`;
+            var title = '设备[${row.clientName}]的映射列表';
+            title = title.replace('${row.clientName}', row.clientName);
             document.querySelectorAll('div .panel-title')[1].innerHTML = title;
 
         });
     }
 }];
 
-let toolbarTunnel = [{
+var toolbarTunnel = [{
     text: '添加',
     id: 'toolbarTunnelAdd',
     iconCls: 'icon-add',
@@ -247,7 +256,7 @@ let toolbarTunnel = [{
     iconCls: 'icon-edit',
     handler: function() {
         $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
-        let row = $('#tableDevicesTunnel').datagrid('getSelected');
+        var row = $('#tableDevicesTunnel').datagrid('getSelected');
         tunnelUrl = '/tunnel/update'
         $('#fm').form('load', row);
     }
@@ -256,14 +265,14 @@ let toolbarTunnel = [{
     id: 'toolbarTunnelDelete',
     iconCls: 'icon-cut',
     handler: function() {
-        let index = getGridRowIndex('tableDevicesTunnel');
+        var index = getGridRowIndex('tableDevicesTunnel');
         if (index == -1) {
             $.messager.alert('提示', '请选择需要删除映射');
             return;
         }
         $.messager.confirm("操作提示", "确定要删除此映射吗？", function(data) {
             if (data) {
-                let id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
+                var id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
                 $.post('/tunnel/delete', {
                     id: id,
                     clientId: _clientId
@@ -280,7 +289,7 @@ function saveTunnel() {
     $('#fm').form('submit', {
         url: tunnelUrl,
         onSubmit: function() {
-            let v = $(this).form('validate');
+            var v = $(this).form('validate');
             $('#clientId').val(_clientId);
             $('#id').val(_tunneId);
             return v;

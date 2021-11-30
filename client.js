@@ -395,7 +395,7 @@ async function rewriteClientConfig(clientConfig) {
     await fs.writeFile(filepath, JSON.stringify(clientConfig));
 }
 
-function readLineData(questionTip = '请输入Key:') {
+function readLineData(questionTip = '我们将初始化设备,请输入一个设备Key:') {
     let p = new Promise((resolve, reject) => {
         let rl = readline.createInterface({
             input: process.stdin,

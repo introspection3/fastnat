@@ -3,8 +3,9 @@ $(function() {
 
     $('#username').focus();
 
-    function alertMessage(content, title = '提示') {
-        let d = dialog({
+    function alertMessage(content) {
+        var title = '提示';
+        var d = dialog({
             title: title,
             width: 200,
             content: content,
@@ -30,18 +31,18 @@ $(function() {
         }
     });
     $('#btnSendEmail').click(function() {
-        let email = $('#email').val();
-        let myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;　　
+        var email = $('#email').val();
+        var myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;　　
         if (!myReg.test(email)) {　　　
             $('#email').focus();　　
             alertMessage('邮箱格式不对');
             return;
         } else {
-            $.post('/user/sendEmailCode', { email }, function(ret) {
+            $.post('/user/sendEmailCode', { email: email }, function(ret) {
                 alertMessage(ret.info);
                 if (ret.success) {
                     $('#btnSendEmail').hide();
-                    setInterval(() => {
+                    setInterval(function() {
                         $('#btnSendEmail').show();
                     }, 10000);
                 }
@@ -59,7 +60,7 @@ $(function() {
     });
 
     function checkNotEmpty(id) {
-        let targetDom = $('#' + id);
+        var targetDom = $('#' + id);
         if (targetDom.val().trim() === '') {
             targetDom.focus();
             return 0;
@@ -67,9 +68,9 @@ $(function() {
         return 1;
     }
     $('#btnReg').click(function() {
-        let info = checkNotEmpty('vcode') + checkNotEmpty('emailCode') + checkNotEmpty('email') + checkNotEmpty('password') + checkNotEmpty('username');
+        var info = checkNotEmpty('vcode') + checkNotEmpty('emailCode') + checkNotEmpty('email') + checkNotEmpty('password') + checkNotEmpty('username');
         if (info !== 5) {
-            let d = dialog({
+            var d = dialog({
                 title: '提示',
                 width: 200,
                 content: '此项不能为空',
@@ -81,12 +82,12 @@ $(function() {
             d.show();
             return;
         }
-        let username = $('#username').val();
-        let password = $('#password').val();
-        let email = $('#email').val();
-        let emailCode = $('#emailCode').val();
+        var username = $('#username').val();
+        var password = $('#password').val();
+        var email = $('#email').val();
+        var emailCode = $('#emailCode').val();
 
-        let myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;　　
+        var myReg = /^[a-zA-Z0-9_-]+@([a-zA-Z0-9]+\.)+(com|cn|net|org)$/;　　
 
         if (!myReg.test(email)) {　　　
             $('#email').focus();　　
@@ -105,8 +106,8 @@ $(function() {
             return;
         }
 
-        let vcode = $('#vcode').val();
-        $.post('/user/register', { username, vcode, password, emailCode, email }, function(result) {
+        var vcode = $('#vcode').val();
+        $.post('/user/register', { username: username, vcode: vcode, password: password, emailCode: emailCode, email: email }, function(result) {
             if (result.success) {
                 location.href = '/';
             } else {
@@ -115,7 +116,7 @@ $(function() {
                     $('#imgvcode').click();
                     $('#vcode').val('')
                 }
-                let msg = result.info;
+                var msg = result.info;
                 if (typeof msg === typeof {}) {
                     msg = JSON.stringify(msg);
                 }

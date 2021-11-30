@@ -13,6 +13,11 @@
     <script type="text/javascript" src="/libs/easyui/validate.js"></script>
     <script type="text/javascript" src="/user/devices.js"></script>
     <link rel="stylesheet" type="text/css" href="/user/devices.css" />
+    <style>
+        body {
+            zoom: 0.8;
+        }
+    </style>
 </head>
 
 <body>
@@ -27,7 +32,7 @@
                 <th data-options="field:'os',width:fixWidth(10),formatter:tooLongText">设备信息</th>
                 <th data-options="field:'hostName',width:fixWidth(10),formatter:tooLongText">主机名</th>
                 <th data-options="field:'platform',width:fixWidth(5),formatter:formatSystem">系统</th>
-                <th data-options="field:'osReleaseVersion',width:fixWidth(8),formatter:tooLongText">系统版本</th>
+                <th data-options="field:'osReleaseVersion',width:fixWidth(6),formatter:tooLongText">系统版本</th>
                 <th data-options="field:'virtualIp',width:fixWidth(7)">设备IP</th>
                 <th data-options="field:'publicIp',width:fixWidth(7),">出口IP</th>
                 <th data-options="field:'mac',width:fixWidth(8),">MAC地址</th>

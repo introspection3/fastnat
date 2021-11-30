@@ -1,16 +1,16 @@
 function getQueryVariable(variable) {
-    let query = window.location.search.substring(1);
-    let vars = query.split("&");
-    for (let i = 0; i < vars.length; i++) {
-        let pair = vars[i].split("=");
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split("=");
         if (pair[0] == variable) { return pair[1]; }
     }
     return (false);
 }
 
-let _clientId = getQueryVariable('id') * 1;
-let _tunneId = -1;
-let _connectorUrl = '/connector/add';
+var _clientId = getQueryVariable('id') * 1;
+var _tunneId = -1;
+var _connectorUrl = '/connector/add';
 
 $(function() {
     $("#toolbarConnectorEdit").linkbutton("disable");
@@ -33,12 +33,15 @@ function fixWidth(percent) {
     return percent;
 }
 
-let tabTitle = '';
+var tabTitle = '';
 
 function operateFunction(value, row, index) {
-    let title = `[${row.clientName}]连接的P2P映射`;
+    var title = '[${row.clientName}]连接的P2P映射';
+    title = title.replace("${row.clientName}", row.clientName);
     tabTitle = title;
-    return `<a href="#" onclick="openConnector(${row.id})">P2P映射</a>`;
+    var ret = '<a href="#" onclick="openConnector(${row.id})">P2P映射</a>';
+    ret = ret.replace("${row.id}", row.id);
+    return ret;
 }
 
 function tooLongText(value, row, index) {
@@ -54,11 +57,11 @@ function getDetail(index, selectdata) {
 }
 
 function getGridRowIndex(id) {
-    let rows = $('#' + id).datagrid("getSelections");
+    var rows = $('#' + id).datagrid("getSelections");
     if (rows.length == 0) {
         return -1;
     }
-    let index = $('#' + id).datagrid("getRowIndex", rows[0]);
+    var index = $('#' + id).datagrid("getRowIndex", rows[0]);
     return index;
 }
 
@@ -67,7 +70,7 @@ function formatDateTime(val, row) {
     return new moment(now).format('YYYY-MM-DD HH:mm:ss');
 }
 
-let toolbarConnector = [{
+var toolbarConnector = [{
     text: '添加',
     id: 'toolbarConnectorAdd',
     iconCls: 'icon-add',
@@ -81,7 +84,7 @@ let toolbarConnector = [{
     iconCls: 'icon-edit',
     handler: function() {
         $('#dialogConnector').dialog('open').dialog('setTitle', '编辑映射');
-        let row = $('#tableDevicesConnector').datagrid('getSelected');
+        var row = $('#tableDevicesConnector').datagrid('getSelected');
         _connectorUrl = '/connector/update'
         $('#fm').form('load', row);
     }
@@ -90,14 +93,14 @@ let toolbarConnector = [{
     id: 'toolbarConnectorDelete',
     iconCls: 'icon-cut',
     handler: function() {
-        let index = getGridRowIndex('tableDevicesConnector');
+        var index = getGridRowIndex('tableDevicesConnector');
         if (index == -1) {
             $.messager.alert('提示', '请选择需要删除映射');
             return;
         }
         $.messager.confirm("操作提示", "您确定要删除此映射吗？", function(data) {
             if (data) {
-                let id = $('#tableDevicesConnector').datagrid("getSelections")[0].id;
+                var id = $('#tableDevicesConnector').datagrid("getSelections")[0].id;
                 $.post('/connector/delete', {
                     id: id,
                     clientId: _clientId
@@ -114,7 +117,7 @@ function saveConnector() {
     $('#fm').form('submit', {
         url: _connectorUrl,
         onSubmit: function() {
-            let v = $(this).form('validate');
+            var v = $(this).form('validate');
             $('#clientId').val(_clientId);
             $('#id').val(_tunneId);
             return v;

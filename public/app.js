@@ -6,10 +6,10 @@
  }
 
  //定义全局变量
- let app = {};
- let user = {};
+ var app = {};
+ var user = {};
  //全局格式化
- let globalFormatters = {
+ var globalFormatters = {
      //用户
      user: function(value) {
 
@@ -20,7 +20,7 @@
      }
  };
  //全局筛选
- let globalFilters = {
+ var globalFilters = {
      user: function(field) {
          return {
              field: field,
@@ -47,9 +47,9 @@
          }
      },
      combo: function(field, dg, dictionaryCategory) {
-         let dictionarys = app.dictionarys[dictionaryCategory || field];
-         let data = [{ value: '', text: 'All' }];
-         for (let value in dictionarys) {
+         var dictionarys = app.dictionarys[dictionaryCategory || field];
+         var data = [{ value: '', text: 'All' }];
+         for (var value in dictionarys) {
              data.push({ value: value, text: dictionarys[value] });
          }
 
@@ -77,14 +77,14 @@
      }
  };
  //全局列
- let globalColumns = [
+ var globalColumns = [
      { field: 'CreatorUserId', title: '创建人', hidden: true, width: 120, sortable: true },
      { field: 'CreationTime', title: '创建时间', hidden: true, width: 130, sortable: true },
      { field: 'LastModifierUserId', title: '修改人', hidden: true, width: 120, sortable: true, formatter: globalFormatters.user },
      { field: 'LastModificationTime', title: '修改时间', hidden: true, width: 130, sortable: true }
  ];
  //全局列筛选
- let globalColumnsFilter = [
+ var globalColumnsFilter = [
      globalFilters.user('CreatorUserId'),
      globalFilters.user('LastModifierUserId'),
      globalFilters.date('CreationTime'),
@@ -125,8 +125,8 @@
 
  //关闭当前打开的tab
  function closetab() {
-     let curTab = $('#mainTabs').tabs("getSelected");
-     let index = $('#mainTabs').tabs('getTabIndex', curTab);
+     var curTab = $('#mainTabs').tabs("getSelected");
+     var index = $('#mainTabs').tabs('getTabIndex', curTab);
      $('#mainTabs').tabs('close', index);
  }
 
@@ -168,8 +168,8 @@
 
  //显示icon选择dialog
  function chooseIcons() {
-     let textbox = $(this);
-     let dlg = $('#dlg-main');
+     var textbox = $(this);
+     var dlg = $('#dlg-main');
 
      if ($('#icons>a').size() <= 0) {
          dlg.dialog({
@@ -181,7 +181,7 @@
              height: 400,
              top: 120,
              onLoad: function() {
-                 let box = $('#icons').empty();
+                 var box = $('#icons').empty();
 
                  $.getJSON('/api/get-icons', function(data) {
                      $.each(data, function(i, n) {
@@ -189,7 +189,7 @@
                      });
 
                      dlg.find('a').bind('click', function() {
-                         let iconClass = $(this).attr('class').replace('fa ', '');
+                         var iconClass = $(this).attr('class').replace('fa ', '');
                          textbox.textbox('setValue', iconClass);
 
                          dlg.dialog('close');
@@ -204,7 +204,7 @@
 
  //生成toolbar
  function createToolbar(me, dg) {
-     let toolbar = [];
+     var toolbar = [];
      $.each($('.tabs-selected').data('buttons'), function(i, n) {
          toolbar.push({
              id: dg.selector.replace('#', '') + '-' + n.ButtonLink,
@@ -225,7 +225,7 @@
 
  //生成表头的右键菜单
  function createColumnMenu(dg) {
-     let cmenu = $('<div />').appendTo(dg);
+     var cmenu = $('<div />').appendTo(dg);
      cmenu.menu({
          onClick: function(item, field) {
              if (item.iconCls === 'icon-ok') {
@@ -244,10 +244,10 @@
              }
          }
      });
-     let fields = dg.datagrid('getColumnFields');
-     for (let i = 0; i < fields.length; i++) {
-         let field = fields[i];
-         let col = dg.datagrid('getColumnOption', field);
+     var fields = dg.datagrid('getColumnFields');
+     for (var i = 0; i < fields.length; i++) {
+         var field = fields[i];
+         var col = dg.datagrid('getColumnOption', field);
          if (col.title) {
              cmenu.menu('appendItem', {
                  text: col.title,
@@ -261,11 +261,12 @@
  }
 
  function addTab(title, href) {
-     let mainTabs = $('#mainTabs');
+     var mainTabs = $('#mainTabs');
      if (mainTabs.tabs('exists', title)) {
          mainTabs.tabs('select', title);
      } else {
-         let content = ` <iframe scrolling="yes" src="${href}" frameborder="0" height="99%" width="100%"  frameborder="0" ></iframe> `;
+         var content = ' <iframe scrolling="yes" src="${href}" frameborder="0" height="99%" width="100%"  frameborder="0" ></iframe> ';
+         content = content.replace('${href}', href);
          mainTabs.tabs('add', {
              title: title,
              content: content,
@@ -277,6 +278,7 @@
 
  //页面加载完成执行
  $(function() {
+
      $.get('/user/isOnline', function(result) {
          if (result.success === false) {
              location.href = '/login.html';
@@ -285,12 +287,12 @@
              $('#lblUserName').html(user.username);
          }
      });
-     let mainTabs = $('#mainTabs');
-     let mainTabMenus = $('#mainTabMenus');
+     var mainTabs = $('#mainTabs');
+     var mainTabMenus = $('#mainTabMenus');
 
      window.onhashchange = function() {
-         let v = location.hash.substring(1, location.hash.length);
-         let title = (decodeURI(v));
+         var v = location.hash.substring(1, location.hash.length);
+         var title = (decodeURI(v));
          mainTabs.tabs('select', title);
      }
 
@@ -299,12 +301,13 @@
      $('#nav-accordion a').click(function(event) {
          $('#nav-accordion a').removeClass('active');
          $(event.target).addClass('active');
-         let title = $(event.target).attr('title');
-         let href = $(event.target).attr('page');
+         var title = $(event.target).attr('title');
+         var href = $(event.target).attr('page');
          if (mainTabs.tabs('exists', title)) {
              mainTabs.tabs('select', title);
          } else {
-             let content = ` <iframe scrolling="yes" src="${href}" frameborder="0" height="99%" width="100%"  frameborder="0" ></iframe> `;
+             var content = ' <iframe scrolling="yes" src="${href}" frameborder="0" height="99%" width="100%"  frameborder="0" ></iframe>';
+             content = content.replace('${href}', href);
              mainTabs.tabs('add', {
                  title: title,
                  content: content,
@@ -321,8 +324,8 @@
              iconCls: "icon-reload",
              text: '<a href="javascript:void(0);"  title="点击刷新当前标签"></a>',
              handler: function() {
-                 let tab = mainTabs.tabs('getSelected');
-                 let ii = tab.find('iframe')[0];
+                 var tab = mainTabs.tabs('getSelected');
+                 var ii = tab.find('iframe')[0];
                  $(ii).attr('src', $(ii).attr('src'));
              }
          }],
@@ -337,7 +340,7 @@
              window.location.hash = encodeURI(title);
          },
          onLoad: function(panel) {
-             let title = panel.panel('options').title;
+             var title = panel.panel('options').title;
              window.location.hash = encodeURI(title);
          }
      });
@@ -345,12 +348,12 @@
      //tabs右键菜单响应
      mainTabMenus.menu({
          onClick: function(item) {
-             let curTabTitle = $(this).data("curTabTitle");
+             var curTabTitle = $(this).data("curTabTitle");
 
              switch (item.name) {
                  case 'refresh':
-                     let tab = mainTabs.tabs('getSelected');
-                     let ii = tab.find('iframe')[0];
+                     var tab = mainTabs.tabs('getSelected');
+                     var ii = tab.find('iframe')[0];
                      $(ii).attr('src', $(ii).attr('src'));
                      break;
                  case 'close':
@@ -358,7 +361,7 @@
                      break;
                  case 'other':
                      $('.tabs-inner span').each(function(i, n) {
-                         let t = $(n).text();
+                         var t = $(n).text();
                          if (i > 0 && curTabTitle !== t) {
                              mainTabs.tabs('close', t);
                          }
@@ -370,7 +373,7 @@
                  default:
                      $('.tabs-inner span').each(function(i, n) {
                          if (i > 0) {
-                             let t = $(n).text();
+                             var t = $(n).text();
                              mainTabs.tabs('close', t);
                          }
                      });

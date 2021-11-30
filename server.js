@@ -99,8 +99,9 @@ app.use(
     session({
         store: redisStoreInstance,
         saveUninitialized: false,
-        secret: 'fastnatsecretcookie',
+        secret: 'fcookie',
         resave: false,
+        cookie: { maxAge: 60000 * 24 },
     })
 );
 app.set('x-powered-by', false);
