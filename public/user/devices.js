@@ -52,7 +52,7 @@ function operateFunction(value, row, index) {
     var title = '[${row.clientName}]P2P连接';
     title = title.replace('${row.clientName}', row.clientName);
     var tabTitle = encodeURI(title);
-    var ret = '<a href="#" onclick="openConnector(${row.id},\'${tabTitle}\')">P2P连接</a>';
+    var ret = '<a href="#" onclick="openConnector(${row.id},\'${tabTitle}\')">P2P</a>';
     ret = ret.replace("${row.id}", row.id);
     ret = ret.replace("${tabTitle}", tabTitle);
     return ret;
@@ -73,7 +73,7 @@ function formateVisit(value, row, index) {
         var hrefStr = window.location.protocol + '//' + window.location.hostname + ':' + value;
         var link = '<a target="_blank" href="${hrefStr}">${value}</a>';
         link = link.replace('${hrefStr}', hrefStr);
-        link = link.replace('${value', value);
+        link = link.replace('${value}', value);
         return link;
     }
     return value;
@@ -263,7 +263,7 @@ var toolbarTunnel = [{
 }, {
     text: '删除',
     id: 'toolbarTunnelDelete',
-    iconCls: 'icon-cut',
+    iconCls: 'icon-clear',
     handler: function() {
         var index = getGridRowIndex('tableDevicesTunnel');
         if (index == -1) {
