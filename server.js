@@ -101,7 +101,7 @@ app.use(
         saveUninitialized: false,
         secret: 'fcookie',
         resave: false,
-        cookie: { maxAge: 60000 * 24 },
+        cookie: { maxAge: 60000 * 24 * 10 },
     })
 );
 app.set('x-powered-by', false);

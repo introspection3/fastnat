@@ -13,6 +13,11 @@
     <script type="text/javascript" src="/libs/easyui/validate.js"></script>
     <script type="text/javascript" src="/user/connectors.js"></script>
     <link rel="stylesheet" type="text/css" href="/user/devices.css" />
+    <style>
+        body {
+            /* zoom: 0.9; */
+        }
+    </style>
 </head>
 
 <body>
@@ -32,7 +37,7 @@
         </thead>
     </table>
 
-    <div class="easyui-dialog" id="dialogConnector" style="width:380px;height:300px;display:none;" data-options="title:'添加P2P映射连接',buttons:'#dialogButtons',modal:true">
+    <div class="easyui-dialog" id="dialogConnector" style="width:400px;height:300px;display:none;" data-options="title:'添加P2P映射连接',buttons:'#dialogButtons',modal:true">
         <form id="fm" method="post">
             <div class="fitem">
                 <input name="name" class="easyui-textbox" data-options="prompt:'给此连接取一个名',validType:'minLength[2]'" required="true" label="连接名称:" style="width:100%">

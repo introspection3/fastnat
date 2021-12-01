@@ -54,9 +54,7 @@ $(function() {
         var password = $('#password').val();
         $.post('/user/doLogin', { username: username, vcode: vcode, password: password }, function(result) {
             if (result.success) {
-                setTimeout(function() {
-                    location.reload();
-                }, 1000);
+                location.href = '/';
             } else {
 
                 if (result.data === 'vcode') {
