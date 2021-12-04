@@ -26,7 +26,8 @@ router.use(function(req, res, next) {
 router.get('/api/check', async function(req, res, next) {
 
     let content = await readFile(serverConfigPath);
-    let updateConfig = JSON.parse(content);
+    let updateConfig = JSON.parse(content).update;
+
     //linux_arm64_2.2.2.zip
     let version = req.query.version;
     let platform = req.query.platform;
@@ -35,7 +36,8 @@ router.get('/api/check', async function(req, res, next) {
     let baseUrl = updateConfig.baseUrl + '';
 
     let pkgFileName = `${platform}_${arch}_${newVersion}.zip`;
-    let canUpdate = compareVersions(newVersion, version);
+
+    let canUpdate = compareVersions(newVersion, version) > 0;
 
     if (baseUrl.startsWith('http') === false) {
         let defaultWebSeverConfig = defaultConfig.webserver;

@@ -1,4 +1,3 @@
-const version = '1.0.0';
 global.programType = 'client';
 const axios = require('axios').default;
 const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
@@ -22,7 +21,9 @@ const ServiceUtil = require('./Utils/ServiceUtil');
 const ConfigCheckUtil = require('./Utils/ConfigCheckUtil');
 const path = require('path');
 const commandType = require('./Communication/CommandType').commandType;
-const rootPath = require('./Common/GlobalData').rootPath;
+const GlobalData = require('./Common/GlobalData');
+const version = GlobalData.version;
+const rootPath = GlobalData.rootPath;
 const SysTray = require('./SysTray/SysTray');
 const getPluginPath = require('./Utils/PluginUtil').getPluginPath;
 const fs = require('fs').promises;
@@ -30,6 +31,7 @@ const WindowsUtil = require('./Utils/WindowsUtil');
 const Tap9Util = require('./Utils/Tap9Util');
 const readline = require('readline');
 const { v4: uuidv4 } = require('uuid');
+const UpdateUtil = require('./Utils/UpdateUtil');
 //---------------p2p config -----s-----
 const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
@@ -44,7 +46,7 @@ const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
 const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 // const rcpClient = new RpCTcpClient({ host: defaultConfig.host, port: defaultBridgeConfigRpcPort });
 
-program.version(version);
+program.version(GlobalData.version);
 program
     .option('-t, --test', 'is test')
     .option('-s, --sleep', 'only tell application ,this process will sleep then go on')
@@ -417,7 +419,7 @@ async function main() {
             logger.warn('尚未安装网卡驱动,请允许安装');
         }
     }
-
+    UpdateUtil.downUpdatePackageIfExist();
 
 
     WindowsUtil.topMost();
