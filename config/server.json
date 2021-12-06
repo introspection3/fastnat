@@ -12,7 +12,8 @@
     "update": {
         "version": "1.0.0",
         "baseUrl": "/pkg/",
-        "des": "简单性能提升"
+        "des": "简单性能提升",
+        "uiVersion": "1.0.0"
     },
     "log": {
         "level": "trace",
