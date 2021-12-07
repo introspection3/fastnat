@@ -2,7 +2,7 @@
 
     "authenKey": "742af98b-e977-48a8-b1c8-1a2a091b93a7",
     "upnpEnabled": false,
-    "serverUrl": "http://localhost:8081",
+    "serverUrl": "http://fastnat.club:8081",
     "log": {
         "level": "trace",
         "enableCallStack": false

@@ -5,6 +5,7 @@ const readFile = fs.promises.readFile;
 const path = require('path');
 const GlobalData = require('../Common/GlobalData');
 const axios = require('axios');
+const logger = require('../Log/logger');
 
 function downloadFileAsync(uri, dest) {
     return new Promise((resolve, reject) => {
@@ -51,6 +52,7 @@ async function checkAsync(version = GlobalData.version) {
 
 async function downUpdatePackageIfExist() {
     let result = await checkAsync();
+
     if (result.data.canUpdate) {
         let downFileSavePath = path.join(GlobalData.rootPath, "pkg.zip");
         await downloadFileAsync(`${result.data.url}`, downFileSavePath);

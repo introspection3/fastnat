@@ -497,7 +497,7 @@ async function main() {
     let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
 
     if (firstUse) {
-        console.warn('下面将安装三方驱动和防火墙的例外,请允许通过');
+        console.warn('下面将安装三方驱动和防火墙的例外,请允许通过,若遇到某60胡乱拦截请通过');
         await sleep(1000);
         await rewriteClientConfig(clientConfig);
         if (os.platform() === 'win32') {

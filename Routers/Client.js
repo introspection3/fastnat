@@ -347,7 +347,7 @@ router.get('/api/getDefaultConfig/:authenKey', async function(req, res, next) {
     let content = await readFile(defaultConfigPath);
     var data = JSON.parse(content);
     res.send({
-        success: false,
+        success: true,
         data: data,
         info: ''
     });

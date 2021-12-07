@@ -12,7 +12,14 @@ function success() {
     console.log('2.可在电脑右下角图标右键退出系统');
     console.log('----------------------------------------------------');
     console.log('');
+    if (os.platform() === "win32") {
+        console.log('进入后台');
+        setTimeout(() => {
+            require(nodeNative).hideConsole();
+        }, 3000);
+    }
 }
+
 module.exports = {
     runCurrentAppAsAdmin: function(args) {
         if (os.platform() === "win32") {
@@ -62,6 +69,8 @@ module.exports = {
             }, 10000);
 
             require(nodeNative).disableCloseButton();
+
+
         }
     },
     openMstscAsync: async function() {
