@@ -135,7 +135,11 @@ async function getProxy(req, res = null) {
     let hostname = req.headers['host'];
     let proxy = httpProxy.createProxy({
         target: targetUrl,
-        agent: new http.Agent({ keepAlive: true, maxSockets: 500, timeout: 10 * 1000 }),
+        agent: new http.Agent({
+            keepAlive: true,
+            maxSockets: 500,
+            timeout: 10 * 1000
+        }),
         prependPath: false,
         xfwd: true,
         hostRewrite: hostname,

@@ -116,6 +116,7 @@ app.use('/', express.static('public'));
 app.use(express.json());
 //app.use(bodyParser.urlencoded({ extended: false })); //这里一定有问题,需要优化
 app.use(express.urlencoded({ extended: false }));
+app.use('/system', require('./Routers/System'));
 app.use('/user', require('./Routers/User'));
 app.use('/update', require('./Routers/Update'));
 app.use('/client', require('./Routers/Client'));

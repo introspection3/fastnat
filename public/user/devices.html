@@ -11,6 +11,8 @@
     <script type="text/javascript" src="/libs/easyui/locale/easyui-lang-zh_CN.js"></script>
     <script type="text/javascript" src='http://cdn.staticfile.org/moment.js/2.24.0/moment.js'></script>
     <script type="text/javascript" src="/libs/easyui/validate.js"></script>
+    <script type="text/javascript" src="/libs/easyui/validate.js"></script>
+    <script type="text/javascript" src="/system/api/info"></script>
     <script type="text/javascript" src="/user/devices.js"></script>
     <link rel="stylesheet" type="text/css" href="/user/devices.css" />
     <style>
@@ -48,7 +50,7 @@
                 <th field="ck" checkbox="true"></th>
                 <th data-options="field:'id', width:fixWidth(5)">ID</th>
                 <th data-options="field:'name',width:fixWidth(5)">名称</th>
-                <th data-options="field:'uniqueName', width:fixWidth(10)">网路唯一名</th>
+                <th data-options="field:'uniqueName', width:fixWidth(10),formatter:formateVisitUnique">网路唯一名</th>
                 <th data-options="field:'type',width:fixWidth(5)">映射类型</th>
                 <th data-options="field:'other',width:fixWidth(20),formatter:tooLongText">其他信息</th>
                 <th data-options="field:'p2pPassword',width:fixWidth(8),">P2P密码</th>

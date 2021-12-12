@@ -77,7 +77,25 @@ function formateVisit(value, row, index) {
         return link;
     }
     return value;
+}
 
+function formateVisitUnique(value, row, index) {
+
+    var domainName = systemInfo.http.domain;
+    var hrefStr = '';
+    if (row.type === 'http') {
+        hrefStr = 'http://' + value + '.' + domainName + ":" + systemInfo.http.port;
+    } else if (row.type === 'https') {
+        rhrefStresult = 'https://' + value + '.' + domainName + ":" + systemInfo.http.sslPort;
+    } else {
+        return value;
+    }
+
+    var link = '<a target="_blank" href="${hrefStr}">${value}</a>';
+    link = link.replace('${hrefStr}', hrefStr);
+    link = link.replace('${value}', value);
+
+    return link;
 }
 
 function formatSystem(value, row, index) {
@@ -115,128 +133,143 @@ function formatDateTime(val, row) {
 }
 var toolbarDeviceEditRow = null;
 var toolbarDevice = [{
-    text: '添加',
-    id: 'toolbarDeviceAdd',
-    iconCls: 'icon-add',
-    handler: function() {
-        $.messager.defaults = {
-            ok: "确定",
-            cancel: "取消"
-        };
-        $.messager.prompt('新建客户端', '请输入客户端名:', function(r) {
-            if (r) {
-                $.post('/client/add', {
-                    clientName: r
-                }, function(result) {
-                    if (result.success) {
-                        $('#tableDevices').datagrid("reload");
-                    } else {
-                        $.messager.alert('提示', result.info);
-                    }
-                });
+        text: '添加',
+        id: 'toolbarDeviceAdd',
+        iconCls: 'icon-add',
+        handler: function() {
+            $.messager.defaults = {
+                ok: "确定",
+                cancel: "取消"
+            };
+            $.messager.prompt('新建客户端', '请输入客户端名:', function(r) {
+                if (r) {
+                    $.post('/client/add', {
+                        clientName: r
+                    }, function(result) {
+                        if (result.success) {
+                            $('#tableDevices').datagrid("reload");
+                        } else {
+                            $.messager.alert('提示', result.info);
+                        }
+                    });
+                }
+            });
+        }
+    }, {
+        text: '编辑',
+        id: 'toolbarDeviceEdit',
+        iconCls: 'icon-edit',
+        handler: function() {
+            var index = getGridRowIndex('tableDevices');
+            if (index == -1) {
+                $.messager.alert('提示', '请选择需要编辑的设备');
+                return;
             }
-        });
-    }
-}, {
-    text: '编辑',
-    id: 'toolbarDeviceEdit',
-    iconCls: 'icon-edit',
-    handler: function() {
-        var index = getGridRowIndex('tableDevices');
-        if (index == -1) {
-            $.messager.alert('提示', '请选择需要编辑的设备');
-            return;
-        }
-        $("#toolbarDeviceERedo").linkbutton("enable");
-        $("#toolbarDeviceSave").linkbutton("enable");
-        $('#tableDevices').datagrid('beginEdit', index);
+            $("#toolbarDeviceERedo").linkbutton("enable");
+            $("#toolbarDeviceSave").linkbutton("enable");
+            $('#tableDevices').datagrid('beginEdit', index);
 
-    }
-}, {
-    text: '取消编辑',
-    id: 'toolbarDeviceERedo',
-    iconCls: 'icon-redo',
-    handler: function() {
-        $('#tableDevices').datagrid("rejectChanges");
-        $("#toolbarDeviceERedo").linkbutton("disable");
-        $("#toolbarDeviceSave").linkbutton("disable");
-    }
-}, {
-    text: '复制Key',
-    id: 'toolbarDeviceCopy',
-    iconCls: 'icon-copy',
-    handler: function() {
-        var index = getGridRowIndex('tableDevices');
-        if (index == -1) {
-            $.messager.alert('提示', '请选择需要复制的设备');
-            return;
         }
-        var row = $('#tableDevices').datagrid("getSelections")[0];
-        var authenKey = row.authenKey;
-        var oInput = document.createElement('input');
-        oInput.value = authenKey;
-        document.body.appendChild(oInput);
-        oInput.select(); // 选择对象
-        document.execCommand("Copy"); // 执行浏览器复制命令
-        oInput.className = 'oInput';
-        oInput.style.display = 'none';
-        $.messager.alert('提示', '复制成功,<br/>接下来请粘贴到程序中!', 'info');
-
-    }
-}, {
-    text: '删除',
-    iconCls: 'icon-clear',
-    id: 'toolbarDeviceDelete',
-    handler: function() {
-        var index = getGridRowIndex('tableDevices');
-        if (index == -1) {
-            $.messager.alert('提示', '请选择需要删除的设备');
-            return;
+    }, {
+        text: '取消编辑',
+        id: 'toolbarDeviceERedo',
+        iconCls: 'icon-redo',
+        handler: function() {
+            $('#tableDevices').datagrid("rejectChanges");
+            $("#toolbarDeviceERedo").linkbutton("disable");
+            $("#toolbarDeviceSave").linkbutton("disable");
         }
-        $.messager.defaults = {
-            ok: "确定",
-            cancel: "取消"
-        };
-
-        $.messager.confirm("警告", "删除设备意味着您所有的映射将删除,所以不建议您删除,你确定要继续吗?", function(data) {
-            if (data) {
-                var id = $('#tableDevices').datagrid("getSelections")[0].id;
-                $.post('/client/delete', {
-                    id: id
-                }, function(result) {
-                    $('#tableDevices').datagrid('reload');
-                });
+    }, {
+        text: '复制Key',
+        id: 'toolbarDeviceCopy',
+        iconCls: 'icon-copy',
+        handler: function() {
+            var index = getGridRowIndex('tableDevices');
+            if (index == -1) {
+                $.messager.alert('提示', '请选择需要复制的设备');
+                return;
             }
-        });
-    }
-}, '-', {
-    text: '保存',
-    iconCls: 'icon-save',
-    id: 'toolbarDeviceSave',
-    handler: function() {
-        var index = getGridRowIndex('tableDevices');
-        if (index == -1) {
-            $.messager.alert('提示', '请选择需要保存的设备');
-            return;
-        }
-        $('#tableDevices').datagrid('endEdit', index);
-        var row = $('#tableDevices').datagrid("getSelections")[0];
-        if (row.clientName.trim() === '') {
-            $.messager.alert('提示', '客户名称不能为空');
-            return;
-        }
-        $.post('/client/update', {
-            id: row.id,
-            clientName: row.clientName
-        }, function(result) {
-            $('#tableDevices').datagrid('reload');
-            var title = '设备[${row.clientName}]的映射列表';
-            title = title.replace('${row.clientName}', row.clientName);
-            document.querySelectorAll('div .panel-title')[1].innerHTML = title;
+            var row = $('#tableDevices').datagrid("getSelections")[0];
+            var authenKey = row.authenKey;
+            var oInput = document.createElement('input');
+            oInput.value = authenKey;
+            document.body.appendChild(oInput);
+            oInput.select(); // 选择对象
+            document.execCommand("Copy"); // 执行浏览器复制命令
+            oInput.className = 'oInput';
+            oInput.style.display = 'none';
+            $.messager.alert('提示', '复制成功,<br/>接下来请粘贴到程序中!', 'info');
 
-        });
-    }
-}];
+        }
+    }, {
+        text: '删除',
+        iconCls: 'icon-clear',
+        id: 'toolbarDeviceDelete',
+        handler: function() {
+            var index = getGridRowIndex('tableDevices');
+            if (index == -1) {
+                $.messager.alert('提示', '请选择需要删除的设备');
+                return;
+            }
+            $.messager.defaults = {
+                ok: "确定",
+                cancel: "取消"
+            };
+
+            $.messager.confirm("警告", "删除设备意味着您所有的映射将删除,所以不建议您删除,你确定要继续吗?", function(data) {
+                if (data) {
+                    var id = $('#tableDevices').datagrid("getSelections")[0].id;
+                    $.post('/client/delete', {
+                        id: id
+                    }, function(result) {
+                        $('#tableDevices').datagrid('reload');
+                    });
+                }
+            });
+        }
+    }, '-', {
+        text: '保存',
+        iconCls: 'icon-save',
+        id: 'toolbarDeviceSave',
+        handler: function() {
+            var index = getGridRowIndex('tableDevices');
+            if (index == -1) {
+                $.messager.alert('提示', '请选择需要保存的设备');
+                return;
+            }
+            $('#tableDevices').datagrid('endEdit', index);
+            var row = $('#tableDevices').datagrid("getSelections")[0];
+            if (row.clientName.trim() === '') {
+                $.messager.alert('提示', '客户名称不能为空');
+                return;
+            }
+            $.post('/client/update', {
+                id: row.id,
+                clientName: row.clientName
+            }, function(result) {
+                $('#tableDevices').datagrid('reload');
+                var title = '设备[${row.clientName}]的映射列表';
+                title = title.replace('${row.clientName}', row.clientName);
+                document.querySelectorAll('div .panel-title')[1].innerHTML = title;
+
+            });
+        }
+    },
+
+    {
+        text: '',
+        iconCls: 'icon-help',
+        id: 'toolbarHelp',
+        handler: function() {
+            var msg = '一个电脑(或手机)就是一个设备,在电脑(或手机)上安装本软件时,录入下方一个KEY即可';
+            $.messager.alert('提示', msg, 'info', function() {
+
+            });
+
+        }
+    },
+];
+``
 
 var toolbarTunnel = [{
     text: '添加',

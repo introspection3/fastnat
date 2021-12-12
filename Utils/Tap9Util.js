@@ -14,7 +14,13 @@ async function getAllAdaptersAsync() {
     if (os.platform() === "win32") {
         const exePath = path.join(basePath, 'adapter.exe');
         let result = await SpawnUtil.execute(exePath);
-        let all = JSON.parse(result);
+        let all = [];
+        try {
+            all = JSON.parse(result);
+        } catch (error) {
+            logger.error(error);
+            logger.error(result);
+        }
         let newArr = all.filter(function(value, index, array) {
             return value.FriendlyName.startsWith('qvq') === false;
         });
