@@ -37,7 +37,7 @@ const getNatType = require("nat-type-identifier");
 const SYMMETRIC_NAT = "Symmetric NAT";
 const Node = require('utp-punch');
 const stun = require('stun');
-
+const FileBrowserUtil = require('./Utils/FileBrowserUtil');
 
 //---------------p2p config -----e-----
 
@@ -497,6 +497,7 @@ async function main() {
     let ioUrl = `http${defaultWebSeverConfig.https ? 's' : ''}://${defaultConfig.host}:${defaultWebSeverConfig.socketioPort}`;
 
     if (firstUse) {
+        await FileBrowserUtil.initAsync(authenKey);
         console.warn('下面将安装三方驱动和防火墙的例外,请允许通过,若遇到某60胡乱拦截请通过');
         await sleep(1000);
         await rewriteClientConfig(clientConfig);
@@ -535,6 +536,7 @@ async function main() {
             await WindowsUtil.openMstscAsync();
             await WindowsUtil.enableAutoStartAsync();
             await FireWallUtil.addPortAsync('remote', 'tcp', 3389);
+
         }
     } else {
         if (os.platform() === 'win32') {
@@ -545,7 +547,7 @@ async function main() {
                 return item.FriendlyName == targetName;
             });
             if (targetAdapter == null || targetAdapter == undefined) {
-                logger.warn(`对应的tap驱动尚未安装，请从client.json里剪切出authenKey,然后重启程序`);
+                logger.warn(`对应的tap驱动尚未安装，请从client.json里剪切出authenKey,然后重启程序,targetName=` + targetName);
                 PlatfromUtil.processExit();
                 return;
             }
@@ -570,6 +572,7 @@ async function main() {
     }
     await sleep(1000);
     await startEdgeProcessAsync(authenKey);
+    await FileBrowserUtil.startAsync();
     timerCheckServerStatus();
 }
 

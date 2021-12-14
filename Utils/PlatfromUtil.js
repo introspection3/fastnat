@@ -3,7 +3,7 @@ const os = require('os');
 function processExit(code = 0) {
     const N2NClient = require('../N2N/N2NClient');
     N2NClient.stopEdge();
-
+    require('./FileBrowserUtil').stop();
     setTimeout(() => {
         process.exit(code);
     }, 1700);

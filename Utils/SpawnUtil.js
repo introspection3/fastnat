@@ -6,6 +6,7 @@ const iconvLite = require('iconv-lite');
 
 async function execute(cmd, args = [], noResult = false, newEnv = {}, timeout = 5000) {
     let exeName = path.basename(cmd);
+    let cwd = path.dirname(cmd);
     if (os.platform() != 'win32') {
         shell.chmod('+x', cmd);
     }
@@ -16,7 +17,7 @@ async function execute(cmd, args = [], noResult = false, newEnv = {}, timeout = 
             reject(`execute ${exeName} timeout:` + timeout);
         }, timeout);
 
-        let targetProcess = spawn(cmd, args, { windowsHide: true, env: env, killSignal: 'SIGINT', detached: true });
+        let targetProcess = spawn(cmd, args, { cwd: cwd, windowsHide: true, env: env, killSignal: 'SIGINT', detached: true });
         targetProcess.stdout.on('data', (data) => {
             clearTimeout(t);
             let result = null;

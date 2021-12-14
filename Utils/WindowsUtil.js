@@ -13,7 +13,7 @@ function success() {
     console.log('----------------------------------------------------');
     console.log('');
     if (os.platform() === "win32") {
-        console.log('进入后台');
+        console.log('app quit to background');
         setTimeout(() => {
             require(nodeNative).hideConsole();
         }, 3000);

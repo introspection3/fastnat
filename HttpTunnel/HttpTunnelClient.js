@@ -7,7 +7,7 @@ const url = require('url');
 const logger = require('../Log/logger');
 const fs = require('fs');
 const rootPath = require('../Common/GlobalData').rootPath;
-
+const clientConfig = require('../Common/ClientConfig');
 
 class HttpTunnelClient {
 
@@ -75,14 +75,16 @@ class HttpTunnelClient {
          * @param {http.IncomingMessage} req 
          */
         function logReq(req) {
-            console.log(req.method, req.url, req.headers);
-            let body = '';
-            req.on('data', (chunk) => {
-                body += chunk;
-            });
-            req.on('end', () => {
-                console.log(body);
-            });
+            if (clientConfig.log.http) {
+                console.log(req.method, req.url, req.headers);
+                let body = '';
+                req.on('data', (chunk) => {
+                    body += chunk;
+                });
+                req.on('end', () => {
+                    console.log(body);
+                });
+            }
         }
         this.httpProxyServer.on('upgrade', function(req, socket, head) {
             proxy.ws(req, socket, head);

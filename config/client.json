@@ -5,6 +5,7 @@
     "serverUrl": "http://fastnat.club:8081",
     "log": {
         "level": "trace",
-        "enableCallStack": false
+        "enableCallStack": false,
+        "http": false
     }
 }
