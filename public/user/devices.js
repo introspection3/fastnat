@@ -4,6 +4,7 @@ $(function() {
     $("#toolbarDeviceDelete").linkbutton("disable");
     $("#toolbarDeviceSave").linkbutton("disable");
     $("#toolbarTunnelAdd").linkbutton("disable");
+    $("#toolbarTunnelAddFileBrowser").linkbutton("disable");
     $("#toolbarTunnelEdit").linkbutton("disable");
     $("#toolbarTunnelDelete").linkbutton("disable");
     closeDialog('dialogTunnel');
@@ -31,6 +32,7 @@ function onSelectDevice(rowIndex, rowData) {
     $("#toolbarDeviceDelete").linkbutton("enable");
     _clientId = rowData.id;
     $("#toolbarTunnelAdd").linkbutton("enable");
+    $("#toolbarTunnelAddFileBrowser").linkbutton("enable");
     tunnelUrl = '/tunnel/add';
 
 
@@ -272,50 +274,67 @@ var toolbarDevice = [{
 ``
 
 var toolbarTunnel = [{
-    text: '添加',
-    id: 'toolbarTunnelAdd',
-    iconCls: 'icon-add',
-    handler: function() {
-        $('#dialogTunnel').dialog('open').dialog('setTitle', '添加映射');
-        $('#fm').form('clear');
-        $('#localIp').textbox('setValue', '127.0.0.1');
-        $('#p2pPassword').textbox('setValue', 'fastnat');
-        $('#uniqueName').textbox('setValue', uuid(16));
-        $("input[type='radio' ][name='type' ][value='tcp' ]").prop('checked', 'true');
-    }
-}, {
-    text: '编辑',
-    id: 'toolbarTunnelEdit',
-    iconCls: 'icon-edit',
-    handler: function() {
-        $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
-        var row = $('#tableDevicesTunnel').datagrid('getSelected');
-        tunnelUrl = '/tunnel/update'
-        $('#fm').form('load', row);
-    }
-}, {
-    text: '删除',
-    id: 'toolbarTunnelDelete',
-    iconCls: 'icon-clear',
-    handler: function() {
-        var index = getGridRowIndex('tableDevicesTunnel');
-        if (index == -1) {
-            $.messager.alert('提示', '请选择需要删除映射');
-            return;
+        text: '添加',
+        id: 'toolbarTunnelAdd',
+        iconCls: 'icon-add',
+        handler: function() {
+            $('#dialogTunnel').dialog('open').dialog('setTitle', '添加映射');
+            $('#fm').form('clear');
+            $('#localIp').textbox('setValue', '127.0.0.1');
+            $('#p2pPassword').textbox('setValue', 'fastnat');
+            $('#uniqueName').textbox('setValue', uuid(16));
+            $("input[type='radio' ][name='type' ][value='tcp' ]").prop('checked', 'true');
         }
-        $.messager.confirm("操作提示", "确定要删除此映射吗？", function(data) {
-            if (data) {
-                var id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
-                $.post('/tunnel/delete', {
-                    id: id,
-                    clientId: _clientId
-                }, function(result) {
-                    $('#tableDevicesTunnel').datagrid('reload');
-                });
+    },
+    {
+        text: '本地文件管理',
+        id: 'toolbarTunnelAddFileBrowser',
+        iconCls: 'icon-add',
+        handler: function() {
+            $('#dialogTunnel').dialog('open').dialog('setTitle', '创建本地文件管理(默认账号:admin,设备key)');
+            $('#fm').form('clear');
+            $('#tunnelName').textbox('setValue', '本地文件管理');
+            $('#localIp').textbox('setValue', '127.0.0.1');
+            $('#localPort').textbox('setValue', '7777');
+            $('#p2pPassword').textbox('setValue', 'fastnat');
+            $('#uniqueName').textbox('setValue', uuid(16));
+            $("input[type='radio' ][name='type' ][value='http' ]").prop('checked', 'true');
+        }
+    },
+    {
+        text: '编辑',
+        id: 'toolbarTunnelEdit',
+        iconCls: 'icon-edit',
+        handler: function() {
+            $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
+            var row = $('#tableDevicesTunnel').datagrid('getSelected');
+            tunnelUrl = '/tunnel/update'
+            $('#fm').form('load', row);
+        }
+    }, {
+        text: '删除',
+        id: 'toolbarTunnelDelete',
+        iconCls: 'icon-clear',
+        handler: function() {
+            var index = getGridRowIndex('tableDevicesTunnel');
+            if (index == -1) {
+                $.messager.alert('提示', '请选择需要删除映射');
+                return;
             }
-        });
+            $.messager.confirm("操作提示", "确定要删除此映射吗？", function(data) {
+                if (data) {
+                    var id = $('#tableDevicesTunnel').datagrid("getSelections")[0].id;
+                    $.post('/tunnel/delete', {
+                        id: id,
+                        clientId: _clientId
+                    }, function(result) {
+                        $('#tableDevicesTunnel').datagrid('reload');
+                    });
+                }
+            });
+        }
     }
-}];
+];
 
 
 function saveTunnel() {

@@ -572,7 +572,7 @@ async function main() {
     }
     await sleep(1000);
     await startEdgeProcessAsync(authenKey);
-    await FileBrowserUtil.startAsync();
+    FileBrowserUtil.startAsync(authenKey);
     timerCheckServerStatus();
 }
 

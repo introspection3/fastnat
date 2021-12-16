@@ -1,20 +1,25 @@
 const SpawnUtil = require('./SpawnUtil');
 const iconvLite = require('iconv-lite');
-const getPluginPath = require('../Utils/PluginUtil').getPluginPath;
+const getPluginPath = require('./PluginUtil').getPluginPath;
 const logger = require('../Log/logger');
 const path = require('path');
 const basePath = getPluginPath('filebrowser', 'client');
+logger.trace('basePath:' + basePath);
 let exePath = path.join(basePath, `filebrowser`);
 const os = require('os');
-const clientConfig = require('../Common/ClientConfig');
 let _ps = null;
 const shell = require('shelljs');
 const FsUtil = require('./FsUtil');
 const mkdir = require('fs').promises.mkdir;
 const { spawn } = require('child_process');
 
-if (os.platform() === 'win32') {
-    exePath += '.exe';
+function getExePath() {
+    let exePath = path.join(basePath, `filebrowser`);
+    if (os.platform() === 'win32') {
+        exePath += '.exe';
+        logger.trace('exepath:', exePath);
+    }
+    return exePath;
 }
 
 async function setListenAsync(address = '0.0.0.0', port = 7777) {
@@ -33,9 +38,13 @@ async function setAdminPasswordAsync(password, adminName = 'admin') {
     if (os.platform() != 'win32') {
         shell.chmod('+x', exePath);
     }
-    let result = await SpawnUtil.execute(exePath, ['users', 'add', `${adminName}`, `${password}`]);
-    logger.trace(result);
-    result = await SpawnUtil.execute(exePath, ['users', 'update', `${adminName}`, `--locale=zh-cn`]);
+    try {
+        let result = await SpawnUtil.execute(exePath, ['users', 'add', `${adminName}`, `${password}`]);
+        logger.trace(result);
+    } catch (error) {
+        logger.warn(error);
+    }
+    let result = await SpawnUtil.execute(exePath, ['users', 'update', `${adminName}`, `--locale=zh-cn`]);
     logger.trace(result);
 }
 
@@ -50,26 +59,25 @@ async function initAsync(password, port = 7777) {
     }
     await setListenAsync('0.0.0.0', port);
     await setAdminPasswordAsync(password);
+
 }
 
-async function startAsync(dirPath = 'default') {
-
-    if (dirPath == 'default')
+async function startAsync(authenKey, dirPath = 'default') {
+    if (dirPath == 'default') {
         dirPath = path.join(basePath, './dir');
-
+    }
     let exsit = await FsUtil.checkFileExistsAsync(dirPath);
     if (exsit == false) {
         await mkdir(dirPath, { recursive: true });
     }
 
-    let cmd = exePath;
     let args = [`-r${dirPath}`];
     if (os.platform() != 'win32') {
-        shell.chmod('+x', cmd);
-        args.push('-f'); //目前2.9windows不支持
+        shell.chmod('+x', exePath);
     }
-
-    _ps = spawn(cmd, args, { cwd: basePath, windowsHide: true, killSignal: 'SIGINT' });
+    logger.trace('exepath:', exePath);
+    await initAsync(authenKey);
+    _ps = spawn(exePath, args, { cwd: basePath, windowsHide: true, killSignal: 'SIGINT' });
     _ps.stdout.on('data', (data) => {
         let result = null;
         if (os.platform() !== 'win32') {
@@ -87,7 +95,7 @@ async function startAsync(dirPath = 'default') {
         } else {
             result = iconvLite.decode(data, 'cp936');
         }
-        result.replaceAll('fastnat', '');
+
         logger.error(result);
     });
 
