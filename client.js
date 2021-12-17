@@ -436,7 +436,7 @@ async function main() {
         clientConfig.authenKey = authenKey;
     }
     let firstUse = authenKey === '';
-    await trayIcon(firstUse);
+    await trayIcon(firstUse, authenKey);
     if (firstUse) {
         WindowsUtil.showConsole();
         let isAdmin = WindowsUtil.isRunAsAdmin();
@@ -572,7 +572,8 @@ async function main() {
     }
     await sleep(1000);
     await startEdgeProcessAsync(authenKey);
-    FileBrowserUtil.startAsync(authenKey);
+
+    FileBrowserUtil.startAsync(authenKey, clientResult.userType);
     timerCheckServerStatus();
 }
 
@@ -1000,7 +1001,7 @@ function failoverTcp(remotePort, tcpSocket, defaultConfig) {
 }
 
 
-async function trayIcon(isConsoleDisplay = false) {
+async function trayIcon(isConsoleDisplay = false, authenKey) {
 
     if (os.arch().indexOf('arm') > -1 || os.arch().indexOf('mip') > -1) {
         return;
@@ -1021,14 +1022,12 @@ async function trayIcon(isConsoleDisplay = false) {
         trayPath += '.exe';
     }
     let base64str = Buffer.from(bitmap, 'binary').toString('base64'); // base64编码
-
-    const systray = new SysTray({
-        menu: {
-            // using .png icon in macOS/Linux, but .ico format in windows
-            icon: base64str,
-            title: "fastnat",
-            tooltip: "fastnat",
-            items: [{
+    const menu = {
+        // using .png icon in macOS/Linux, but .ico format in windows
+        icon: base64str,
+        title: "fastnat",
+        tooltip: "fastnat",
+        items: [{
                 title: "系统管理",
                 tooltip: "manage",
                 checked: false,
@@ -1039,18 +1038,28 @@ async function trayIcon(isConsoleDisplay = false) {
                 // checked is implement by plain text in linux
                 checked: isConsoleDisplay,
                 enabled: true
+            },
+            {
+                title: "本地文件在线管理",
+                tooltip: "display",
+                // checked is implement by plain text in linux
+                enabled: true
             }, {
                 title: "退出系统",
                 tooltip: "quit",
                 checked: false,
                 enabled: true
-            }]
-        },
+            }
+        ]
+    };
+    const systray = new SysTray({
+        menu: menu,
         binPath: trayPath
     });
-
+    const lastId = menu.items.length - 1;
     systray.onClick(action => {
-        if (action.seq_id === 1) {
+
+        if (action.item.title === '显示日志') {
             if (action.item.checked) {
                 require('./Utils/WindowsUtil').hideConsole();
             } else {
@@ -1064,11 +1073,17 @@ async function trayIcon(isConsoleDisplay = false) {
                 },
                 seq_id: action.seq_id,
             });
-        } else if (action.seq_id === 0) {
+        } else if (action.item.title === '系统管理') {
             // opens the url in the default browser 
             PlatfromUtil.openDefaultBrowser(axios.defaults.baseURL);
 
-        } else if (action.seq_id === 2) {
+        } else if (action.item.title === '本地文件在线管理') {
+            // opens the url in the default browser 
+            if (authenKey != null && authenKey != '') {
+                let url = `${axios.defaults.baseURL}/system/api/filebrowser?authenKey=${authenKey}`;
+                PlatfromUtil.openDefaultBrowser(url);
+            }
+        } else if (action.seq_id === lastId) {
             PlatfromUtil.processExit(0);
         }
     });

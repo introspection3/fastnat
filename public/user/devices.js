@@ -278,6 +278,7 @@ var toolbarTunnel = [{
         id: 'toolbarTunnelAdd',
         iconCls: 'icon-add',
         handler: function() {
+            tunnelUrl = '/tunnel/add';
             $('#dialogTunnel').dialog('open').dialog('setTitle', '添加映射');
             $('#fm').form('clear');
             $('#localIp').textbox('setValue', '127.0.0.1');
@@ -291,6 +292,7 @@ var toolbarTunnel = [{
         id: 'toolbarTunnelAddFileBrowser',
         iconCls: 'icon-add',
         handler: function() {
+            tunnelUrl = '/tunnel/add';
             $('#dialogTunnel').dialog('open').dialog('setTitle', '创建本地文件管理(默认账号:admin,设备key)');
             $('#fm').form('clear');
             $('#tunnelName').textbox('setValue', '本地文件管理');
@@ -308,7 +310,7 @@ var toolbarTunnel = [{
         handler: function() {
             $('#dialogTunnel').dialog('open').dialog('setTitle', '编辑映射');
             var row = $('#tableDevicesTunnel').datagrid('getSelected');
-            tunnelUrl = '/tunnel/update'
+            tunnelUrl = '/tunnel/update';
             $('#fm').form('load', row);
         }
     }, {

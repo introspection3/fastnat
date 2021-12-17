@@ -384,9 +384,19 @@ router.get('/api/:authenKey', async function(req, res, next) {
         });
         return;
     }
+    //
+    let user = await RegisterUser.findOne({
+        where: {
+            id: client.registerUserId,
+            isAvailable: true
+        }
+    });
+
+    //
     res.send({
         success: true,
-        data: client
+        data: client,
+        userType: user.userType
     });
 });
 

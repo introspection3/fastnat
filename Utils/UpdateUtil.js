@@ -14,7 +14,7 @@ function downloadFileAsync(uri, dest) {
         http.get(uri, (res) => {
 
             if (res.statusCode !== 200) {
-                reject(response.statusCode);
+                reject(res.statusCode + uri);
                 return;
             }
 

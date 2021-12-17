@@ -4,7 +4,7 @@ const getPluginPath = require('./PluginUtil').getPluginPath;
 const logger = require('../Log/logger');
 const path = require('path');
 const basePath = getPluginPath('filebrowser', 'client');
-logger.trace('basePath:' + basePath);
+
 let exePath = path.join(basePath, `filebrowser`);
 const os = require('os');
 let _ps = null;
@@ -17,7 +17,6 @@ function getExePath() {
     let exePath = path.join(basePath, `filebrowser`);
     if (os.platform() === 'win32') {
         exePath += '.exe';
-        logger.trace('exepath:', exePath);
     }
     return exePath;
 }
@@ -34,7 +33,7 @@ async function setListenAsync(address = '0.0.0.0', port = 7777) {
     }
 }
 
-async function setAdminPasswordAsync(password, adminName = 'admin') {
+async function setAdminPasswordAsync(password, userType, adminName = 'admin') {
     if (os.platform() != 'win32') {
         shell.chmod('+x', exePath);
     }
@@ -44,11 +43,15 @@ async function setAdminPasswordAsync(password, adminName = 'admin') {
     } catch (error) {
         logger.warn(error);
     }
-    let result = await SpawnUtil.execute(exePath, ['users', 'update', `${adminName}`, `--locale=zh-cn`]);
+    let share = '--perm.share=false';
+    if (userType !== 'normal') {
+        share = '--perm.share=true';
+    }
+    let result = await SpawnUtil.execute(exePath, ['users', 'update', `${adminName}`, `--locale=zh-cn`, share]);
     logger.trace(result);
 }
 
-async function initAsync(password, port = 7777) {
+async function initAsync(password, userType, port = 7777) {
     let exist = await FsUtil.checkFileExistsAsync(path.join(basePath, 'filebrowser.db'));
     if (exist == false) {
         if (os.platform() != 'win32') {
@@ -58,11 +61,11 @@ async function initAsync(password, port = 7777) {
         logger.trace(result);
     }
     await setListenAsync('0.0.0.0', port);
-    await setAdminPasswordAsync(password);
-
+    await setAdminPasswordAsync(password, userType);
 }
 
-async function startAsync(authenKey, dirPath = 'default') {
+async function startAsync(authenKey, userType, dirPath = 'default') {
+
     if (dirPath == 'default') {
         dirPath = path.join(basePath, './dir');
     }
@@ -75,8 +78,8 @@ async function startAsync(authenKey, dirPath = 'default') {
     if (os.platform() != 'win32') {
         shell.chmod('+x', exePath);
     }
-    logger.trace('exepath:', exePath);
-    await initAsync(authenKey);
+
+    await initAsync(authenKey, userType);
     _ps = spawn(exePath, args, { cwd: basePath, windowsHide: true, killSignal: 'SIGINT' });
     _ps.stdout.on('data', (data) => {
         let result = null;
