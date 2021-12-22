@@ -1137,13 +1137,12 @@ function restartApplication() {
     logger.debug("app will restart ,old pid= " + process.pid);
     logger.debug("args:" + args.toString());
     logger.debug('app exe:' + exe);
-
+    let notWindows = os.platform() != 'win32';
     const subprocess = require("child_process").spawn(exe, args, {
         cwd: rootPath,
         detached: true,
-        shell: false,
-        stdio: 'ignore',
-        windowsHide: false
+        shell: notWindows,
+        windowsHide: notWindows
     });
 
     subprocess.unref();

@@ -1,10 +1,13 @@
 const os = require('os');
+const logger = require('../Log/logger');
 
 function processExit(code = 0) {
+    console.log('app ready to exit');
     const N2NClient = require('../N2N/N2NClient');
     N2NClient.stopEdge();
     require('./FileBrowserUtil').stop();
     setTimeout(() => {
+        console.log('app has exited');
         process.exit(code);
     }, 1700);
 }
@@ -29,7 +32,7 @@ function getIPAdress() {
 
 const openDefaultBrowser = function(url) {
     if (process.platform === 'linux') {
-        console.log('请自己打开浏览器');
+        console.log('请自己打开浏览器' + url);
         return;
     }
     let exec = require('child_process').exec;
@@ -44,7 +47,10 @@ const openDefaultBrowser = function(url) {
             exec('xdg-open', [url]);
     }
 }
-module.exports.processExit = processExit;
-module.exports.getIPAdress = getIPAdress;
-module.exports.cpus = cpus;
-module.exports.openDefaultBrowser = openDefaultBrowser;
+
+module.exports = {
+    processExit,
+    getIPAdress,
+    cpus,
+    openDefaultBrowser
+}

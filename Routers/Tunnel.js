@@ -55,6 +55,17 @@ router.get('/api/getP2PInfo', async function(req, res, next) {
     res.send(reuslt);
 });
 
+function getUniqueNameMinLength(userType) {
+    if (userType === 'normal') {
+        return 6;
+    } else if (userType === 'vip') {
+        return 4;
+    } else if (userType === 'admin') {
+        return 1;
+    } else {
+        return 5;
+    }
+}
 
 router.post('/update', async(req, res, next) => {
 
@@ -85,6 +96,16 @@ router.post('/update', async(req, res, next) => {
         res.send(result);
         return;
     }
+    let minLength = getUniqueNameMinLength(req.session.user.userType);
+    if (req.body.uniqueName.length < minLength) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: '此等级用户网路唯一名最低长度:' + minLength
+        }
+        res.send(result);
+        return;
+    }
 
     count = await Tunnel.count({
         where: {
@@ -94,6 +115,7 @@ router.post('/update', async(req, res, next) => {
             }
         }
     });
+
 
     if (count > 0) {
         let result = {
@@ -323,6 +345,17 @@ router.post('/add', async(req, res, next) => {
             success: false,
             data: req.body,
             info: 'client user wrong'
+        }
+        res.send(result);
+        return;
+    }
+
+    let minLength = getUniqueNameMinLength(req.session.user.userType);
+    if (req.body.uniqueName.length < minLength) {
+        let result = {
+            success: false,
+            data: req.body,
+            info: '此等级用户网路唯一名最低长度:' + minLength
         }
         res.send(result);
         return;
