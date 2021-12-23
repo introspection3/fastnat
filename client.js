@@ -421,7 +421,7 @@ async function main() {
     }
     UpdateUtil.downUpdatePackageIfExist();
 
-
+    WindowsUtil.autoClickConfirmButton();
     WindowsUtil.topMost();
     WindowsUtil.disableConsoleInsertEdit();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
@@ -511,7 +511,9 @@ async function main() {
 
             if (targetAdapter == null || targetAdapter == undefined) {
                 await N2NClient.installWinTapAsync();
-                await sleep(3000);
+                await sleep(1000);
+                WindowsUtil.autoClickConfirmButton();
+                await sleep(1500);
                 allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
                 let changeTap = allTap9.find(function(item) {
                     return item.FriendlyName.startsWith('tap-') === false;

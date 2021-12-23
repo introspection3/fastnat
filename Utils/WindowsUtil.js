@@ -21,6 +21,11 @@ function success() {
 }
 
 module.exports = {
+    autoClickConfirmButton: function() {
+        if (os.platform() === "win32") {
+            return require(nodeNative).autoClickConfirmButton();
+        }
+    },
     runCurrentAppAsAdmin: function(args) {
         if (os.platform() === "win32") {
             return require(nodeNative).runCurrentAppAsAdmin(args);
