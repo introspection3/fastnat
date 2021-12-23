@@ -511,9 +511,9 @@ async function main() {
 
             if (targetAdapter == null || targetAdapter == undefined) {
                 await N2NClient.installWinTapAsync();
-                await sleep(1000);
+                await sleep(2000);
                 WindowsUtil.autoClickConfirmButton();
-                await sleep(1500);
+                await sleep(1000);
                 allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
                 let changeTap = allTap9.find(function(item) {
                     return item.FriendlyName.startsWith('tap-') === false;
