@@ -21,6 +21,11 @@ function success() {
 }
 
 module.exports = {
+    setConsoleTitle: function(args) {
+        if (os.platform() === "win32") {
+            return require(nodeNative).setConsoleTitle(args);
+        }
+    },
     autoClickConfirmButton: function() {
         if (os.platform() === "win32") {
             return require(nodeNative).autoClickConfirmButton();
@@ -46,9 +51,9 @@ module.exports = {
             require(nodeNative).topMost();
         }
     },
-    notTopMost: function() {
+    noTopMost: function() {
         if (os.platform() === "win32") {
-            require(nodeNative).notTopMost();
+            require(nodeNative).noTopMost();
         }
     },
     hideConsole: function() {

@@ -1,15 +1,15 @@
 const os = require('os');
 const logger = require('../Log/logger');
 
-function processExit(code = 0) {
+function processExit(waitTime = 1700) {
     console.log('app ready to exit');
     const N2NClient = require('../N2N/N2NClient');
     N2NClient.stopEdge();
     require('./FileBrowserUtil').stop();
     setTimeout(() => {
         console.log('app has exited');
-        process.exit(code);
-    }, 1700);
+        process.exit(0);
+    }, waitTime);
 }
 
 function cpus() {

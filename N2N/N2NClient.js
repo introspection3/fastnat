@@ -190,6 +190,16 @@ function getWinTapPath() {
     return path.join(basePath, 'tapinstall.exe');
 }
 
+
+function getGoodString(text) {
+    if (os.platform() !== 'win32') {
+        return text;
+    }
+    let data = Buffer.from(text, 'ascii');
+    let result = iconvLite.decode(data, 'cp936');
+    return result;
+}
+
 /**安装wintap,仅在windows下使用 */
 async function installWinTapAsync() {
     let wintap = getWinTapPath();
@@ -198,6 +208,15 @@ async function installWinTapAsync() {
 
     return await ExecUtil.execute(cmd, cwd, -1);
 
+}
+
+/**安装wintap,仅在windows下使用 */
+function installWinTap() {
+    let wintap = getWinTapPath();
+    let cmd = `"${wintap}" install OemVista.inf  ${tapName}`;
+    exec(cmd, { cwd: basePath }, (error, stdout, stderr) => {
+        console.log(getGoodString(stdout));
+    });
 }
 
 /**卸载wintap,仅在windows下使用 */
@@ -217,6 +236,7 @@ async function checkFileExist(name) {
 
 module.exports = {
     getPath,
+    installWinTap: installWinTap,
     startEdge: start,
     stopEdge: stop,
     installWinTapAsync: installWinTapAsync,

@@ -421,8 +421,8 @@ async function main() {
     }
     UpdateUtil.downUpdatePackageIfExist();
 
-    WindowsUtil.autoClickConfirmButton();
-    WindowsUtil.topMost();
+    WindowsUtil.setConsoleTitle('fastnat');
+
     WindowsUtil.disableConsoleInsertEdit();
     let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
     if (existClientConfig === false) {
@@ -453,9 +453,9 @@ async function main() {
 
 
         PlatfromUtil.openDefaultBrowser(url);
-
+        WindowsUtil.topMost();
         authenKey = await readLineData();
-
+        WindowsUtil.noTopMost();
         let pattern = /^[a-zA-Z0-9_-]{4,36}$/;
         if (!pattern.test(authenKey)) {
             console.warn('KEY格式有误,请重启重试');
@@ -498,7 +498,7 @@ async function main() {
 
     if (firstUse) {
         await FileBrowserUtil.initAsync(authenKey);
-        console.warn('下面将安装三方驱动和防火墙的例外,请允许通过,若遇到某60胡乱拦截请通过');
+        console.warn('下面将安装三方驱动和防火墙的例外,请允许通过,若遇到某某0胡乱拦截,则请通过');
         await sleep(1000);
         await rewriteClientConfig(clientConfig);
         if (os.platform() === 'win32') {
@@ -510,9 +510,12 @@ async function main() {
             });
 
             if (targetAdapter == null || targetAdapter == undefined) {
-                await N2NClient.installWinTapAsync();
+                console.log('start to install driver');
+                N2NClient.installWinTap();
+                WindowsUtil.noTopMost();
                 await sleep(2000);
                 WindowsUtil.autoClickConfirmButton();
+                console.log('install driver success');
                 await sleep(1000);
                 allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
                 let changeTap = allTap9.find(function(item) {
@@ -549,13 +552,15 @@ async function main() {
                 return item.FriendlyName == targetName;
             });
             if (targetAdapter == null || targetAdapter == undefined) {
-                logger.warn(`对应的tap驱动尚未安装，请从client.json里剪切出authenKey,然后重启程序,targetName=` + targetName);
-                PlatfromUtil.processExit();
+                logger.warn(`对应的tap驱动尚未安装,targetName=` + targetName);
+                clientConfig.authenKey = '';
+                await rewriteClientConfig(clientConfig);
+                await restartApplicationAsAdmin();
                 return;
             }
         }
     }
-
+    WindowsUtil.topMost();
     checkNatType(clientConfig, defaultConfig);
     let currentClientTunnels = clientResult.data.tunnels;
     setCurrentClientTunnelsMap(currentClientTunnels)
@@ -1125,7 +1130,7 @@ async function updateClientSystemInfo(natType, authenKey) {
     return result;
 }
 
-function restartApplication() {
+function restartApplication(waitTime = 1700) {
     let exe = process.argv.shift();
     let args = [];
 
@@ -1148,7 +1153,7 @@ function restartApplication() {
     });
 
     subprocess.unref();
-    PlatfromUtil.processExit();
+    PlatfromUtil.processExit(waitTime);
 }
 
 function getJSNameFromProcess() {
@@ -1161,15 +1166,15 @@ function getJSNameFromProcess() {
     return "client.js";
 }
 
-async function restartApplicationAsAdmin(params) {
+async function restartApplicationAsAdmin(waitTime = 0) {
     if (os.platform() === 'win32') {
         //  const elevate = require('node-windows').elevate;
         let cmd = `${getJSNameFromProcess()} -s`;
         WindowsUtil.runCurrentAppAsAdmin(cmd);
-        PlatfromUtil.processExit();
+        PlatfromUtil.processExit(waitTime);
     } else {
         logger.error('not implement for this platform');
-        restartApplication();
+        restartApplication(waitTime);
     }
 }
 
