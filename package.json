@@ -32,6 +32,7 @@
         "node-worker-threads-pool": "^1.5.0",
         "nodemailer": "^6.7.0",
         "os-name": "^5.0.1",
+        "pkill": "^2.0.0",
         "prompt": "^1.2.0",
         "redlock": "^4.2.0",
         "sequelize": "^6.6.5",

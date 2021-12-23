@@ -22,7 +22,7 @@
      let p = new Promise((resolve, reject) => {
          let t = setTimeout(() => {
              reject('socket.io client  to server timeout,please check the server status')
-         }, 300000);
+         }, 30000);
 
          socketIOSocket.on('connect', function() {
              clearTimeout(t);
@@ -30,6 +30,7 @@
              resolve(socketIOSocket);
          });
      });
+     logger.trace('socket.io ready');
      return p;
  }
 

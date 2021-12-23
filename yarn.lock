@@ -1433,6 +1433,11 @@
   "resolved" "https://registry.nlark.com/pify/download/pify-3.0.0.tgz"
   "version" "3.0.0"
 
+"pkill@^2.0.0":
+  "integrity" "sha1-d0W7v+fEOTU/SFkdQWUJDRCxA3A="
+  "resolved" "https://registry.npmjs.org/pkill/-/pkill-2.0.0.tgz"
+  "version" "2.0.0"
+
 "prompt@^1.2.0":
   "integrity" "sha512-iGerYRpRUg5ZyC+FJ/25G5PUKuWAGRjW1uOlhX7Pi3O5YygdK6R+KEaBjRbHSkU5vfS5PZCltSPZdDtUYwRCZA=="
   "resolved" "https://registry.npmjs.org/prompt/-/prompt-1.2.0.tgz"

@@ -38,7 +38,7 @@ const SYMMETRIC_NAT = "Symmetric NAT";
 const Node = require('utp-punch');
 const stun = require('stun');
 const FileBrowserUtil = require('./Utils/FileBrowserUtil');
-
+const pkill = require('pkill');
 //---------------p2p config -----e-----
 
 const P2PConnectorResouce = require('./P2P/P2PConnectorResouce');
@@ -49,6 +49,7 @@ const Sock5TunnelClient = require('./Socks5Tunnel/Sock5TunnelClient');
 program.version(GlobalData.version);
 program
     .option('-t, --test', 'is test')
+    .option('-k, --kill', 'stop self')
     .option('-s, --sleep', 'only tell application ,this process will sleep then go on')
     .parse(process.argv);
 const options = program.opts();
@@ -396,6 +397,18 @@ async function rewriteClientConfig(clientConfig) {
     const filepath = path.join(rootPath, "config", 'client.json');
     await fs.writeFile(filepath, JSON.stringify(clientConfig));
 }
+/**
+ * 
+ * @param {string} authenKey 
+ * @returns 
+ */
+function getScretAuthenKey(authenKey) {
+    if (authenKey && authenKey.length > 8) {
+        let first5 = authenKey.substring(0, 8);
+        return authenKey.replace(first5, '*****');
+    }
+    return authenKey;
+}
 
 function readLineData(questionTip = '我们将初始化设备,请输入一个设备Key:') {
     let p = new Promise((resolve, reject) => {
@@ -412,6 +425,34 @@ function readLineData(questionTip = '我们将初始化设备,请输入一个设
     return p;
 }
 async function main() {
+    if (options.kill) {
+        if (os.platform() === 'win32') {
+            return;
+        }
+        pkill('edge', function(err, validPid) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log('edge killed,pid=' + validPid);
+        });
+        pkill('filebrowser', function(err, validPid) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log('filebrowser killed,pid=' + validPid);
+        });
+        pkill('fastnat', function(err, validPid) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log('fastnat killed,pid=' + validPid);
+        });
+    }
+
+
     if (os.platform() === 'win32') {
         WindowsUtil.hideConsole();
         let allTaps = await Tap9Util.getAllTap9AdaptersAsync();
@@ -488,7 +529,8 @@ async function main() {
         PlatfromUtil.processExit();
         return;
     }
-
+    let theKey = getScretAuthenKey(authenKey);
+    WindowsUtil.setConsoleTitle(`fastnat(${theKey})`);
     let defaultConfig = await getDefaultConfig(authenKey);
 
     let defaultBridgeConfig = defaultConfig.bridge;
@@ -513,7 +555,7 @@ async function main() {
                 console.log('start to install driver');
                 N2NClient.installWinTap();
                 WindowsUtil.noTopMost();
-                await sleep(2000);
+                await sleep(1500);
                 WindowsUtil.autoClickConfirmButton();
                 console.log('install driver success');
                 await sleep(1000);
@@ -541,6 +583,9 @@ async function main() {
             await WindowsUtil.openMstscAsync();
             await WindowsUtil.enableAutoStartAsync();
             await FireWallUtil.addPortAsync('remote', 'tcp', 3389);
+            await FireWallUtil.addPortAsync('remote', 'tcp', 7777);
+            await FireWallUtil.addPortAsync('remote', 'tcp', 8050);
+
 
         }
     } else {
@@ -1049,7 +1094,6 @@ async function trayIcon(isConsoleDisplay = false, authenKey) {
             {
                 title: "本地文件在线管理",
                 tooltip: "display",
-                // checked is implement by plain text in linux
                 enabled: true
             }, {
                 title: "退出系统",
@@ -1091,7 +1135,7 @@ async function trayIcon(isConsoleDisplay = false, authenKey) {
                 PlatfromUtil.openDefaultBrowser(url);
             }
         } else if (action.seq_id === lastId) {
-            PlatfromUtil.processExit(0);
+            PlatfromUtil.processExit(1700);
         }
     });
     return systray;
@@ -1141,15 +1185,18 @@ function restartApplication(waitTime = 1700) {
     if (!args.includes('-s')) {
         args.push('-s')
     }
+
     logger.debug("app will restart ,old pid= " + process.pid);
     logger.debug("args:" + args.toString());
     logger.debug('app exe:' + exe);
     let notWindows = os.platform() != 'win32';
+
     const subprocess = require("child_process").spawn(exe, args, {
         cwd: rootPath,
         detached: true,
         shell: notWindows,
-        windowsHide: notWindows
+        windowsHide: notWindows,
+        stdio: ['inherit']
     });
 
     subprocess.unref();
