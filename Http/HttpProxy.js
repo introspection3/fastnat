@@ -118,13 +118,15 @@ async function getProxy(req, res = null) {
         if (req) {
             req.statusCode = 403;
             req.statusMessage = 'Not found';
-            res.end('');
+            if (res) {
+                res.end('');
+            }
         }
         return null;
     }
 
     if (secondDomainName === 'www') {
-        logger.trace(`www request,from ${JSON.stringify(req.socket.address())} ` + JSON.stringify(req.headers));
+        // logger.trace(`www request,from ${JSON.stringify(req.socket.address())} ` + JSON.stringify(req.headers));
     }
     let port = await getPort(secondDomainName);
     if (HttpProxyCacheMap.has(port)) {
@@ -136,8 +138,6 @@ async function getProxy(req, res = null) {
     let proxy = httpProxy.createProxy({
         target: targetUrl,
         agent: new http.Agent({
-            keepAlive: true,
-            maxSockets: 500,
             timeout: 10 * 1000
         }),
         prependPath: false,
@@ -219,8 +219,11 @@ function createHttpProxy() {
 
     server.on('upgrade', async function(req, socket, head) {
         let proxy = await getProxy(req);
-        if (proxy)
+        if (proxy) {
             proxy.ws(req, socket, head);
+        } else {
+            socket.end();
+        }
     });
 
     server.listen(serverHttpConfig.port, () => {

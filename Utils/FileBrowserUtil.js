@@ -26,10 +26,10 @@ async function setListenAsync(address = '0.0.0.0', port = 7777) {
         shell.chmod('+x', exePath);
     }
     let result = await SpawnUtil.execute(exePath, ['config', 'set', `-a${address}`]);
-    logger.trace(result);
+    // logger.trace(result);
     if (port != 8080) {
         result = await SpawnUtil.execute(exePath, ['config', 'set', `-p${port}`]);
-        logger.trace(result);
+        // logger.trace(result);
     }
 }
 
@@ -39,7 +39,7 @@ async function setAdminPasswordAsync(password, userType, adminName = 'admin') {
     }
     try {
         let result = await SpawnUtil.execute(exePath, ['users', 'add', `${adminName}`, `${password}`]);
-        logger.trace(result);
+        //logger.trace(result);
     } catch (error) {
         logger.warn(error);
     }

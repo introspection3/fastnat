@@ -987,28 +987,18 @@ async function getClientP2PInfoByTunnelId(authenKey, tunnelId) {
 async function checkServer() {
     try {
         let ret = await axios.get('/checkServerStatus');
-        let result = await ret.data;
-
-        return result.success;
+        return true;
     } catch (error) {
-        logger.trace('checkServerStatus error' + error);
+        logger.trace('checkServer function error:' + error);
         isWorkingFine = false;
         return false;
     }
 }
 async function checkServerStatus() {
-    let errorCount = 0;
     let ok = await checkServer();
-
     if (ok == false) {
-        errorCount = errorCount + 1;
         ok = await checkServer();
-
-        if (ok == false) {
-            errorCount = errorCount + 1;
-        } else {
-            return ok;
-        }
+        return ok;
     }
     return ok;
 }
@@ -1189,6 +1179,7 @@ function restartApplication(waitTime = 1700) {
     logger.debug("app will restart ,old pid= " + process.pid);
     logger.debug("args:" + args.toString());
     logger.debug('app exe:' + exe);
+
     let notWindows = os.platform() != 'win32';
 
     const subprocess = require("child_process").spawn(exe, args, {
@@ -1196,7 +1187,7 @@ function restartApplication(waitTime = 1700) {
         detached: true,
         shell: notWindows,
         windowsHide: notWindows,
-        stdio: ['inherit']
+        stdio: 'ignore'
     });
 
     subprocess.unref();
