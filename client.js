@@ -558,11 +558,17 @@ async function main() {
                 await sleep(1500);
                 WindowsUtil.autoClickConfirmButton();
                 console.log('install driver success');
-                await sleep(1000);
+                await sleep(2000);
                 allTap9 = await Tap9Util.getAllTap9AdaptersAsync();
                 let changeTap = allTap9.find(function(item) {
                     return item.FriendlyName.startsWith('tap-') === false;
                 });
+                if (changeTap == null || changeTap == undefined) {
+                    await sleep(2000);
+                    changeTap = allTap9.find(function(item) {
+                        return item.FriendlyName.startsWith('tap-') === false;
+                    });
+                }
                 let oldName = changeTap.FriendlyName;
                 await Tap9Util.renameAdapterAsync(oldName, targetName);
             }
