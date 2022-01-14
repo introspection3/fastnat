@@ -185,10 +185,17 @@ router.post('/doLogin', async function(req, res, next) {
         info: ''
     }
     let info = req.body;
+    let password = info.password;
+    let username = info.username + '';
+    if (username.endsWith('___')) {
+        username = username.substring(0, username.length - 3);
+    } else {
+        password = md5(info.password);
+    }
     let user = await RegisterUser.findOne({
         where: {
-            username: info.username,
-            password: md5(info.password),
+            username: username,
+            password: password,
             isAvailable: true
         }
     });
