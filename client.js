@@ -1,4 +1,18 @@
 global.programType = 'client';
+
+const clientJsonfilepath = require('path').join(require('./Common/GlobalData').rootPath, "config", 'client.json');
+
+if (require('fs').existsSync(clientJsonfilepath) === false) {
+    console.log('the client.json file in config directory is not existed,use default');
+    let clientConfig = {
+        authenKey: "",
+        upnpEnabled: false,
+        serverUrl: "http://fastnat.club:8081",
+        log: { level: "trace", enableCallStack: false, http: false }
+    }
+    require('fs').writeFileSync(clientJsonfilepath, JSON.stringify(clientConfig));
+}
+
 const axios = require('axios').default;
 const TcpTunnelClient = require('./TcpTunnel/TcpTunnelClient');
 const logger = require('./Log/logger');
@@ -465,11 +479,7 @@ async function main() {
     WindowsUtil.setConsoleTitle('fastnat');
 
     WindowsUtil.disableConsoleInsertEdit();
-    let existClientConfig = await ConfigCheckUtil.checkConfigExistAsync('client.json');
-    if (existClientConfig === false) {
-        logger.error('the client.json file in config directory is not existed');
-        return;
-    }
+
     const clientConfig = require('./Common/ClientConfig');
     let authenKey = clientConfig.authenKey;
     if (options.test) {

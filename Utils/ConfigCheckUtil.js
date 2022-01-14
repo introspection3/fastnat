@@ -6,4 +6,12 @@ function checkConfigExistAsync(fileName) {
     let fullPath = path.join(rootPath, 'config', fileName);
     return checkFileExistsAsync(fullPath);
 }
-module.exports.checkConfigExistAsync = checkConfigExistAsync;
+
+function checkConfigExist(fileName) {
+    return require('fs').existsSync(fileName);
+
+}
+module.exports = {
+    checkConfigExistAsync,
+    checkConfigExist
+}
