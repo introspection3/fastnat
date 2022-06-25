@@ -18,6 +18,8 @@ const defaultBridgeConfigRpcPort = defaultBridgeConfig.rpcPort;
 checkType(isNumber, defaultBridgeConfigPort, 'defaultBridgeConfigPort');
 const defaultWebServerConfigPort = defaultWebServerConfig.port;
 checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigPort');
+const defaultWebServerConfigVisitHttpsPort = defaultWebServerConfig.visitHttpsPort;
+checkType(isNumber, defaultWebServerConfigPort, 'defaultWebServerConfigisitHttpsPort');
 const clusterEnabled = serverConfig.cluster.enabled;
 checkType(isBoolean, clusterEnabled, 'serverConfig.cluster.enabled');
 const instanceCount = serverConfig.cluster.count;
@@ -33,6 +35,14 @@ const netbuildingHost = netbuilding.host;
 const netbuildingPort = netbuilding.port;
 //------------------netbuilding---e-------
 
+//--------------------visit site https------------
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const configDir = path.join(rootPath, 'config');
+const serverHttpConfig = serverConfig.http;
+const sslConfig = serverHttpConfig.ssl;
+//--------------------visit site https------------
 
 if (clusterEnabled) {
     const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
@@ -142,6 +152,31 @@ const server = app.listen(defaultWebServerConfigPort, function() {
     logger.debug(`fastnat web start at:${JSON.stringify(server.address())}`)
 });
 
+//----------添加https支持,仅用于浏览器强制ssl的麻烦情况
+
+
+
+let serverOptions = {};
+if (sslConfig.type == 'pem') {
+    serverOptions = {
+        key: fs.readFileSync(path.join(configDir, 'ssl', sslConfig.pemKeyName)),
+        cert: fs.readFileSync(path.join(configDir, 'ssl', sslConfig.pemCertName)),
+    };
+}
+
+if (sslConfig.type == 'pfx') {
+    serverOptions = {
+        pfx: fs.readFileSync(path.join(configDir, 'ssl', sslConfig.pfxName)),
+        passphrase: sslConfig.pfxPassword
+    };
+}
+
+const httpsServer = https.createServer(serverOptions, app);
+
+httpsServer.listen(defaultWebServerConfigVisitHttpsPort, () => {
+    logger.debug('site VisitHttps Server running on port ' + defaultWebServerConfigVisitHttpsPort);
+});
+//---------------------------------------------------
 
 const tcpTunnelServer = new TcpTunnelServer({ port: defaultBridgeConfigPort });
 tcpTunnelServer.start();

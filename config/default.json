@@ -4,7 +4,8 @@
     "webserver": {
         "https": false,
         "port": 8081,
-        "socketioPort": 8082
+        "socketioPort": 8082,
+        "visitHttpsPort": 1443
     },
     "bridge": {
         "port": 3927
