@@ -3,11 +3,11 @@ global.programType = 'client';
 const clientJsonfilepath = require('path').join(require('./Common/GlobalData').rootPath, "config", 'client.json');
 
 if (require('fs').existsSync(clientJsonfilepath) === false) {
-    console.log('the client.json file in config directory is not existed,use default');
+    console.log('the client.json file in config directory is not exist,we will use default config');
     let clientConfig = {
         authenKey: "",
         upnpEnabled: false,
-        serverUrl: "http://fastnat.club:8081",
+        serverUrl: "https://fastnat.club:1443",
         log: { level: "trace", enableCallStack: false, http: false }
     }
     require('fs').writeFileSync(clientJsonfilepath, JSON.stringify(clientConfig));
@@ -64,7 +64,7 @@ program.version(GlobalData.version);
 program
     .option('-t, --test', 'is test')
     .option('-k, --kill', 'stop self')
-    .option('-s, --sleep', 'only tell application ,this process will sleep then go on')
+    .option('-s, --sleep', 'only tell application ,this process will sleep and then go on')
     .parse(process.argv);
 const options = program.opts();
 
